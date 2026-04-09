@@ -202,3 +202,12 @@ Semver strict. Deprecated features survive one full minor cycle, removed in next
 
 ### Error Handling
 HTTP errors map to typed exceptions: 401 → `AuthenticationError`, 403 → `ForbiddenError`, 404 → `NotFoundError`, 429 → `RateLimitError`. All inherit from `GuruApiError` which carries `status_code`, `message`, and `body`.
+
+### Generated Code Rules
+- Generated models live in `src/guru_sdk/models/_generated.py` — **never edit by hand**
+- Re-generate with `python scripts/generate_models.py` after updating `swagger/swagger.json`
+- `models/__init__.py` is the re-export layer — add new models there when consumers need them
+- Generated code gets per-file ruff ignores in `pyproject.toml` (N815 camelCase, TCH003 type-checking imports)
+- Field names are snake_case (Pythonic); camelCase from the API spec is preserved as `Field(alias=...)` for API compat
+- Three-way field access: create from API dicts via camelCase alias, access via snake_case field name, serialize to API via `model_dump(by_alias=True)`
+- Tests for generated models use realistic API shapes (real UUIDs, correct enum values, required fields)

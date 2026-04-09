@@ -77,6 +77,11 @@ ignore = [
 [tool.ruff.lint.isort]
 known-first-party = ["guru_sdk"]
 
+[tool.ruff.lint.per-file-ignores]
+# Generated code uses camelCase field names from the API spec.
+# GuruModel has populate_by_name=True so both camelCase and snake_case work.
+"src/guru_sdk/models/_generated.py" = ["N815", "TCH003"]
+
 # =============================================================================
 # Mypy — strict type checking
 # =============================================================================

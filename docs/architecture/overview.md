@@ -1,6 +1,6 @@
 # guru-py-sdk Architecture
 
-**Last updated**: 2026-04-09 (Phase 1 — Foundation)
+**Last updated**: 2026-04-09 (Iteration 002 — Swagger Model Generation)
 
 ## Overview
 
@@ -48,8 +48,9 @@ src/guru_sdk/
 ├── http.py              # HttpClient (httpx sync transport)
 ├── errors.py            # Exception hierarchy
 ├── models/
-│   ├── __init__.py
-│   └── _base.py         # GuruModel (Pydantic v2 base)
+│   ├── __init__.py      # Re-exports 32 key models
+│   ├── _base.py         # GuruModel (Pydantic v2 base)
+│   └── _generated.py    # 248 models + 122 enums (auto-generated from Swagger)
 ├── resources/
 │   ├── __init__.py
 │   └── _base.py         # BaseResource

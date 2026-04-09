@@ -2,8 +2,77 @@
 
 All models inherit from GuruModel (extra="ignore", frozen=True) so they are
 forward-compatible with API changes and immutable by default.
+
+Models are generated from the Guru public Swagger spec. Re-generate with:
+    python scripts/generate_models.py
 """
 
 from guru_sdk.models._base import GuruModel
+from guru_sdk.models._generated import (
+    Answer,
+    Card,
+    CardAttachment,
+    CardCollaborator,
+    CardComment,
+    CardCommentReply,
+    CardInfo,
+    CardSyncInfo,
+    CardTemplate,
+    CardVerifier,
+    CardVerifiers,
+    CollectionModel,
+    DraftCard,
+    EffectivePermissions,
+    Folder,
+    FolderCard,
+    FolderItem,
+    KnowledgeAgent,
+    KnowledgeAgentAccess,
+    KnowledgeAgentConfig,
+    NewCard,
+    NewFolder,
+    Page,
+    Source,
+    Tag,
+    TagCategory,
+    Team,
+    User,
+    UserGroup,
+    UserGroupMember,
+    WhoAmI,
+)
 
-__all__ = ["GuruModel"]
+__all__ = [
+    "Answer",
+    "Card",
+    "CardAttachment",
+    "CardCollaborator",
+    "CardComment",
+    "CardCommentReply",
+    "CardInfo",
+    "CardSyncInfo",
+    "CardTemplate",
+    "CardVerifier",
+    "CardVerifiers",
+    "CollectionModel",
+    "DraftCard",
+    "EffectivePermissions",
+    "Folder",
+    "FolderCard",
+    "FolderItem",
+    "GuruModel",
+    "KnowledgeAgent",
+    "KnowledgeAgentAccess",
+    "KnowledgeAgentConfig",
+    "NewCard",
+    "NewFolder",
+    "Page",
+    "Source",
+    "Tag",
+    "TagCategory",
+    "Team",
+    "User",
+    "UserGroup",
+    "UserGroupMember",
+    "WhoAmI",
+]
