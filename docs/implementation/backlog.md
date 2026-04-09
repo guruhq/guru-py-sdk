@@ -10,11 +10,10 @@ The planned iterations for guru-py-sdk, derived from the [restructure plan](/RES
 | 002 | Swagger Model Generation | Complete | Full generation pipeline (253 schemas → 248 models + 122 enums), 6 deprecated schemas filtered, 42 new tests (137 total) |
 | 003 | Snake_case Field Aliasing | Complete | Added `--snake-case-field` to codegen, re-generated models with Pythonic field names + camelCase aliases, 5 new tests (142 total) |
 
-## Phase 2 — Core Resources + Generated Models
+## Phase 2 — Core Resources
 
 | # | Title | Scope | Dependencies |
 |---|-------|-------|--------------|
-| 003 | Snake_case Field Aliasing | Post-process generated models to use snake_case field names (e.g., `preferred_phrase`) with camelCase aliases (`preferredPhrase`). Must happen before resource modules start using field names — changing later would be a breaking change for consumers. Update generation pipeline, re-generate, update tests. | 002 |
 | 004 | Cards Resource | CardResource — full CRUD, verify/unverify, tags, comments, collaborators, folder placement. Proves the end-to-end pattern: model + resource + tests + wired into Guru facade. Most complex resource, highest usage. | 002, 003 (needs Card model with snake_case fields) |
 | 005 | Folders + Collections | FolderResource — CRUD, items, permissions, home folder. CollectionResource — CRUD, group access. Validates that the pattern from 004 is repeatable with simpler resources. | 002, 003 (needs Folder, Collection models with snake_case fields) |
 | 006 | Groups + Members + Tags | GroupResource — CRUD, member management. MemberResource — list, get, invite. TagResource — CRUD, categories. Rounds out the core resources. | 002, 003 |
@@ -39,6 +38,6 @@ The planned iterations for guru-py-sdk, derived from the [restructure plan](/RES
 
 ## Notes
 
-- Iterations 003–005 can potentially run in parallel once 002 is complete (they're independent resource modules).
-- Iteration numbers are provisional — actual numbers are assigned when work begins. If a new iteration is needed (e.g., a refactor discovered during 003), it gets the next available number.
+- Iterations 004–006 can potentially run in parallel (they're independent resource modules).
+- Iteration numbers are provisional — actual numbers are assigned when work begins. If a new iteration is needed (e.g., a refactor discovered during 004), it gets the next available number.
 - Each iteration follows the compound engineering loop: `start-iteration` → TDD → ADRs as needed → `complete-iteration` (implementation record + learnings + architecture update + CLAUDE.md patterns).
