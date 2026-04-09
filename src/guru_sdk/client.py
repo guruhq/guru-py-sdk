@@ -24,6 +24,7 @@ import os
 
 from guru_sdk.errors import AuthenticationError
 from guru_sdk.http import DEFAULT_BASE_URL, HttpClient
+from guru_sdk.resources.cards import CardResource
 
 # =============================================================================
 # Public API
@@ -73,11 +74,9 @@ class Guru:
             timeout=timeout,
         )
 
-        # Resource modules — added in Phase 2 as each resource is implemented.
-        # Each will follow the pattern:
-        #   self.cards = CardResource(self._http)
-        #   self.folders = FolderResource(self._http)
-        #   etc.
+        # Resource modules — one property per resource group, all sharing the
+        # same HttpClient. Mirrors guru-cli's facade pattern.
+        self.cards = CardResource(self._http)
 
     # -------------------------------------------------------------------------
     # Context manager support — clean up httpx client

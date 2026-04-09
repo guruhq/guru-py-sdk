@@ -9,6 +9,7 @@ Usage::
 
 Public API:
     Guru: Client facade — the main entry point.
+    CardResource: Card operations (CRUD, verify, tags, comments, folders, collaborators).
     GuruModel: Base class for all Pydantic models.
     Errors: GuruError, GuruApiError, NotFoundError, AuthenticationError,
             ForbiddenError, RateLimitError, ValidationError.
@@ -26,9 +27,11 @@ from guru_sdk.errors import (
     ValidationError,
 )
 from guru_sdk.models._base import GuruModel
+from guru_sdk.resources.cards import CardResource
 
 __all__ = [
     "AuthenticationError",
+    "CardResource",
     "ForbiddenError",
     "Guru",
     "GuruApiError",

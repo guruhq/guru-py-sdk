@@ -1,6 +1,6 @@
 # guru-py-sdk Architecture
 
-**Last updated**: 2026-04-09 (Iteration 002 — Swagger Model Generation)
+**Last updated**: 2026-04-09 (Iteration 004 — Cards Resource)
 
 ## Overview
 
@@ -53,7 +53,8 @@ src/guru_sdk/
 │   └── _generated.py    # 248 models + 122 enums (auto-generated from Swagger)
 ├── resources/
 │   ├── __init__.py
-│   └── _base.py         # BaseResource
+│   ├── _base.py         # BaseResource
+│   └── cards.py         # CardResource (CRUD, verify, tags, comments, folders, collaborators)
 └── contrib/
     └── __init__.py      # Phase 4: Publisher, Bundle
 ```

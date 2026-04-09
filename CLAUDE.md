@@ -15,7 +15,7 @@ Modern Python SDK for the Guru API. Typed, sync-first, async-ready. Architectura
   - `resources/` — One file per resource (mirrors guru-cli pattern)
     - `_base.py` — `BaseResource` with shared resolve/validation logic
   - `contrib/` — Higher-level utilities (Publisher, Bundle — Phase 4)
-- `tests/` — Mirrors `src/` structure (TDD, 95+ tests)
+- `tests/` — Mirrors `src/` structure (TDD, 210+ tests)
 - `scripts/` — `generate_models.py` (Swagger-to-Pydantic generator)
 - `docs/` — Living documentation (see Documentation section)
 - `swagger/` — Public API spec (source for model generation)
@@ -211,3 +211,28 @@ HTTP errors map to typed exceptions: 401 → `AuthenticationError`, 403 → `For
 - Field names are snake_case (Pythonic); camelCase from the API spec is preserved as `Field(alias=...)` for API compat
 - Three-way field access: create from API dicts via camelCase alias, access via snake_case field name, serialize to API via `model_dump(by_alias=True)`
 - Tests for generated models use realistic API shapes (real UUIDs, correct enum values, required fields)
+
+### HttpClient Method Taxonomy
+Every API pattern maps to a specific HttpClient method:
+- `get(path, Model)` → GET single resource
+- `get_list(path, Model)` → GET list (handles 204 as empty list)
+- `get_paginated(path, Model)` → GET all pages via Link headers
+- `post(path, body, Model)` → POST with JSON body, validated response
+- `post_no_content(path, body?)` → POST expecting 204
+- `post_list(path, body, Model)` → POST returning a list
+- `put(path, body, Model)` → PUT with JSON body, validated response
+- `put_empty(path, Model)` → PUT with no body, validated response
+- `put_no_content(path, body?)` → PUT expecting 204
+- `put_list(path, Model, body?)` → PUT returning a list
+- `delete(path)` → DELETE, no response body
+
+Resources never touch httpx directly — all HTTP goes through these methods.
+
+### Resource Validation Pattern
+Every public resource method validates inputs at the top, before any HTTP call:
+- IDs, names, structured values → `validate_input()` (strict: rejects `?`, `#`, `%xx`, traversal)
+- User-authored text (comments, HTML content, search terms) → `validate_free_text()` (lenient: only rejects control chars)
+- Emails in URL paths → `quote(email, safe="")` to percent-encode `@`
+
+### Test Data Realism
+Test fixtures must include all required fields for nested models. E.g., `User` requires `firstName` and `lastName` — a minimal `{"id": "x", "email": "y"}` will fail Pydantic validation. Always check required fields on generated models before writing fixtures.

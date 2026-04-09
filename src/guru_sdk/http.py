@@ -114,6 +114,68 @@ class HttpClient:
         self._raise_for_status(response)
         return model.model_validate(response.json())
 
+    def put_empty(self, path: str, model: type[_T]) -> _T:
+        """PUT with no body — response validated against *model*.
+
+        Used for actions like verify that take no body but return the resource.
+        """
+        response = self._client.put(path)
+        self._raise_for_status(response)
+        return model.model_validate(response.json())
+
+    def put_no_content(self, path: str, body: Any = None) -> None:
+        """PUT that expects no response body (e.g., resolving a comment)."""
+        response = self._client.put(path, json=body)
+        self._raise_for_status(response)
+
+    def put_list(self, path: str, model: type[_T], body: Any = None) -> list[_T]:
+        """PUT that returns a list — response validated against list[*model*].
+
+        Used for actions like add_tag that return the updated tag list.
+        """
+        response = self._client.put(path, json=body)
+        self._raise_for_status(response)
+        adapter = TypeAdapter(list[model])  # type: ignore[valid-type]
+        return adapter.validate_python(response.json())
+
+    def post_list(self, path: str, body: Any, model: type[_T]) -> list[_T]:
+        """POST that returns a list — response validated against list[*model*].
+
+        Used for actions like add_collaborator that return the updated list.
+        """
+        response = self._client.post(path, json=body)
+        self._raise_for_status(response)
+        adapter = TypeAdapter(list[model])  # type: ignore[valid-type]
+        return adapter.validate_python(response.json())
+
+    def patch(self, path: str, body: Any, model: type[_T], **params: Any) -> _T:
+        """PATCH with JSON body and validate the response against *model*.
+
+        Supports query parameters via **params (e.g., keepVerificationState).
+        """
+        response = self._client.patch(path, json=body, params=params or None)
+        self._raise_for_status(response)
+        return model.model_validate(response.json())
+
+    def post_raw(self, path: str, body: Any) -> httpx.Response:
+        """POST and return the raw httpx Response.
+
+        Used for async bulk operations (POST /cards/bulkop) that may return
+        202 Accepted with a job ID, or other non-standard response patterns.
+        """
+        response = self._client.post(path, json=body)
+        self._raise_for_status(response)
+        return response
+
+    def get_bytes(self, path: str) -> bytes:
+        """GET raw bytes (e.g., PDF download).
+
+        Returns the response body as bytes instead of parsing as JSON.
+        """
+        response = self._client.get(path)
+        self._raise_for_status(response)
+        return response.content
+
     def delete(self, path: str) -> None:
         """DELETE a resource. Expects no response body."""
         response = self._client.delete(path)
