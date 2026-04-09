@@ -38,10 +38,10 @@ codegen = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/guruhq/guru-sdk"
-Documentation = "https://github.com/guruhq/guru-sdk#readme"
-Repository = "https://github.com/guruhq/guru-sdk"
-Issues = "https://github.com/guruhq/guru-sdk/issues"
+Homepage = "https://github.com/guruhq/guru-py-sdk"
+Documentation = "https://github.com/guruhq/guru-py-sdk#readme"
+Repository = "https://github.com/guruhq/guru-py-sdk"
+Issues = "https://github.com/guruhq/guru-py-sdk/issues"
 
 # =============================================================================
 # Version — single source of truth in _version.py

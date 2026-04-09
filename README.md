@@ -1,4 +1,4 @@
-# guru-sdk
+# guru-py-sdk
 
 Modern Python SDK for the [Guru API](https://developer.getguru.com). Typed, sync-first, async-ready, and architecturally aligned with [guru-cli](https://github.com/guruhq/guru-cli).
 
@@ -7,7 +7,7 @@ Modern Python SDK for the [Guru API](https://developer.getguru.com). Typed, sync
 ## Install
 
 ```bash
-pip install guru-sdk
+uv add guru-sdk
 ```
 
 Requires Python 3.10+.
@@ -65,7 +65,7 @@ with Guru() as g:
 Mirrors the guru-cli two-layer pattern:
 
 ```
-guru-cli (TypeScript)              guru-sdk (Python)
+guru-cli (TypeScript)              guru-py-sdk (Python)
 ─────────────────────              ────────────────────
 GuruHttp (transport)        →      HttpClient (httpx sync)
 *Resource classes            →      *Resource classes
@@ -79,12 +79,15 @@ Resource modules use constructor injection — each receives `HttpClient` and pr
 
 ```bash
 # Install with dev dependencies
-pip install -e ".[dev]"
+uv sync --all-extras
 
 # Quality gates (run all three before any PR)
-ruff check src/ tests/       # lint + import sorting
-mypy src/guru_sdk/ --strict  # type checking
-pytest                       # 95 tests
+make check                   # lint + typecheck + test
+
+# Or individually:
+make lint                    # ruff check
+make typecheck               # mypy --strict
+make test                    # pytest
 ```
 
 ## What's Next

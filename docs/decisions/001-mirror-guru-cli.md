@@ -7,7 +7,7 @@
 
 Guru has two developer tools: `guru-cli` (TypeScript, agent-friendly CLI) and the legacy `py-sdk` (Python SDK, monolithic God-class). The legacy SDK is a single 3,738-line file with 132+ methods, no type hints, and no structural alignment with modern Guru APIs.
 
-We need to build a new Python SDK (`guru-sdk`) that can be maintained alongside the CLI without duplicating design decisions.
+We need to build a new Python SDK (`guru-py-sdk`) that can be maintained alongside the CLI without duplicating design decisions.
 
 ## Decision
 

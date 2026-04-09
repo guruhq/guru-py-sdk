@@ -12,7 +12,7 @@ What it does:
     5. Formats with ruff
 
 Requires the 'codegen' extra:
-    pip install guru-sdk[codegen]
+    uv sync --extra codegen
 """
 
 from __future__ import annotations

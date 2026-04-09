@@ -1,4 +1,4 @@
-# guru-sdk
+# guru-py-sdk
 
 Modern Python SDK for the Guru API. Typed, sync-first, async-ready. Architecturally mirrors [guru-cli](https://github.com/guruhq/guru-cli) — same vocabulary, same resource module pattern, same API spec.
 

@@ -1,10 +1,10 @@
-# guru-sdk Architecture
+# guru-py-sdk Architecture
 
 **Last updated**: 2026-04-09 (Phase 1 — Foundation)
 
 ## Overview
 
-guru-sdk is a modern Python SDK for the Guru API. It mirrors the two-layer architecture of guru-cli (TypeScript): a transport layer (`HttpClient`) and resource modules (`*Resource`) composed by a facade class (`Guru`). Models are Pydantic v2, generated from the Guru public Swagger spec.
+guru-py-sdk is a modern Python SDK for the Guru API. It mirrors the two-layer architecture of guru-cli (TypeScript): a transport layer (`HttpClient`) and resource modules (`*Resource`) composed by a facade class (`Guru`). Models are Pydantic v2, generated from the Guru public Swagger spec.
 
 ## System Diagram
 
@@ -98,7 +98,7 @@ GuruError (base)
 
 ## Alignment with guru-cli
 
-| guru-cli (TypeScript) | guru-sdk (Python) |
+| guru-cli (TypeScript) | guru-py-sdk (Python) |
 |-----------------------|-------------------|
 | `GuruHttp` | `HttpClient` |
 | `*Resource` classes | `*Resource` classes |
