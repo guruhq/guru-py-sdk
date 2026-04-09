@@ -99,4 +99,19 @@ disallow_untyped_defs = false
 # =============================================================================
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["src"]
 addopts = "-ra -q"
+
+# =============================================================================
+# Dependency Groups (PEP 735 — used by uv sync)
+# =============================================================================
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-httpx>=0.30",
+    "mypy>=1.10",
+    "ruff>=0.4",
+]
+codegen = [
+    "datamodel-code-generator>=0.25",
+]
