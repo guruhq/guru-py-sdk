@@ -194,19 +194,28 @@ class HttpClient:
         model: type[_T],
         *,
         max_pages: int = 10,
+        **params: Any,
     ) -> list[_T]:
         """GET all pages of a paginated endpoint.
 
         Follows Link: <url>; rel="next" headers up to *max_pages*.
+        Initial query parameters are passed via **params (first page only —
+        subsequent pages use the full URL from Link headers).
         """
         all_items: list[_T] = []
         # First request uses the relative path through the httpx client
         next_url: str | None = path
         page = 0
         adapter = TypeAdapter(list[model])  # type: ignore[valid-type]
+        # Initial params are only used on the first request; Link headers
+        # provide the full URL for subsequent pages.
+        initial_params = params or None
 
         while next_url is not None and page < max_pages:
-            response = self._client.get(next_url)
+            response = self._client.get(
+                next_url,
+                params=initial_params if page == 0 else None,
+            )
 
             self._raise_for_status(response)
 

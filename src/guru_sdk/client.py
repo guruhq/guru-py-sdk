@@ -27,6 +27,9 @@ from guru_sdk.http import DEFAULT_BASE_URL, HttpClient
 from guru_sdk.resources.cards import CardResource
 from guru_sdk.resources.collections import CollectionResource
 from guru_sdk.resources.folders import FolderResource
+from guru_sdk.resources.groups import GroupResource
+from guru_sdk.resources.members import MemberResource
+from guru_sdk.resources.tags import TagResource
 
 # =============================================================================
 # Public API
@@ -81,6 +84,9 @@ class Guru:
         self.cards = CardResource(self._http)
         self.collections = CollectionResource(self._http)
         self.folders = FolderResource(self._http)
+        self.groups = GroupResource(self._http)
+        self.members = MemberResource(self._http)
+        self.tags = TagResource(self._http)
 
     # -------------------------------------------------------------------------
     # Context manager support — clean up httpx client

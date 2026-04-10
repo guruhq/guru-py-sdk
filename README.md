@@ -108,6 +108,51 @@ g.collections.add_group(collection.id, group_id="...", role="AUTHOR")
 home = g.collections.home_folder(collection.id)
 ```
 
+### Groups (`g.groups`)
+
+CRUD, member management, and collection access.
+
+```python
+groups = g.groups.list()
+eng = g.groups.get("Engineering")  # name or UUID
+
+members = g.groups.members(eng.id)
+g.groups.add_members(eng.id, emails=["alice@company.com", "bob@company.com"])
+g.groups.remove_member(eng.id, email="alice@company.com")
+
+collections = g.groups.collections(eng.id)
+```
+
+### Members (`g.members`)
+
+List, search, invite, and remove team members.
+
+```python
+all_members = g.members.list()
+results = g.members.list(search="alice")
+member = g.members.get("alice@company.com")
+
+g.members.invite(email="new@company.com")
+g.members.invite(email="new@company.com", member_type="LIGHT", message="Welcome!")
+g.members.remove("former@company.com")
+```
+
+### Tags (`g.tags`)
+
+Tag and category management. Team ID is resolved automatically.
+
+```python
+categories = g.tags.list_categories()
+tag = g.tags.get_tag("onboarding")  # name or UUID
+
+g.tags.create_tag(category_id="...", value="new-tag")
+g.tags.update_tag(tag.id, value="renamed")
+
+g.tags.create_category(name="Priority")
+g.tags.update_category(category_id, name="Severity")
+g.tags.delete_category(category_id)
+```
+
 ## Name Resolution
 
 All resources accept either UUIDs or human-readable names. When you pass a name, the SDK resolves it automatically:
@@ -167,7 +212,6 @@ make test                  # pytest
 
 ## What's Next
 
-- **Phase 2 (in progress):** Remaining core resources — groups, members, tags
 - **Phase 3:** Extended resources — search, sources, drafts, pages, agents, answers, announcements
 - **Phase 4:** `contrib/` workflows, publisher, bundle, migration guide, PyPI publish as `guru-sdk`
 

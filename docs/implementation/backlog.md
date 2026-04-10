@@ -11,13 +11,14 @@ The planned iterations for guru-py-sdk, derived from the [restructure plan](/RES
 | 003 | Snake_case Field Aliasing | Complete | Added `--snake-case-field` to codegen, re-generated models with Pythonic field names + camelCase aliases, 5 new tests (142 total) |
 | 004 | Cards Resource | Complete | CardResource with 32 methods (CRUD, patch, archive/restore, verify, tags, comments, folders, collaborators, PDF, bulk, move), 7 new HttpClient methods, name resolution, py-sdk parity audit, 95 new tests (237 total) |
 | 005 | Folders + Collections | Complete | FolderResource (13 methods: CRUD, hierarchy, permissions, cross-collection move) + CollectionResource (9 methods: CRUD, group access, home folder). Fixed color validation and enum parity. 71 new tests (308 total) |
+| 006 | Groups + Members + Tags | Complete | GroupResource (9 methods: CRUD, members, collections), MemberResource (4 methods: list/search, get, invite, remove), TagResource (7 methods: tag/category CRUD + team ID caching via WhoAmI). Extended get_paginated with initial params. 63 new tests (371 total) |
 
 ## Phase 2 — Core Resources
 
 | # | Title | Scope | Dependencies |
 |---|-------|-------|--------------|
 | ~~005~~ | ~~Folders + Collections~~ | ~~Moved to Completed~~ | |
-| 006 | Groups + Members + Tags | GroupResource — CRUD, member management. MemberResource — list, get, invite. TagResource — CRUD, categories. Rounds out the core resources. | 002, 003 |
+| ~~006~~ | ~~Groups + Members + Tags~~ | ~~Moved to Completed~~ | |
 
 ## Phase 2.5 — God Class Audit
 

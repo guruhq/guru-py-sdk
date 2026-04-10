@@ -1,6 +1,6 @@
 # guru-py-sdk Architecture
 
-**Last updated**: 2026-04-10 (Iteration 005 — Folders + Collections)
+**Last updated**: 2026-04-10 (Iteration 006 — Groups + Members + Tags)
 
 ## Overview
 
@@ -56,7 +56,10 @@ src/guru_sdk/
 │   ├── _base.py         # BaseResource
 │   ├── cards.py         # CardResource (CRUD, verify, tags, comments, folders, collaborators)
 │   ├── collections.py   # CollectionResource (CRUD, group access, home folder)
-│   └── folders.py       # FolderResource (CRUD, hierarchy, permissions, cross-collection move)
+│   ├── folders.py       # FolderResource (CRUD, hierarchy, permissions, cross-collection move)
+│   ├── groups.py        # GroupResource (CRUD, member management, collection access)
+│   ├── members.py       # MemberResource (list, get, invite, remove)
+│   └── tags.py          # TagResource (tag CRUD, category CRUD, team ID resolution)
 └── contrib/
     └── __init__.py      # Phase 4: Publisher, Bundle
 ```

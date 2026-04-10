@@ -1,4 +1,4 @@
-"""Smoke test — exercises Cards, Folders, and Collections against the live API.
+"""Smoke test — exercises all six core resources against the live API.
 
 Usage:
     export GURU_USER="you@company.com"
@@ -78,5 +78,47 @@ try:
         print(f"  Comments: {len(comments)}")
 except Exception as e:
     print(f"Cards error: {e}")
+
+# ── Groups ──────────────────────────────────────────────────────────────────
+print("\n=== Groups ===")
+try:
+    all_groups = g.groups.list()
+    print(f"Found {len(all_groups)} groups")
+    for grp in all_groups[:5]:
+        print(f"  - {grp.name} (id={grp.id}, members={grp.number_of_members})")
+
+    if all_groups:
+        # Get group members
+        first_group = all_groups[0]
+        members = g.groups.members(first_group.id)
+        print(f"\nMembers of '{first_group.name}': {len(members)}")
+        for m in members[:3]:
+            print(f"  - {m.user.email} ({m.user.first_name} {m.user.last_name})")
+except Exception as e:
+    print(f"Groups error: {e}")
+
+# ── Members ─────────────────────────────────────────────────────────────────
+print("\n=== Members ===")
+try:
+    all_members = g.members.list()
+    print(f"Found {len(all_members)} members")
+    for m in all_members[:3]:
+        print(f"  - {m.user.email} ({m.user.first_name} {m.user.last_name})")
+except Exception as e:
+    print(f"Members error: {e}")
+
+# ── Tags ────────────────────────────────────────────────────────────────────
+print("\n=== Tags ===")
+try:
+    categories = g.tags.list_categories()
+    print(f"Found {len(categories)} tag categories")
+    for cat in categories:
+        tag_count = len(cat.tags) if cat.tags else 0
+        print(f"  - {cat.name} ({tag_count} tags)")
+        if cat.tags:
+            for t in cat.tags[:3]:
+                print(f"      • {t.value}")
+except Exception as e:
+    print(f"Tags error: {e}")
 
 print("\n✓ Smoke test complete")
