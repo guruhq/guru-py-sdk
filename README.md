@@ -153,6 +153,28 @@ g.tags.update_category(category_id, name="Severity")
 g.tags.delete_category(category_id)
 ```
 
+### Search (`g.search`)
+
+Keyword and semantic search across cards, sources, and documents.
+
+```python
+# Keyword search for cards
+cards = g.search.cards("onboarding")
+cards = g.search.cards("draft content", query_type="draft", show_archived=True)
+
+# Keyword search across cards + sources
+results = g.search.documents("API reference", max_results=10)
+print(f"Found {results.total} documents")
+for doc in results.documents:
+    print(f"  - {doc.title} ({doc.document_type})")
+
+# Semantic (natural language) search
+results = g.search.documents_semantic("how do I reset my password")
+
+# Search source records only
+results = g.search.sources(search_terms="deploy", source_types=["JIRA"])
+```
+
 ## Name Resolution
 
 All resources accept either UUIDs or human-readable names. When you pass a name, the SDK resolves it automatically:

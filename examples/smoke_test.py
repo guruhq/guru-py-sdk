@@ -121,4 +121,27 @@ try:
 except Exception as e:
     print(f"Tags error: {e}")
 
+# ── Search ─────────────────────────────────────────────────────────────────
+print("\n=== Search ===")
+try:
+    # Keyword card search
+    cards = g.search.cards("onboarding")
+    print(f"Card search 'onboarding': {len(cards)} results")
+    for card in cards[:3]:
+        print(f"  - {card.preferred_phrase} (id={card.id})")
+
+    # Document search (cards + sources)
+    results = g.search.documents("onboarding", max_results=5)
+    print(f"\nDocument search 'onboarding': {results.total} total")
+    for doc in (results.documents or [])[:3]:
+        print(f"  - {doc.title} ({doc.document_type})")
+
+    # Semantic search
+    nlq = g.search.documents_semantic("how do I onboard new employees", max_results=3)
+    print(f"\nSemantic search: {nlq.total} total")
+    for doc in (nlq.documents or [])[:3]:
+        print(f"  - {doc.title}")
+except Exception as e:
+    print(f"Search error: {e}")
+
 print("\n✓ Smoke test complete")

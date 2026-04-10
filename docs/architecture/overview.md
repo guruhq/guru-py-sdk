@@ -1,6 +1,6 @@
 # guru-py-sdk Architecture
 
-**Last updated**: 2026-04-10 (Iteration 006 — Groups + Members + Tags)
+**Last updated**: 2026-04-10 (Iteration 008 — Search)
 
 ## Overview
 
@@ -17,7 +17,7 @@ guru-py-sdk is a modern Python SDK for the Guru API. It mirrors the two-layer ar
               ┌────────────────────────┼────────────────────────┐
               │            │           │           │             │
          CardResource  FolderResource  CollectionResource  SearchResource  AnswerResource
-         (Phase 2 ✓)   (Phase 2 ✓)    (Phase 2 ✓)         (Phase 3)       (Phase 3)
+         (Phase 2 ✓)   (Phase 2 ✓)    (Phase 2 ✓)         (Phase 3 ✓)     (Phase 3)
               │            │           │           │             │
               └────────────┴───────────┴───────────┴─────────────┘
                                        │
@@ -48,7 +48,7 @@ src/guru_sdk/
 ├── http.py              # HttpClient (httpx sync transport)
 ├── errors.py            # Exception hierarchy
 ├── models/
-│   ├── __init__.py      # Re-exports 32 key models
+│   ├── __init__.py      # Re-exports 36 key models
 │   ├── _base.py         # GuruModel (Pydantic v2 base)
 │   └── _generated.py    # 248 models + 122 enums (auto-generated from Swagger)
 ├── resources/
@@ -59,6 +59,7 @@ src/guru_sdk/
 │   ├── folders.py       # FolderResource (CRUD, hierarchy, permissions, cross-collection move)
 │   ├── groups.py        # GroupResource (CRUD, member management, collection access)
 │   ├── members.py       # MemberResource (list, get, invite, remove)
+│   ├── search.py        # SearchResource (cards, documents, documents_semantic, sources)
 │   └── tags.py          # TagResource (tag CRUD, category CRUD, team ID resolution)
 └── contrib/
     └── __init__.py      # Phase 4: Publisher, Bundle

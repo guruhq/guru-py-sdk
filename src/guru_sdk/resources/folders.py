@@ -10,7 +10,10 @@ endpoint paths.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    import builtins
 
 from guru_sdk._compat import is_uuid, validate_input
 from guru_sdk.errors import NotFoundError
@@ -139,7 +142,7 @@ class FolderResource(BaseResource):
     # Hierarchy
     # -------------------------------------------------------------------------
 
-    def items(self, folder_id: str) -> list[FolderItem]:
+    def items(self, folder_id: str) -> builtins.list[FolderItem]:
         """List items (cards, sub-folders) in a folder.
 
         Args:
@@ -161,7 +164,7 @@ class FolderResource(BaseResource):
     # Permissions
     # -------------------------------------------------------------------------
 
-    def permissions(self, folder_id: str) -> list[UserGroupAccess]:
+    def permissions(self, folder_id: str) -> builtins.list[UserGroupAccess]:
         """List folder-level permission overrides (shared groups).
 
         Args:

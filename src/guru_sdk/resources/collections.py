@@ -9,7 +9,10 @@ API surface mirrors guru-cli's CollectionResource.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    import builtins
 
 from guru_sdk._compat import is_uuid, validate_input
 from guru_sdk.errors import NotFoundError
@@ -114,7 +117,7 @@ class CollectionResource(BaseResource):
     # Group Access
     # -------------------------------------------------------------------------
 
-    def groups(self, collection_id: str) -> list[UserGroupAccess]:
+    def groups(self, collection_id: str) -> builtins.list[UserGroupAccess]:
         """List groups with access to a collection.
 
         Args:

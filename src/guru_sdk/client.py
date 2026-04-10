@@ -29,6 +29,7 @@ from guru_sdk.resources.collections import CollectionResource
 from guru_sdk.resources.folders import FolderResource
 from guru_sdk.resources.groups import GroupResource
 from guru_sdk.resources.members import MemberResource
+from guru_sdk.resources.search import SearchResource
 from guru_sdk.resources.tags import TagResource
 
 # =============================================================================
@@ -86,6 +87,7 @@ class Guru:
         self.folders = FolderResource(self._http)
         self.groups = GroupResource(self._http)
         self.members = MemberResource(self._http)
+        self.search = SearchResource(self._http)
         self.tags = TagResource(self._http)
 
     # -------------------------------------------------------------------------

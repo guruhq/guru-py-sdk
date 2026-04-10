@@ -38,7 +38,7 @@ class MemberResource(BaseResource):
         Args:
             search: Optional search string to filter members.
         """
-        params: dict[str, str] = {}
+        params: dict[str, Any] = {}
         if search is not None:
             validate_free_text(search, "search")
             params["search"] = search

@@ -235,6 +235,9 @@ Every public resource method validates inputs at the top, before any HTTP call:
 - Emails in URL paths → `quote(email, safe="")` to percent-encode `@`
 - JSON body fields (colors, descriptions, enums) → no URL-path validation; Pydantic validates on the response side
 
+### Search Validation — Empty String Check
+`validate_free_text()` only rejects control characters, not empty strings. Search methods that require a query must add explicit empty-string validation: `if not value.strip(): raise ValidationError(...)` before calling `validate_free_text()`.
+
 ### Enum Values — Check Generated Models
 Always check the actual enum definitions in `_generated.py` when writing tests or docstrings that reference enum values. API documentation may use different names than the Swagger spec (e.g., `COLLECTION_OWNER` in docs vs `COLL_ADMIN` in the spec).
 

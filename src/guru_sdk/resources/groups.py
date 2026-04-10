@@ -8,6 +8,7 @@ API surface mirrors guru-cli's GroupResource.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from urllib.parse import quote
 
 from guru_sdk._compat import is_uuid, validate_input
@@ -15,6 +16,9 @@ from guru_sdk.errors import NotFoundError
 from guru_sdk.models import UserGroup, UserGroupMember
 from guru_sdk.models._generated import CollectionModel
 from guru_sdk.resources._base import BaseResource
+
+if TYPE_CHECKING:
+    import builtins
 
 # =============================================================================
 # Public API — GroupResource
@@ -78,7 +82,7 @@ class GroupResource(BaseResource):
     # Member Management
     # -------------------------------------------------------------------------
 
-    def members(self, group_id: str) -> list[UserGroupMember]:
+    def members(self, group_id: str) -> builtins.list[UserGroupMember]:
         """List members of a group.
 
         Args:
@@ -87,7 +91,7 @@ class GroupResource(BaseResource):
         resolved = self._resolve_group(group_id)
         return self._http.get_paginated(f"/groups/{resolved}/members", UserGroupMember)
 
-    def add_members(self, group_id: str, *, emails: list[str]) -> None:
+    def add_members(self, group_id: str, *, emails: builtins.list[str]) -> None:
         """Add members to a group by email.
 
         Args:
@@ -115,7 +119,7 @@ class GroupResource(BaseResource):
     # Collection Access
     # -------------------------------------------------------------------------
 
-    def collections(self, group_id: str) -> list[CollectionModel]:
+    def collections(self, group_id: str) -> builtins.list[CollectionModel]:
         """List collections a group has access to.
 
         Args:
