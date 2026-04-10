@@ -1,6 +1,6 @@
 # guru-py-sdk Architecture
 
-**Last updated**: 2026-04-09 (Iteration 004 — Cards Resource)
+**Last updated**: 2026-04-10 (Iteration 005 — Folders + Collections)
 
 ## Overview
 
@@ -16,8 +16,8 @@ guru-py-sdk is a modern Python SDK for the Guru API. It mirrors the two-layer ar
                                        │ composes
               ┌────────────────────────┼────────────────────────┐
               │            │           │           │             │
-         CardResource  FolderResource  ...   SearchResource  AnswerResource
-         (Phase 2)     (Phase 2)             (Phase 3)       (Phase 3)
+         CardResource  FolderResource  CollectionResource  SearchResource  AnswerResource
+         (Phase 2 ✓)   (Phase 2 ✓)    (Phase 2 ✓)         (Phase 3)       (Phase 3)
               │            │           │           │             │
               └────────────┴───────────┴───────────┴─────────────┘
                                        │
@@ -54,7 +54,9 @@ src/guru_sdk/
 ├── resources/
 │   ├── __init__.py
 │   ├── _base.py         # BaseResource
-│   └── cards.py         # CardResource (CRUD, verify, tags, comments, folders, collaborators)
+│   ├── cards.py         # CardResource (CRUD, verify, tags, comments, folders, collaborators)
+│   ├── collections.py   # CollectionResource (CRUD, group access, home folder)
+│   └── folders.py       # FolderResource (CRUD, hierarchy, permissions, cross-collection move)
 └── contrib/
     └── __init__.py      # Phase 4: Publisher, Bundle
 ```

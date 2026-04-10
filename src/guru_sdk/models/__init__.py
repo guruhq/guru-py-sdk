@@ -38,6 +38,7 @@ from guru_sdk.models._generated import (
     Team,
     User,
     UserGroup,
+    UserGroupAccess,
     UserGroupMember,
     WhoAmI,
 )
@@ -73,6 +74,7 @@ __all__ = [
     "Team",
     "User",
     "UserGroup",
+    "UserGroupAccess",
     "UserGroupMember",
     "WhoAmI",
 ]

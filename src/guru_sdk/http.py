@@ -176,9 +176,12 @@ class HttpClient:
         self._raise_for_status(response)
         return response.content
 
-    def delete(self, path: str) -> None:
-        """DELETE a resource. Expects no response body."""
-        response = self._client.delete(path)
+    def delete(self, path: str, **params: Any) -> None:
+        """DELETE a resource. Expects no response body.
+
+        Supports optional query parameters via **params (e.g., removeType).
+        """
+        response = self._client.delete(path, params=params or None)
         self._raise_for_status(response)
 
     # -------------------------------------------------------------------------

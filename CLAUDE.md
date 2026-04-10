@@ -233,6 +233,10 @@ Every public resource method validates inputs at the top, before any HTTP call:
 - IDs, names, structured values → `validate_input()` (strict: rejects `?`, `#`, `%xx`, traversal)
 - User-authored text (comments, HTML content, search terms) → `validate_free_text()` (lenient: only rejects control chars)
 - Emails in URL paths → `quote(email, safe="")` to percent-encode `@`
+- JSON body fields (colors, descriptions, enums) → no URL-path validation; Pydantic validates on the response side
+
+### Enum Values — Check Generated Models
+Always check the actual enum definitions in `_generated.py` when writing tests or docstrings that reference enum values. API documentation may use different names than the Swagger spec (e.g., `COLLECTION_OWNER` in docs vs `COLL_ADMIN` in the spec).
 
 ### Test Data Realism
 Test fixtures must include all required fields for nested models. E.g., `User` requires `firstName` and `lastName` — a minimal `{"id": "x", "email": "y"}` will fail Pydantic validation. Always check required fields on generated models before writing fixtures.
