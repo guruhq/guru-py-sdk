@@ -42,7 +42,9 @@ The planned iterations for guru-py-sdk, derived from the [restructure plan](/RES
 | 013 | Contrib: Workflows | Convenience workflows extracted from the god class audit (iteration 007). Multi-step operations like `move_card_to_folder` (remove + add), content utilities (`find_urls`, `has_text`, `replace_url`), and any mini-workflows that compose multiple resource calls. Lives in `contrib/`. | 007 (needs audit results) |
 | 014 | Publisher | Port `publish_folders.py` → `contrib/publisher.py`. Folder-based content sync, modernized with Guru client + Pydantic models + pathlib. | 004, 005 (needs cards + folders) |
 | 015 | Bundle | Port `bundle.py` → `contrib/bundle.py`. Export/bundle, modernized. | 004, 005 |
-| 016 | Migration Guide + PyPI Publish | `docs/migration.md` (v1 → v2 method mapping), README polish, PyPI publish as `guru-sdk`. | All above |
+| 016 | QA Environment Support | Add `base_url` override and `qa=True` convenience flag to `Guru` constructor (matches py-sdk `qa` param → `https://qaapi.getguru.com/api/v1`). Also support `GURU_BASE_URL` env var. | 001 |
+| 018 | Codegen Override Mechanism | Add a config file (e.g. `swagger/overrides.json`) to the model generation pipeline that can force specific fields optional, rename types, or skip schemas. Prevents manual fixes (like User.firstName optionality) from being lost on regeneration. Coordinate with backend on Swagger spec accuracy for agent/system users. | 002 |
+| 017 | Migration Guide + PyPI Publish | `docs/migration.md` (v1 → v2 method mapping), README polish, PyPI publish as `guru-sdk`. | All above |
 
 ## Notes
 

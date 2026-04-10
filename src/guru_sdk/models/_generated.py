@@ -1774,8 +1774,8 @@ class AnnouncementUser(GuruModel):
         UserProfile | None,
         Field(alias="userProfile", description="Additional information about a user"),
     ] = None
-    last_name: Annotated[str, Field(alias="lastName", description="The user's last name")]
-    first_name: Annotated[str, Field(alias="firstName", description="The user's first name")]
+    last_name: Annotated[str | None, Field(alias="lastName", description="The user's last name")] = None
+    first_name: Annotated[str | None, Field(alias="firstName", description="The user's first name")] = None
     profile_pic_url: Annotated[
         str | None,
         Field(alias="profilePicUrl", description="The profile picture url for the user"),
@@ -2047,8 +2047,8 @@ class Person(GuruModel):
         UserProfile | None,
         Field(alias="userProfile", description="Additional information about a user"),
     ] = None
-    last_name: Annotated[str, Field(alias="lastName", description="The user's last name")]
-    first_name: Annotated[str, Field(alias="firstName", description="The user's first name")]
+    last_name: Annotated[str | None, Field(alias="lastName", description="The user's last name")] = None
+    first_name: Annotated[str | None, Field(alias="firstName", description="The user's first name")] = None
     profile_pic_url: Annotated[
         str | None,
         Field(alias="profilePicUrl", description="The profile picture url for the user"),
@@ -2170,8 +2170,8 @@ class User(GuruModel):
         UserProfile | None,
         Field(alias="userProfile", description="Additional information about a user"),
     ] = None
-    last_name: Annotated[str, Field(alias="lastName", description="The user's last name")]
-    first_name: Annotated[str, Field(alias="firstName", description="The user's first name")]
+    last_name: Annotated[str | None, Field(alias="lastName", description="The user's last name")] = None
+    first_name: Annotated[str | None, Field(alias="firstName", description="The user's first name")] = None
     profile_pic_url: Annotated[
         str | None,
         Field(alias="profilePicUrl", description="The profile picture url for the user"),
