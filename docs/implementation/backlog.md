@@ -12,44 +12,36 @@ The planned iterations for guru-py-sdk, derived from the [restructure plan](/RES
 | 004 | Cards Resource | Complete | CardResource with 32 methods (CRUD, patch, archive/restore, verify, tags, comments, folders, collaborators, PDF, bulk, move), 7 new HttpClient methods, name resolution, py-sdk parity audit, 95 new tests (237 total) |
 | 005 | Folders + Collections | Complete | FolderResource (13 methods: CRUD, hierarchy, permissions, cross-collection move) + CollectionResource (9 methods: CRUD, group access, home folder). Fixed color validation and enum parity. 71 new tests (308 total) |
 | 006 | Groups + Members + Tags | Complete | GroupResource (9 methods: CRUD, members, collections), MemberResource (4 methods: list/search, get, invite, remove), TagResource (7 methods: tag/category CRUD + team ID caching via WhoAmI). Extended get_paginated with initial params. 63 new tests (371 total) |
-
-## Phase 2 — Core Resources
-
-| # | Title | Scope | Dependencies |
-|---|-------|-------|--------------|
-| ~~005~~ | ~~Folders + Collections~~ | ~~Moved to Completed~~ | |
-| ~~006~~ | ~~Groups + Members + Tags~~ | ~~Moved to Completed~~ | |
-
-## Phase 2.5 — God Class Audit
-
-| # | Title | Scope | Dependencies |
-|---|-------|-------|--------------|
-| 007 | Legacy Guru Class Audit | Systematic audit of every method on py-sdk's `Guru` class. Categorize each as: (a) already covered by a resource, (b) belongs on a resource not yet built, (c) convenience workflow for `contrib/`, (d) local utility (content parsing, URL extraction, etc.), or (e) deprecated/unnecessary. Produces a migration matrix and populates the contrib backlog. | 004, 005, 006 (needs core resources built to know what's covered) |
+| 007 | Legacy Guru Class Audit | Complete | Audited 110+ methods across Guru class + 22 data object classes + Publisher, Bundle, util modules. 50% covered by Phase 2, 16% deferred to Phase 3 resources, 14% identified for contrib, 11% deprecated (boards). Produced full migration matrix. |
 
 ## Phase 3 — Extended Resources
 
 | # | Title | Scope | Dependencies |
 |---|-------|-------|--------------|
-| 008 | Search | SearchResource — keyword + semantic search for cards, sources, documents. Mode/strategy routing mirroring guru-cli's search rebuild (ADR-015). | 002, 003 |
+| 008 | Search | SearchResource — keyword + semantic search for cards, sources, documents. Covers py-sdk's `find_card`, `find_cards`, `get_visible_cards`. | 002, 003 |
 | 009 | Sources | SourceResource — get, object types, facet discovery, facet hierarchy traversal. | 002, 003 |
-| 010 | Drafts | DraftResource — CRUD, publishing context, collaborators. | 004 (drafts relate to cards) |
+| 010 | Drafts | DraftResource — CRUD, publishing context, collaborators. Covers py-sdk's `get_drafts`, `create_draft`, `delete_draft`. | 004 (drafts relate to cards) |
 | 011 | Pages + Page Drafts | PageResource — CRUD, position, permissions, nested tree. PageDraftResource — CRUD, collaborators. Internal API (mirrors guru-cli ADR-014). | 002, 003 |
-| 012 | Agents + Answers + Announcements | AgentResource (Knowledge Agents) — CRUD, group access, pages. AnswerResource — ask, ask-minimal. AnnouncementResource — create, stats. | 002, 003 |
+| 012 | Agents + Answers + Announcements | AgentResource (Knowledge Agents) — CRUD, group access, pages. AnswerResource — ask, ask-minimal, questions inbox/sent. AnnouncementResource — create, stats. | 002, 003 |
+| 021 | Frameworks | FrameworkResource — list, get, import (creates collection from template). Small surface (3 methods), used in collection creation UI. | 002, 003 |
+| 019 | Card Attachments | Add `upload_file` (attachment upload) to CardResource. | 004 |
 
 ## Phase 4 — Contrib + Polish
 
 | # | Title | Scope | Dependencies |
 |---|-------|-------|--------------|
-| 013 | Contrib: Workflows | Convenience workflows extracted from the god class audit (iteration 007). Multi-step operations like `move_card_to_folder` (remove + add), content utilities (`find_urls`, `has_text`, `replace_url`), and any mini-workflows that compose multiple resource calls. Lives in `contrib/`. | 007 (needs audit results) |
-| 014 | Publisher | Port `publish_folders.py` → `contrib/publisher.py`. Folder-based content sync, modernized with Guru client + Pydantic models + pathlib. | 004, 005 (needs cards + folders) |
-| 015 | Bundle | Port `bundle.py` → `contrib/bundle.py`. Export/bundle, modernized. | 004, 005 |
-| 016 | QA Environment Support | Add `base_url` override and `qa=True` convenience flag to `Guru` constructor (matches py-sdk `qa` param → `https://qaapi.getguru.com/api/v1`). Also support `GURU_BASE_URL` env var. | 001 |
+| 013 | Contrib: Workflows | Convenience workflows from the god class audit. Includes: `move_card_between_folders` (remove+add), `move_folder_to_folder` (action endpoint), `batch_add_users_to_group` (100-per-batch + retry), `add_user_to_multiple_groups`, `make_collection_with_setup` (create + group + framework), `add_tag_with_auto_create`. Lives in `contrib/workflows.py`. | 007 ✅ |
+| 014 | Contrib: Content Utilities | Card content helpers from py-sdk data_objects: `has_text()`, `find_urls()`, `replace_url()`, `download_resources()`, `find_urls_in_doc()`. Pure functions operating on HTML strings — no API calls. Lives in `contrib/content.py`. | 007 ✅ |
+| 015 | Publisher | Port `publish_folders.py` → `contrib/publisher.py`. Folder-based content sync, modernized with Guru client + Pydantic models + pathlib. Board-based Publisher is deprecated — do not port. | 004, 005 |
+| 016 | Bundle | Port `bundle.py` → `contrib/bundle.py`. Export/bundle, modernized. | 004, 005 |
+| 017 | QA Environment Support | Add `base_url` override and `qa=True` convenience flag to `Guru` constructor (matches py-sdk `qa` param → `https://qaapi.getguru.com/api/v1`). Also support `GURU_BASE_URL` env var. | 001 |
 | 018 | Codegen Override Mechanism | Add a config file (e.g. `swagger/overrides.json`) to the model generation pipeline that can force specific fields optional, rename types, or skip schemas. Prevents manual fixes (like User.firstName optionality) from being lost on regeneration. Coordinate with backend on Swagger spec accuracy for agent/system users. | 002 |
-| 017 | Migration Guide + PyPI Publish | `docs/migration.md` (v1 → v2 method mapping), README polish, PyPI publish as `guru-sdk`. | All above |
+| 020 | Migration Guide + PyPI Publish | `docs/migration.md` (v1 → v2 method mapping from audit matrix), README polish, PyPI publish as `guru-sdk`. | All above |
 
 ## Notes
 
-- Iterations 005–006 can potentially run in parallel (they're independent resource modules).
-- Iteration 007 (god class audit) is a natural checkpoint before Phase 3 — it ensures we know what's covered before building more resources, and feeds directly into the contrib layer.
-- Iteration numbers are provisional — actual numbers are assigned when work begins. If a new iteration is needed (e.g., a refactor discovered during 004), it gets the next available number.
+- Phase 2 is complete. Six core resources cover 50% of all legacy py-sdk functionality.
+- Iteration 007 (god class audit) confirmed that board operations (11% of methods) should not be implemented.
+- Contrib is now split into two iterations: workflows (multi-step API calls) and content utilities (pure functions on HTML).
+- The migration matrix in `docs/implementation/007-legacy-audit.md` maps every py-sdk method to its new-SDK equivalent or category.
 - Each iteration follows the compound engineering loop: `start-iteration` → TDD → ADRs as needed → `complete-iteration` (implementation record + learnings + architecture update + CLAUDE.md patterns).

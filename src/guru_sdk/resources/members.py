@@ -1,7 +1,7 @@
 """Member resource — list, get, invite, remove team members.
 
 Members are users within a Guru team. They can be invited as CORE (full access)
-or LIGHT (limited access) users. Email addresses are used as the primary
+users. Email addresses are used as the primary
 identifier for member operations.
 
 API surface mirrors guru-cli's MemberResource.
@@ -25,7 +25,7 @@ class MemberResource(BaseResource):
     """Guru Members — list, get, invite, remove.
 
     Members are identified by email address. The invite method supports
-    CORE and LIGHT user types.
+    different user types.
     """
 
     # -------------------------------------------------------------------------
@@ -70,7 +70,7 @@ class MemberResource(BaseResource):
 
         Args:
             email: Email address of the person to invite.
-            member_type: User type — "CORE" (full access) or "LIGHT" (limited).
+            member_type: User type — defaults to "CORE".
             message: Optional custom invitation message.
         """
         validate_input(email, "email")
