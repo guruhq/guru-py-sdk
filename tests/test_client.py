@@ -96,3 +96,90 @@ class TestCustomConfiguration:
             timeout=60.0,
         )
         client.close()
+
+
+class TestQaEnvironment:
+    """Guru supports qa=True for QA environment and GURU_BASE_URL env var."""
+
+    def test_qa_flag_sets_qa_base_url(self, httpx_mock):
+        """qa=True sets base_url to qaapi.getguru.com."""
+        client = Guru(
+            username="user@test.com",
+            api_token="token",
+            qa=True,
+        )
+        # The HttpClient should be configured with the QA URL
+        assert client._http._base_url == "https://qaapi.getguru.com/api/v1"
+        client.close()
+
+    def test_qa_false_uses_default(self, httpx_mock):
+        """qa=False (the default) uses the production URL."""
+        client = Guru(
+            username="user@test.com",
+            api_token="token",
+            qa=False,
+        )
+        assert client._http._base_url == "https://api.getguru.com/api/v1"
+        client.close()
+
+    def test_guru_base_url_env_var(self, monkeypatch, httpx_mock):
+        """GURU_BASE_URL env var overrides the default base URL."""
+        monkeypatch.setenv("GURU_USER", "user@test.com")
+        monkeypatch.setenv("GURU_TOKEN", "token")
+        monkeypatch.setenv("GURU_BASE_URL", "https://custom.example.com/api/v1")
+        client = Guru()
+        assert client._http._base_url == "https://custom.example.com/api/v1"
+        client.close()
+
+    def test_explicit_base_url_overrides_env_var(self, monkeypatch, httpx_mock):
+        """Explicit base_url arg wins over GURU_BASE_URL env var."""
+        monkeypatch.setenv("GURU_BASE_URL", "https://env.example.com/api/v1")
+        client = Guru(
+            username="user@test.com",
+            api_token="token",
+            base_url="https://explicit.example.com/api/v1",
+        )
+        assert client._http._base_url == "https://explicit.example.com/api/v1"
+        client.close()
+
+    def test_qa_flag_overrides_env_var(self, monkeypatch, httpx_mock):
+        """qa=True wins over GURU_BASE_URL env var."""
+        monkeypatch.setenv("GURU_BASE_URL", "https://env.example.com/api/v1")
+        client = Guru(
+            username="user@test.com",
+            api_token="token",
+            qa=True,
+        )
+        assert client._http._base_url == "https://qaapi.getguru.com/api/v1"
+        client.close()
+
+    def test_qa_and_explicit_base_url_raises(self, httpx_mock):
+        """Cannot pass both qa=True and explicit base_url — ambiguous."""
+        with pytest.raises(ValueError, match="Cannot specify both"):
+            Guru(
+                username="user@test.com",
+                api_token="token",
+                qa=True,
+                base_url="https://custom.guru.com/api/v1",
+            )
+
+    def test_env_var_not_used_when_qa_true(self, monkeypatch, httpx_mock):
+        """qa=True always uses QA URL, ignores GURU_BASE_URL."""
+        monkeypatch.setenv("GURU_BASE_URL", "https://should-not-use.com/api/v1")
+        client = Guru(
+            username="user@test.com",
+            api_token="token",
+            qa=True,
+        )
+        assert "qaapi" in client._http._base_url
+        client.close()
+
+    def test_default_no_env_var_uses_production(self, monkeypatch, httpx_mock):
+        """Without GURU_BASE_URL and qa=False, uses production URL."""
+        monkeypatch.delenv("GURU_BASE_URL", raising=False)
+        client = Guru(
+            username="user@test.com",
+            api_token="token",
+        )
+        assert client._http._base_url == "https://api.getguru.com/api/v1"
+        client.close()

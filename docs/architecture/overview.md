@@ -1,6 +1,6 @@
 # guru-py-sdk Architecture
 
-**Last updated**: 2026-04-13 (Iteration 012 — Agents + Answers + Announcements)
+**Last updated**: 2026-04-13 (Iteration 017 — QA Environment Support)
 
 ## Overview
 
@@ -33,6 +33,7 @@ guru-py-sdk is a modern Python SDK for the Guru API. It mirrors the two-layer ar
                           ┌──────────────────────────┐
                           │   Guru Public API         │
                           │   api.getguru.com/api/v1  │
+                          │   (or qaapi via qa=True)  │
                           └──────────────────────────┘
 ```
 

@@ -23,7 +23,7 @@ from __future__ import annotations
 import os
 
 from guru_sdk.errors import AuthenticationError
-from guru_sdk.http import DEFAULT_BASE_URL, HttpClient
+from guru_sdk.http import DEFAULT_BASE_URL, QA_BASE_URL, HttpClient
 from guru_sdk.resources.agents import AgentResource
 from guru_sdk.resources.announcements import AnnouncementResource
 from guru_sdk.resources.answers import AnswerResource
@@ -51,6 +51,10 @@ class Guru:
         username: Guru account email. Falls back to GURU_USER / PYGURU_USER env vars.
         api_token: Guru API token. Falls back to GURU_TOKEN / PYGURU_TOKEN env vars.
         base_url: API base URL. Override for testing or on-prem deployments.
+            Also reads GURU_BASE_URL env var as fallback.
+        qa: **Internal only.** If True, target the Guru QA environment
+            (qaapi.getguru.com). Requires Guru-internal QA credentials.
+            Cannot be combined with an explicit base_url.
         timeout: HTTP request timeout in seconds.
     """
 
@@ -59,9 +63,26 @@ class Guru:
         username: str | None = None,
         api_token: str | None = None,
         *,
-        base_url: str = DEFAULT_BASE_URL,
+        base_url: str | None = None,
+        qa: bool = False,
         timeout: float = 30.0,
     ) -> None:
+        # Validate that qa and explicit base_url are not both specified
+        if qa and base_url is not None:
+            msg = (
+                "Cannot specify both qa=True and base_url. "
+                "Use qa=True for the QA environment, or base_url for a custom URL."
+            )
+            raise ValueError(msg)
+
+        # Resolve base URL: explicit arg → qa flag → GURU_BASE_URL env var → default
+        if base_url is not None:
+            resolved_url = base_url
+        elif qa:
+            resolved_url = QA_BASE_URL
+        else:
+            resolved_url = os.environ.get("GURU_BASE_URL") or DEFAULT_BASE_URL
+
         # Resolve credentials from arguments → env vars (with py-sdk v1 fallback)
         resolved_user = (
             username
@@ -81,7 +102,7 @@ class Guru:
             )
 
         self._http = HttpClient(
-            base_url=base_url,
+            base_url=resolved_url,
             username=resolved_user,
             api_token=resolved_token,
             timeout=timeout,

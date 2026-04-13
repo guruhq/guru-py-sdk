@@ -33,6 +33,7 @@ from guru_sdk.models._base import GuruModel
 # =============================================================================
 
 DEFAULT_BASE_URL = "https://api.getguru.com/api/v1"
+QA_BASE_URL = "https://qaapi.getguru.com/api/v1"
 
 # Tracking headers so Guru can identify SDK traffic
 _TRACKING_HEADERS = {

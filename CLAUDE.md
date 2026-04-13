@@ -188,6 +188,9 @@ Every unit of work should compound into the next. Documentation is not optional 
 ### Credential Resolution
 The `Guru` client resolves credentials in order: explicit args → `GURU_USER`/`GURU_TOKEN` env vars → `PYGURU_USER`/`PYGURU_TOKEN` legacy env vars. The legacy fallback exists for backward compatibility with `py-sdk` users.
 
+### Base URL Resolution
+The `Guru` client resolves the API base URL in order: explicit `base_url` arg → `qa=True` flag (→ `QA_BASE_URL`) → `GURU_BASE_URL` env var → `DEFAULT_BASE_URL`. Passing both `qa=True` and `base_url` raises `ValueError` (ambiguous intent).
+
 ### Resource Module Pattern
 Each resource is a class that receives `HttpClient` via constructor. Methods follow consistent naming: `get`, `list`, `create`, `update`, `delete`. This mirrors guru-cli exactly, so knowledge transfers between the two codebases.
 
