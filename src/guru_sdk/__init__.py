@@ -35,6 +35,8 @@ from guru_sdk.resources.drafts import DraftResource
 from guru_sdk.resources.folders import FolderResource
 from guru_sdk.resources.groups import GroupResource
 from guru_sdk.resources.members import MemberResource
+from guru_sdk.resources.page_drafts import PageDraftResource
+from guru_sdk.resources.pages import PageResource
 from guru_sdk.resources.search import SearchResource
 from guru_sdk.resources.sources import SourceResource
 from guru_sdk.resources.tags import TagResource
@@ -53,6 +55,8 @@ __all__ = [
     "GuruModel",
     "MemberResource",
     "NotFoundError",
+    "PageDraftResource",
+    "PageResource",
     "RateLimitError",
     "SearchResource",
     "SourceResource",

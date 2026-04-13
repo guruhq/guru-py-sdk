@@ -206,6 +206,42 @@ new_draft = g.drafts.create(title="My Draft", content="<p>Work in progress</p>")
 g.drafts.delete(draft.id)
 ```
 
+### Pages (`g.pages`)
+
+CRUD, hierarchy traversal, permissions, and repositioning.
+
+```python
+pages = g.pages.list()
+page = g.pages.get("page-uuid")
+tree = g.pages.list_nested(view_only=True)  # nested tree with sub_pages
+
+page = g.pages.create(title="Getting Started", badge_emoji=":star:")
+g.pages.update(page.id, title="Updated Title")
+g.pages.move(page.id, parent_page_id="new-parent-uuid", prev_sibling_page_id="first")
+
+perms = g.pages.list_permissions(page.id)
+g.pages.add_permissions(page.id, [{"type": "user-group", "permissionType": "EDITOR"}])
+g.pages.remove_permission(page.id, permission_id="perm-uuid")
+g.pages.delete(page.id)
+```
+
+### Page Drafts (`g.page_drafts`)
+
+Create, read, delete and collaborator management for page drafts. Update deferred (collaborative editing complexity).
+
+```python
+drafts = g.page_drafts.list()
+page_drafts = g.page_drafts.list(page_id="page-uuid")
+draft = g.page_drafts.get("draft-uuid")
+
+draft = g.page_drafts.create(title="My Page Draft", page_id="page-uuid")
+
+collabs = g.page_drafts.list_collaborators(draft.id)
+g.page_drafts.add_collaborators(draft.id, [{"type": "user"}])
+g.page_drafts.remove_collaborator(draft.id, collaborator_id="collab-uuid")
+g.page_drafts.delete(draft.id)
+```
+
 ## Name Resolution
 
 All resources accept either UUIDs or human-readable names. When you pass a name, the SDK resolves it automatically:
@@ -265,7 +301,7 @@ make test                  # pytest
 
 ## What's Next
 
-- **Phase 3:** Extended resources — search, sources, drafts, pages, agents, answers, announcements
+- **Phase 3:** Extended resources — agents, answers, announcements, frameworks, card attachments
 - **Phase 4:** `contrib/` workflows, publisher, bundle, migration guide, PyPI publish as `guru-sdk`
 
 ## License

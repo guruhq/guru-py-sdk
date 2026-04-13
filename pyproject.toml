@@ -81,6 +81,8 @@ known-first-party = ["guru_sdk"]
 # Generated code uses camelCase field names from the API spec.
 # GuruModel has populate_by_name=True so both camelCase and snake_case work.
 "src/guru_sdk/models/_generated.py" = ["N815", "TCH003"]
+# Manual models also need runtime imports for Pydantic field types (Team, User).
+"src/guru_sdk/models/_manual.py" = ["TCH001"]
 
 # =============================================================================
 # Mypy — strict type checking

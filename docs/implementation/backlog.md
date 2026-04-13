@@ -16,13 +16,13 @@ The planned iterations for guru-py-sdk, derived from the [restructure plan](/RES
 | 008 | Search | Complete | SearchResource with 4 methods: cards (keyword via GET /search/cardmgr), documents (keyword via POST /search/documents), documents_semantic (NLQ via GET /search/documents), sources (POST /search/sourcemgr). Exported DocumentSearchResponse, NLQSearchResponse, SearchFacets, Document models. 25 new tests (396 total) |
 | 009 | Sources | Complete | SourceResource with 5 methods: list, get, object_types, connections, get_connection. Added empty-string rejection to validate_input(). Fixed SyncStatus enum (SYNCED not COMPLETED). Exported GroupedSourceConnection, ObjectType models. 16 new tests (412 total) |
 | 010 | Drafts | Complete | DraftResource with 4 methods (CRD, no update): list, get, create, delete. Update deferred due to collaborative editing (MPS/YJS) — drafts opened in web app enter real-time editing state. 14 new tests (426 total) |
+| 011 | Pages + Page Drafts | Complete | PageResource (11 methods: CRUD, nested tree, move, permissions) + PageDraftResource (8 methods: CRD + collaborators, no update — MPS/YJS). Manual models for internal API types (PageDraft, PagePermission, PageDraftCollaborator). 58 new tests (484 total) |
 
 ## Phase 3 — Extended Resources
 
 | # | Title | Scope | Dependencies |
 |---|-------|-------|--------------|
-| 010a | Draft Update + Context + Collaborators | DraftResource update (with MPS/YJS "politely fail" for active editing sessions), publishing context endpoints, collaborator management. Requires detecting draft editing state. | 010 |
-| 011 | Pages + Page Drafts | PageResource — CRUD, position, permissions, nested tree. PageDraftResource — CRUD, collaborators. Internal API (mirrors guru-cli ADR-014). | 002, 003 |
+| 010a | Draft & Page Draft Updates + Collaborators | DraftResource update and PageDraftResource update (both with MPS/YJS "politely fail" for active editing sessions), card draft publishing context endpoints, card draft collaborator management, page draft update. Requires detecting draft editing state — applies to both card drafts and page drafts. | 010, 011 |
 | 012 | Agents + Answers + Announcements | AgentResource (Knowledge Agents) — CRUD, group access, pages. AnswerResource — ask, ask-minimal, questions inbox/sent. AnnouncementResource — create, stats. | 002, 003 |
 | 021 | Frameworks | FrameworkResource — list, get, import (creates collection from template). Small surface (3 methods), used in collection creation UI. | 002, 003 |
 | 019 | Card Attachments | Add `upload_file` (attachment upload) to CardResource. | 004 |

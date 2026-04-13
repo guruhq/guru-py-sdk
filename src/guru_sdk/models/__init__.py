@@ -10,6 +10,7 @@ Models are generated from the Guru public Swagger spec. Re-generate with:
 from guru_sdk.models._base import GuruModel
 from guru_sdk.models._generated import (
     Answer,
+    BasePage,
     Card,
     CardAttachment,
     CardCollaborator,
@@ -48,9 +49,15 @@ from guru_sdk.models._generated import (
     UserGroupMember,
     WhoAmI,
 )
+from guru_sdk.models._manual import (
+    PageDraft,
+    PageDraftCollaborator,
+    PagePermission,
+)
 
 __all__ = [
     "Answer",
+    "BasePage",
     "Card",
     "CardAttachment",
     "CardCollaborator",
@@ -79,6 +86,9 @@ __all__ = [
     "NewFolder",
     "ObjectType",
     "Page",
+    "PageDraft",
+    "PageDraftCollaborator",
+    "PagePermission",
     "SearchFacets",
     "Source",
     "Tag",

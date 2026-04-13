@@ -1,6 +1,6 @@
 # guru-py-sdk Architecture
 
-**Last updated**: 2026-04-13 (Iteration 010 — Drafts)
+**Last updated**: 2026-04-13 (Iteration 011 — Pages + Page Drafts)
 
 ## Overview
 
@@ -16,8 +16,8 @@ guru-py-sdk is a modern Python SDK for the Guru API. It mirrors the two-layer ar
                                        │ composes
               ┌────────────────────────┼────────────────────────┐
               │            │           │           │             │
-         CardResource  FolderResource  CollectionResource  SearchResource  AnswerResource
-         (Phase 2 ✓)   (Phase 2 ✓)    (Phase 2 ✓)         (Phase 3 ✓)     (Phase 3)
+         CardResource  FolderResource  CollectionResource  SearchResource  PageResource  PageDraftResource
+         (Phase 2 ✓)   (Phase 2 ✓)    (Phase 2 ✓)         (Phase 3 ✓)     (Phase 3 ✓)  (Phase 3 ✓)
               │            │           │           │             │
               └────────────┴───────────┴───────────┴─────────────┘
                                        │
@@ -48,9 +48,10 @@ src/guru_sdk/
 ├── http.py              # HttpClient (httpx sync transport)
 ├── errors.py            # Exception hierarchy
 ├── models/
-│   ├── __init__.py      # Re-exports 38 key models
+│   ├── __init__.py      # Re-exports 42 key models
 │   ├── _base.py         # GuruModel (Pydantic v2 base)
-│   └── _generated.py    # 248 models + 122 enums (auto-generated from Swagger)
+│   ├── _generated.py    # 248 models + 122 enums (auto-generated from Swagger)
+│   └── _manual.py       # 3 manual models for internal API (PageDraft, PagePermission, PageDraftCollaborator)
 ├── resources/
 │   ├── __init__.py
 │   ├── _base.py         # BaseResource
@@ -60,6 +61,8 @@ src/guru_sdk/
 │   ├── folders.py       # FolderResource (CRUD, hierarchy, permissions, cross-collection move)
 │   ├── groups.py        # GroupResource (CRUD, member management, collection access)
 │   ├── members.py       # MemberResource (list, get, invite, remove)
+│   ├── page_drafts.py   # PageDraftResource (CRUD, collaborators — internal API)
+│   ├── pages.py         # PageResource (CRUD, hierarchy, permissions, move — internal API)
 │   ├── search.py        # SearchResource (cards, documents, documents_semantic, sources)
 │   ├── sources.py       # SourceResource (list, get, object_types, connections)
 │   └── tags.py          # TagResource (tag CRUD, category CRUD, team ID resolution)

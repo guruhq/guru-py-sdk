@@ -151,6 +151,9 @@ python scripts/generate_models.py
 ```
 Generated code is committed — inspectable, diffable, reviewable. The generator applies `GuruModel` base class, field aliases, and filters out deprecated schemas.
 
+### Manual Models for Internal API
+Models for endpoints not in the public Swagger spec live in `models/_manual.py` — hand-written but following the same conventions as generated models (GuruModel base, snake_case fields with camelCase aliases, all fields optional). Currently covers: `PageDraft`, `PagePermission`, `PageDraftCollaborator`. Add `_manual.py` to ruff per-file-ignores for `TCH001` since Pydantic needs runtime imports for field types.
+
 ## Documentation (Compound Engineering)
 
 Every unit of work should compound into the next. Documentation is not optional — it's how the system learns.
