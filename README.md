@@ -17,7 +17,7 @@ uv add guru-sdk
 
 ```bash
 export GURU_USER="you@company.com"
-export GURU_TOKEN="your-api-token"    # Settings > API Access in the Guru web app
+export GURU_TOKEN="your-api-token"    # Manage > Apps and Integrations > API Access > Generate User Token
 ```
 
 ```python

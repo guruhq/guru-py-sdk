@@ -39,6 +39,7 @@ The planned iterations for guru-py-sdk, derived from the [restructure plan](/RES
 | 018 | Codegen Override Mechanism | No concrete override needed today. `EXCLUDED_SCHEMAS` handles schema removal, `--use-default` handles field optionality, `_manual.py` handles internal-API types. Build `swagger/overrides.json` when a regeneration actually breaks something. guru-cli has no such mechanism either. |
 | 021 | Frameworks | Not in public spec, not in CLI. See ADR-007. |
 | — | PyPI Publish | Split from iteration 020. Needs decision on public vs. private distribution. |
+| — | Branching Strategy + CI | Protect main, require PRs, feature branch workflow. Add CI pipeline (GitHub Actions) to run quality gates (ruff, mypy, pytest) on every PR. Natural inflection point now that the SDK is feature-complete. |
 
 ## Notes
 
