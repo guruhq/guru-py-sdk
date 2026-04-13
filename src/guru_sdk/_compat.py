@@ -56,6 +56,9 @@ def validate_input(value: str, label: str) -> str:
     Raises:
         ValidationError: If any check fails.
     """
+    if not value.strip():
+        raise ValidationError(f"{label} must not be empty")
+
     if _CONTROL_RE.search(value):
         raise ValidationError(f"{label} contains control characters")
 

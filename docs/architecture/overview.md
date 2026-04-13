@@ -1,6 +1,6 @@
 # guru-py-sdk Architecture
 
-**Last updated**: 2026-04-10 (Iteration 008 — Search)
+**Last updated**: 2026-04-10 (Iteration 009 — Sources)
 
 ## Overview
 
@@ -48,7 +48,7 @@ src/guru_sdk/
 ├── http.py              # HttpClient (httpx sync transport)
 ├── errors.py            # Exception hierarchy
 ├── models/
-│   ├── __init__.py      # Re-exports 36 key models
+│   ├── __init__.py      # Re-exports 38 key models
 │   ├── _base.py         # GuruModel (Pydantic v2 base)
 │   └── _generated.py    # 248 models + 122 enums (auto-generated from Swagger)
 ├── resources/
@@ -60,6 +60,7 @@ src/guru_sdk/
 │   ├── groups.py        # GroupResource (CRUD, member management, collection access)
 │   ├── members.py       # MemberResource (list, get, invite, remove)
 │   ├── search.py        # SearchResource (cards, documents, documents_semantic, sources)
+│   ├── sources.py       # SourceResource (list, get, object_types, connections)
 │   └── tags.py          # TagResource (tag CRUD, category CRUD, team ID resolution)
 └── contrib/
     └── __init__.py      # Phase 4: Publisher, Bundle

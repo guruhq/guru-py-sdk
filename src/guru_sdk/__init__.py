@@ -35,6 +35,7 @@ from guru_sdk.resources.folders import FolderResource
 from guru_sdk.resources.groups import GroupResource
 from guru_sdk.resources.members import MemberResource
 from guru_sdk.resources.search import SearchResource
+from guru_sdk.resources.sources import SourceResource
 from guru_sdk.resources.tags import TagResource
 
 __all__ = [
@@ -52,6 +53,7 @@ __all__ = [
     "NotFoundError",
     "RateLimitError",
     "SearchResource",
+    "SourceResource",
     "TagResource",
     "ValidationError",
     "__version__",

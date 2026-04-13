@@ -14,12 +14,12 @@ The planned iterations for guru-py-sdk, derived from the [restructure plan](/RES
 | 006 | Groups + Members + Tags | Complete | GroupResource (9 methods: CRUD, members, collections), MemberResource (4 methods: list/search, get, invite, remove), TagResource (7 methods: tag/category CRUD + team ID caching via WhoAmI). Extended get_paginated with initial params. 63 new tests (371 total) |
 | 007 | Legacy Guru Class Audit | Complete | Audited 110+ methods across Guru class + 22 data object classes + Publisher, Bundle, util modules. 50% covered by Phase 2, 16% deferred to Phase 3 resources, 14% identified for contrib, 11% deprecated (boards). Produced full migration matrix. |
 | 008 | Search | Complete | SearchResource with 4 methods: cards (keyword via GET /search/cardmgr), documents (keyword via POST /search/documents), documents_semantic (NLQ via GET /search/documents), sources (POST /search/sourcemgr). Exported DocumentSearchResponse, NLQSearchResponse, SearchFacets, Document models. 25 new tests (396 total) |
+| 009 | Sources | Complete | SourceResource with 5 methods: list, get, object_types, connections, get_connection. Added empty-string rejection to validate_input(). Fixed SyncStatus enum (SYNCED not COMPLETED). Exported GroupedSourceConnection, ObjectType models. 16 new tests (412 total) |
 
 ## Phase 3 — Extended Resources
 
 | # | Title | Scope | Dependencies |
 |---|-------|-------|--------------|
-| 009 | Sources | SourceResource — get, object types, facet discovery, facet hierarchy traversal. | 002, 003 |
 | 010 | Drafts | DraftResource — CRUD, publishing context, collaborators. Covers py-sdk's `get_drafts`, `create_draft`, `delete_draft`. | 004 (drafts relate to cards) |
 | 011 | Pages + Page Drafts | PageResource — CRUD, position, permissions, nested tree. PageDraftResource — CRUD, collaborators. Internal API (mirrors guru-cli ADR-014). | 002, 003 |
 | 012 | Agents + Answers + Announcements | AgentResource (Knowledge Agents) — CRUD, group access, pages. AnswerResource — ask, ask-minimal, questions inbox/sent. AnnouncementResource — create, stats. | 002, 003 |

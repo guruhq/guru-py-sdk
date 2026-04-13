@@ -175,6 +175,24 @@ results = g.search.documents_semantic("how do I reset my password")
 results = g.search.sources(search_terms="deploy", source_types=["JIRA"])
 ```
 
+### Sources (`g.sources`)
+
+Read-only access to external data connectors (Confluence, Jira, Slack, etc.).
+
+```python
+all_sources = g.sources.list()
+source = g.sources.get("source-uuid")
+
+# Discover object types and their facets
+obj_types = g.sources.object_types("source-uuid")
+for ot in obj_types:
+    print(f"{ot.name}: {len(ot.facets or [])} facets")
+
+# Grouped connections view
+connections = g.sources.connections()
+conn = g.sources.get_connection("group-uuid")
+```
+
 ## Name Resolution
 
 All resources accept either UUIDs or human-readable names. When you pass a name, the SDK resolves it automatically:
