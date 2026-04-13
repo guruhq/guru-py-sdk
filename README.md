@@ -193,6 +193,19 @@ connections = g.sources.connections()
 conn = g.sources.get_connection("group-uuid")
 ```
 
+### Drafts (`g.drafts`)
+
+Create, read, and delete draft cards. Update is deferred (collaborative editing complexity).
+
+```python
+all_drafts = g.drafts.list()
+card_drafts = g.drafts.list(card_id="card-uuid")  # drafts for a specific card
+draft = g.drafts.get("draft-uuid")
+
+new_draft = g.drafts.create(title="My Draft", content="<p>Work in progress</p>")
+g.drafts.delete(draft.id)
+```
+
 ## Name Resolution
 
 All resources accept either UUIDs or human-readable names. When you pass a name, the SDK resolves it automatically:

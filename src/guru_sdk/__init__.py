@@ -31,6 +31,7 @@ from guru_sdk.errors import (
 from guru_sdk.models._base import GuruModel
 from guru_sdk.resources.cards import CardResource
 from guru_sdk.resources.collections import CollectionResource
+from guru_sdk.resources.drafts import DraftResource
 from guru_sdk.resources.folders import FolderResource
 from guru_sdk.resources.groups import GroupResource
 from guru_sdk.resources.members import MemberResource
@@ -42,6 +43,7 @@ __all__ = [
     "AuthenticationError",
     "CardResource",
     "CollectionResource",
+    "DraftResource",
     "FolderResource",
     "ForbiddenError",
     "GroupResource",

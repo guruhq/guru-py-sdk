@@ -26,6 +26,7 @@ from guru_sdk.errors import AuthenticationError
 from guru_sdk.http import DEFAULT_BASE_URL, HttpClient
 from guru_sdk.resources.cards import CardResource
 from guru_sdk.resources.collections import CollectionResource
+from guru_sdk.resources.drafts import DraftResource
 from guru_sdk.resources.folders import FolderResource
 from guru_sdk.resources.groups import GroupResource
 from guru_sdk.resources.members import MemberResource
@@ -85,6 +86,7 @@ class Guru:
         # same HttpClient. Mirrors guru-cli's facade pattern.
         self.cards = CardResource(self._http)
         self.collections = CollectionResource(self._http)
+        self.drafts = DraftResource(self._http)
         self.folders = FolderResource(self._http)
         self.groups = GroupResource(self._http)
         self.members = MemberResource(self._http)
