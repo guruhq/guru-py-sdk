@@ -10,6 +10,8 @@ endpoint paths, same vocabulary. Knowledge transfers between the two codebases.
 
 from __future__ import annotations
 
+import mimetypes
+from pathlib import Path
 from typing import Any
 from urllib.parse import quote
 
@@ -600,6 +602,51 @@ class CardResource(BaseResource):
         )
 
     # -------------------------------------------------------------------------
+    # Attachments
+    # -------------------------------------------------------------------------
+
+    def upload_file(self, file_path: str | Path) -> str:
+        """Upload a file to Guru and return a URL for embedding in card content.
+
+        The returned URL can be used in card HTML, e.g.::
+
+            url = g.cards.upload_file("diagram.png")
+            g.cards.update(card_id, content=f'<img src="{url}">')
+
+        Supports images, PDFs, and other file types. Uses the
+        ``POST /attachments/upload`` endpoint (not in public Swagger spec —
+        see ADR-006).
+
+        Args:
+            file_path: Path to the local file (str or pathlib.Path).
+
+        Returns:
+            The attachment URL (e.g., ``https://content.api.getguru.com/files/view/...``).
+
+        Raises:
+            FileNotFoundError: If the file doesn't exist.
+        """
+        path = Path(file_path)
+        if not path.exists():
+            msg = f"File not found: {path}"
+            raise FileNotFoundError(msg)
+
+        # Guess MIME type from extension, fall back to binary stream
+        mimetype = _guess_mimetype(path.name)
+        file_bytes = path.read_bytes()
+
+        result = self._http.post_file(
+            "/attachments/upload",
+            field_name="file",
+            filename=path.name,
+            file_bytes=file_bytes,
+            mimetype=mimetype,
+        )
+        # Response shape: {"attachmentId": "...", "link": "...", ...}
+        link: str = result.get("link", "")
+        return link
+
+    # -------------------------------------------------------------------------
     # Private — Name Resolution
     # -------------------------------------------------------------------------
 
@@ -640,3 +687,14 @@ class CardResource(BaseResource):
             f"No card found with title '{card_id}'. "
             "Pass a card UUID for exact lookup."
         )
+
+
+# =============================================================================
+# Private Helpers
+# =============================================================================
+
+
+def _guess_mimetype(filename: str) -> str:
+    """Guess MIME type from filename, defaulting to application/octet-stream."""
+    guessed, _ = mimetypes.guess_type(filename)
+    return guessed or "application/octet-stream"

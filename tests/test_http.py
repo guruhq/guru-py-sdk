@@ -215,6 +215,43 @@ class TestPagination:
 
 
 # =============================================================================
+# HttpClient.post_file() — multipart file upload
+# =============================================================================
+
+
+class TestPostFile:
+    def test_post_file_sends_multipart(self, httpx_mock):
+        httpx_mock.add_response(json={"link": "https://content.api.getguru.com/files/view/abc"})
+        client = HttpClient("https://api.getguru.com/api/v1", "user", "token")
+        result = client.post_file(
+            "/attachments/upload",
+            field_name="file",
+            filename="image.png",
+            file_bytes=b"fake-png-data",
+            mimetype="image/png",
+        )
+        assert result["link"] == "https://content.api.getguru.com/files/view/abc"
+
+        request = httpx_mock.get_request()
+        assert request is not None
+        assert request.method == "POST"
+        assert b"image.png" in request.content
+        assert b"fake-png-data" in request.content
+
+    def test_post_file_raises_on_error(self, httpx_mock):
+        httpx_mock.add_response(status_code=401, json={"message": "Unauthorized"})
+        client = HttpClient("https://api.getguru.com/api/v1", "user", "token")
+        with pytest.raises(AuthenticationError):
+            client.post_file(
+                "/attachments/upload",
+                field_name="file",
+                filename="test.txt",
+                file_bytes=b"data",
+                mimetype="text/plain",
+            )
+
+
+# =============================================================================
 # Link Header Parsing
 # =============================================================================
 

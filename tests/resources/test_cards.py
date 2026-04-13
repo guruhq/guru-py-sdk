@@ -1115,3 +1115,78 @@ class TestGetBulk:
     def test_get_bulk_validates_ids(self, cards: CardResource) -> None:
         with pytest.raises(ValidationError):
             cards.get_bulk(["bad?id"])
+
+
+# =============================================================================
+# CardResource.upload_file() — POST /attachments/upload
+# =============================================================================
+
+
+class TestUploadFile:
+    """Upload a file attachment and get back a URL for embedding in card content."""
+
+    def test_upload_file_returns_url(
+        self, cards: CardResource, httpx_mock, tmp_path
+    ) -> None:
+        attachment_response = {
+            "attachmentId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            "link": "https://content.api.getguru.com/files/view/aaaaaaaa",
+            "filename": "diagram.png",
+            "mimeType": "image/png",
+            "size": 12345,
+        }
+        httpx_mock.add_response(json=attachment_response)
+
+        # Create a temp file to upload
+        test_file = tmp_path / "diagram.png"
+        test_file.write_bytes(b"fake-png-data")
+
+        url = cards.upload_file(str(test_file))
+
+        assert url == "https://content.api.getguru.com/files/view/aaaaaaaa"
+
+    def test_upload_file_sends_multipart_post(
+        self, cards: CardResource, httpx_mock, tmp_path
+    ) -> None:
+        httpx_mock.add_response(json={
+            "attachmentId": "abc",
+            "link": "https://content.api.getguru.com/files/view/abc",
+            "filename": "notes.pdf",
+            "mimeType": "application/pdf",
+            "size": 999,
+        })
+
+        test_file = tmp_path / "notes.pdf"
+        test_file.write_bytes(b"%PDF-1.4 fake")
+
+        cards.upload_file(str(test_file))
+
+        request = httpx_mock.get_request()
+        assert request is not None
+        assert request.url.path == "/api/v1/attachments/upload"
+        assert request.method == "POST"
+        # Multipart body should contain the filename and content
+        assert b"notes.pdf" in request.content
+        assert b"%PDF-1.4 fake" in request.content
+
+    def test_upload_file_raises_for_missing_file(self, cards: CardResource) -> None:
+        with pytest.raises(FileNotFoundError):
+            cards.upload_file("/nonexistent/path/file.png")
+
+    def test_upload_file_with_pathlib(
+        self, cards: CardResource, httpx_mock, tmp_path
+    ) -> None:
+        """Accepts pathlib.Path as well as str."""
+        httpx_mock.add_response(json={
+            "attachmentId": "xyz",
+            "link": "https://content.api.getguru.com/files/view/xyz",
+            "filename": "photo.jpg",
+            "mimeType": "image/jpeg",
+            "size": 500,
+        })
+
+        test_file = tmp_path / "photo.jpg"
+        test_file.write_bytes(b"fake-jpeg")
+
+        url = cards.upload_file(test_file)
+        assert url == "https://content.api.getguru.com/files/view/xyz"

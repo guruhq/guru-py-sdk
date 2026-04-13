@@ -228,6 +228,7 @@ Every API pattern maps to a specific HttpClient method:
 - `put_no_content(path, body?)` → PUT expecting 204
 - `put_list(path, Model, body?)` → PUT returning a list
 - `delete(path)` → DELETE, no response body
+- `post_file(path, field_name, filename, file_bytes, mimetype)` → POST multipart file upload, returns dict
 
 Resources never touch httpx directly — all HTTP goes through these methods.
 

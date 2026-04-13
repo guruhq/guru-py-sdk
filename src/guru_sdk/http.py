@@ -167,6 +167,36 @@ class HttpClient:
         self._raise_for_status(response)
         return response
 
+    def post_file(
+        self,
+        path: str,
+        *,
+        field_name: str,
+        filename: str,
+        file_bytes: bytes,
+        mimetype: str,
+    ) -> dict[str, Any]:
+        """POST a multipart file upload and return parsed JSON.
+
+        Used for attachment uploads (POST /attachments/upload). The file is
+        sent as a multipart form field.
+
+        Args:
+            path: API path (e.g., "/attachments/upload").
+            field_name: Form field name (e.g., "file").
+            filename: Name of the file being uploaded.
+            file_bytes: Raw file content.
+            mimetype: MIME type (e.g., "image/png").
+
+        Returns:
+            Parsed JSON response as a dict.
+        """
+        files = {field_name: (filename, file_bytes, mimetype)}
+        response = self._client.post(path, files=files)
+        self._raise_for_status(response)
+        result: dict[str, Any] = response.json()
+        return result
+
     def get_bytes(self, path: str) -> bytes:
         """GET raw bytes (e.g., PDF download).
 

@@ -22,6 +22,7 @@ The planned iterations for guru-py-sdk, derived from the [restructure plan](/RES
 | 014 | Contrib: Content + Hierarchy | Complete | 3 pure HTML content functions in `contrib/content.py` (has_text, find_urls, replace_url) + dump_folder_hierarchy workflow. Zero external dependencies — stdlib html.parser only. 28 new tests (586 total) |
 | 015 | Publisher | Complete | `CardChanges` frozen dataclass + `PublisherFolders` ABC framework in `contrib/publisher.py`. Folder-based content sync with metadata persistence, change detection, link rewriting, and abstract hooks for external systems. 25 new tests (611 total) |
 | 016 | Bundle | Complete | `Bundle` + `BundleNode` classes in `contrib/bundle.py`. Zip-based content import with tree structure, auto type assignment, Guru-specific HTML sanitization (`clean_html`), YAML generation, and upload via `/app/contentupload` (ADR-005). 44 new tests (655 total) |
+| 019 | Card Attachments | Complete | `CardResource.upload_file()` + `HttpClient.post_file()`. Multipart file upload via `POST /attachments/upload` (ADR-006). Returns URL for embedding in card HTML. 6 new tests (661 total) |
 
 ## Phase 3 — Extended Resources
 
@@ -29,7 +30,7 @@ The planned iterations for guru-py-sdk, derived from the [restructure plan](/RES
 |---|-------|-------|--------------|
 | 010a | Draft & Page Draft Updates + Collaborators | DraftResource update and PageDraftResource update (both with MPS/YJS "politely fail" for active editing sessions), card draft publishing context endpoints, card draft collaborator management, page draft update. Requires detecting draft editing state — applies to both card drafts and page drafts. | 010, 011 |
 | 021 | Frameworks | FrameworkResource — list, get, import (creates collection from template). Small surface (3 methods), used in collection creation UI. | 002, 003 |
-| 019 | Card Attachments | Add `upload_file` (attachment upload) to CardResource. | 004 |
+| ~~019~~ | ~~Card Attachments~~ | ~~Moved to Completed~~ | ~~004 ✅~~ |
 
 ## Phase 4 — Contrib + Polish
 
