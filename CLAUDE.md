@@ -217,6 +217,7 @@ HTTP errors map to typed exceptions: 401 → `AuthenticationError`, 403 → `For
 - Field names are snake_case (Pythonic); camelCase from the API spec is preserved as `Field(alias=...)` for API compat
 - Three-way field access: create from API dicts via camelCase alias, access via snake_case field name, serialize to API via `model_dump(by_alias=True)`
 - Tests for generated models use realistic API shapes (real UUIDs, correct enum values, required fields)
+- **No override mechanism yet** — if a regeneration breaks something (e.g., a field's optionality changes and causes Pydantic validation failures against real API responses), that's the signal to add `swagger/overrides.json` with post-processing rules. Until then, `EXCLUDED_SCHEMAS` in the generator and `models/_manual.py` for internal-API types are sufficient. The guru-cli has no such override mechanism either.
 
 ### HttpClient Method Taxonomy
 Every API pattern maps to a specific HttpClient method:

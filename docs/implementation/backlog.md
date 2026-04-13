@@ -24,6 +24,7 @@ The planned iterations for guru-py-sdk, derived from the [restructure plan](/RES
 | 016 | Bundle | Complete | `Bundle` + `BundleNode` classes in `contrib/bundle.py`. Zip-based content import with tree structure, auto type assignment, Guru-specific HTML sanitization (`clean_html`), YAML generation, and upload via `/app/contentupload` (ADR-005). 44 new tests (655 total) |
 | 019 | Card Attachments | Complete | `CardResource.upload_file()` + `HttpClient.post_file()`. Multipart file upload via `POST /attachments/upload` (ADR-006). Returns URL for embedding in card HTML. 6 new tests (661 total) |
 | 017 | QA Environment Support | Complete | `qa=True` convenience flag + `GURU_BASE_URL` env var on `Guru` constructor. URL resolution: explicit arg → qa flag → env var → default. Conflict detection for qa + base_url. 8 new tests (669 total) |
+| 020 | Migration Guide + README | Complete | Concise customer-facing README (resource table, quick start, contrib examples). Comprehensive migration guide mapping every legacy py-sdk method to its guru-py-sdk equivalent. PyPI publish deferred. |
 
 ## Phase 3 — Extended Resources
 
@@ -42,8 +43,8 @@ The planned iterations for guru-py-sdk, derived from the [restructure plan](/RES
 | ~~015~~ | ~~Publisher~~ | ~~Moved to Completed~~ | ~~004, 005 ✅~~ |
 | ~~016~~ | ~~Bundle~~ | ~~Moved to Completed~~ | ~~004, 005 ✅~~ |
 | ~~017~~ | ~~QA Environment Support~~ | ~~Moved to Completed~~ | ~~001 ✅~~ |
-| 018 | Codegen Override Mechanism | Add a config file (e.g. `swagger/overrides.json`) to the model generation pipeline that can force specific fields optional, rename types, or skip schemas. Prevents manual fixes (like User.firstName optionality) from being lost on regeneration. Coordinate with backend on Swagger spec accuracy for agent/system users. | 002 |
-| 020 | Migration Guide + PyPI Publish | `docs/migration.md` (v1 → v2 method mapping from audit matrix), README polish, PyPI publish as `guru-sdk`. | All above |
+| ~~018~~ | ~~Codegen Override Mechanism~~ | ~~Deferred — no concrete override needed today. `EXCLUDED_SCHEMAS` handles schema removal, `--use-default` handles field optionality, `_manual.py` handles internal-API types. Build `swagger/overrides.json` when a regeneration actually breaks something. guru-cli has no such mechanism either.~~ | ~~002~~ |
+| ~~020~~ | ~~Migration Guide + README~~ | ~~Split from PyPI publish. Concise customer-facing README + comprehensive migration guide (v1 → v2 method mapping). PyPI publish deferred to separate iteration.~~ | ~~All above ✅~~ |
 
 ## Notes
 
