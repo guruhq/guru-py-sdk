@@ -15,7 +15,8 @@ Usage::
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import csv
+from typing import TYPE_CHECKING, Any
 
 from guru_sdk.errors import NotFoundError
 
@@ -271,3 +272,90 @@ def make_collection_with_setup(
         g.collections.add_group(collection.id, group_id, role=role)
 
     return collection
+
+
+# =============================================================================
+# Folder Hierarchy Workflows
+# =============================================================================
+
+
+def dump_folder_hierarchy(
+    g: Guru,
+    collection_id: str,
+    *,
+    path: str | None = None,
+    output_dir: str | None = None,
+) -> str:
+    """Recursively walk a collection's folder tree and write it to CSV.
+
+    Each row represents a folder, with columns showing the parent chain
+    (e.g., ["Engineering", "Onboarding", "Week 1"]). Cards are skipped —
+    only folders appear in the output.
+
+    Args:
+        g: Guru client instance.
+        collection_id: Collection UUID or name.
+        path: Explicit output file path. If None, auto-generates from
+              the home folder title.
+        output_dir: Directory for auto-generated filenames. Defaults to
+                    current working directory. Ignored if path is set.
+
+    Returns:
+        The path to the created CSV file.
+    """
+    # Get the home folder for the collection
+    home = g.collections.home_folder(collection_id)
+
+    # Determine output path
+    if path is None:
+        title = home.title or "collection"
+        filename = f"{title}_folder_hierarchy.csv"
+        if output_dir:
+            import os
+
+            path = os.path.join(output_dir, filename)
+        else:
+            path = filename
+
+    # Write the CSV by recursively walking the folder tree
+    with open(path, "w", newline="", encoding="utf-8") as csvfile:
+        writer = csv.writer(csvfile, quoting=csv.QUOTE_ALL)
+        _walk_folder_items(g, home.id or "", writer, parent_chain=[])
+
+    return path
+
+
+def _walk_folder_items(
+    g: Guru,
+    folder_id: str,
+    writer: Any,  # csv.writer returns _csv._writer which isn't a public type
+    parent_chain: list[str],
+) -> None:
+    """Recursively walk folder items, writing folder paths to CSV.
+
+    For each sub-folder found in items(), writes its parent chain to CSV
+    and recurses into it. Cards are skipped.
+    """
+    from guru_sdk.models._generated import Type9
+
+    items = g.folders.items(folder_id)
+
+    for item in items:
+        # Only process folders, skip cards
+        if item.type != Type9.folder:
+            continue
+
+        # item_id is the folder UUID — fetch the folder to get its title
+        sub_folder_id = item.item_id
+        if sub_folder_id is None:
+            continue
+
+        sub_folder = g.folders.get(sub_folder_id)
+        title = sub_folder.title or sub_folder_id
+
+        # Build the chain and write to CSV
+        current_chain = [*parent_chain, title]
+        writer.writerow(current_chain)
+
+        # Recurse into sub-folder
+        _walk_folder_items(g, sub_folder_id, writer, current_chain)

@@ -19,6 +19,7 @@ The planned iterations for guru-py-sdk, derived from the [restructure plan](/RES
 | 011 | Pages + Page Drafts | Complete | PageResource (11 methods: CRUD, nested tree, move, permissions) + PageDraftResource (8 methods: CRD + collaborators, no update — MPS/YJS). Manual models for internal API types (PageDraft, PagePermission, PageDraftCollaborator). 58 new tests (484 total) |
 | 012 | Agents + Answers + Announcements | Complete | AgentResource (10 methods: CRUD, name resolution, group access), AnswerResource (2 methods: ask, ask_minimal), AnnouncementResource (3 methods: list, create, stats). 51 new tests (535 total) |
 | 013 | Contrib: Workflows | Complete | 6 convenience workflow functions in `contrib/workflows.py`: move_card_between_folders, batch_add_users_to_group, add_user_to_groups, remove_user_from_groups, make_collection_with_setup, add_tag_with_auto_create. 23 new tests (558 total) |
+| 014 | Contrib: Content + Hierarchy | Complete | 3 pure HTML content functions in `contrib/content.py` (has_text, find_urls, replace_url) + dump_folder_hierarchy workflow. Zero external dependencies — stdlib html.parser only. 28 new tests (586 total) |
 
 ## Phase 3 — Extended Resources
 
@@ -33,7 +34,7 @@ The planned iterations for guru-py-sdk, derived from the [restructure plan](/RES
 | # | Title | Scope | Dependencies |
 |---|-------|-------|--------------|
 | ~~013~~ | ~~Contrib: Workflows~~ | ~~Moved to Completed~~ | ~~007 ✅~~ |
-| 014 | Contrib: Content Utilities | Card content helpers from py-sdk data_objects: `has_text()`, `find_urls()`, `replace_url()`, `download_resources()`, `find_urls_in_doc()`. Pure functions operating on HTML strings — no API calls. Lives in `contrib/content.py`. | 007 ✅ |
+| ~~014~~ | ~~Contrib: Content Utilities~~ | ~~Moved to Completed (expanded to include folder hierarchy)~~ | ~~007 ✅~~ |
 | 015 | Publisher | Port `publish_folders.py` → `contrib/publisher.py`. Folder-based content sync, modernized with Guru client + Pydantic models + pathlib. Board-based Publisher is deprecated — do not port. | 004, 005 |
 | 016 | Bundle | Port `bundle.py` → `contrib/bundle.py`. Export/bundle, modernized. | 004, 005 |
 | 017 | QA Environment Support | Add `base_url` override and `qa=True` convenience flag to `Guru` constructor (matches py-sdk `qa` param → `https://qaapi.getguru.com/api/v1`). Also support `GURU_BASE_URL` env var. | 001 |

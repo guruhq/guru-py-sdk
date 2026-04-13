@@ -1,16 +1,19 @@
 """Tests for guru_sdk.contrib.workflows — convenience workflows.
 
-TDD tests covering all six workflow functions:
+TDD tests covering all workflow functions:
 - move_card_between_folders — remove from source + add to target
 - batch_add_users_to_group — batch emails in groups of 100, retry failures
 - add_user_to_groups — add one email to multiple groups
 - remove_user_from_groups — remove one email from multiple groups
 - make_collection_with_setup — create collection + add group access
 - add_tag_with_auto_create — add tag to card, creating if not found
+- dump_folder_hierarchy — recursive folder tree → CSV
 """
 
 from __future__ import annotations
 
+import csv
+from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
@@ -19,6 +22,7 @@ from guru_sdk.errors import NotFoundError
 from guru_sdk.models._generated import (
     CollectionModel,
     Folder,
+    FolderItem,
     Tag,
     UserGroupAccess,
 )
@@ -509,3 +513,180 @@ class TestAddTagWithAutoCreate:
 
         assert result.value == "review"
         assert result.id == TAG_UUID
+
+
+# =============================================================================
+# dump_folder_hierarchy
+# =============================================================================
+
+HOME_FOLDER_UUID = "h1h1h1h1-h1h1-h1h1-h1h1-h1h1h1h1h1h1"
+SUB_FOLDER_UUID_1 = "s1s1s1s1-s1s1-s1s1-s1s1-s1s1s1s1s1s1"
+SUB_FOLDER_UUID_2 = "s2s2s2s2-s2s2-s2s2-s2s2-s2s2s2s2s2s2"
+SUB_SUB_FOLDER_UUID = "s3s3s3s3-s3s3-s3s3-s3s3-s3s3s3s3s3s3"
+
+
+def _make_folder_item(item_id: str, entry_type: str = "folder") -> FolderItem:
+    """Build a FolderItem (folder or card) for mocking items() responses."""
+    return FolderItem.model_validate(
+        {"id": f"item-{item_id}", "itemId": item_id, "type": entry_type}
+    )
+
+
+def _make_folder_obj(folder_id: str, title: str) -> Folder:
+    """Build a Folder model for mocking get() responses."""
+    return Folder.model_validate(
+        {"id": folder_id, "title": title, "slug": f"slug-{folder_id}", "home": False}
+    )
+
+
+class TestDumpFolderHierarchy:
+    """dump_folder_hierarchy(g, collection_id, path)."""
+
+    def test_flat_folders(self, tmp_path: Path) -> None:
+        """Collection with two top-level folders, no nesting."""
+        from guru_sdk.contrib.workflows import dump_folder_hierarchy
+
+        g = _make_guru_mock()
+        home = _make_folder_obj(HOME_FOLDER_UUID, "Engineering Home")
+        g.collections.home_folder.return_value = home
+
+        # Home folder has two sub-folders and one card (card should be skipped)
+        g.folders.items.side_effect = [
+            # Home folder items
+            [
+                _make_folder_item(SUB_FOLDER_UUID_1, "folder"),
+                _make_folder_item(SUB_FOLDER_UUID_2, "folder"),
+                _make_folder_item("card-uuid-123", "card"),
+            ],
+            # Sub-folder 1 items (empty)
+            [],
+            # Sub-folder 2 items (empty)
+            [],
+        ]
+
+        def get_side_effect(folder_id: str) -> Folder:
+            if folder_id == SUB_FOLDER_UUID_1:
+                return _make_folder_obj(SUB_FOLDER_UUID_1, "Getting Started")
+            if folder_id == SUB_FOLDER_UUID_2:
+                return _make_folder_obj(SUB_FOLDER_UUID_2, "API Reference")
+            raise NotFoundError(f"Unknown folder {folder_id}")
+
+        g.folders.get.side_effect = get_side_effect
+
+        csv_path = tmp_path / "hierarchy.csv"
+        dump_folder_hierarchy(g, COLL_UUID, path=str(csv_path))
+
+        # Read and verify CSV
+        with open(csv_path, newline="", encoding="utf-8") as f:
+            rows = list(csv.reader(f))
+
+        assert len(rows) == 2
+        assert rows[0] == ["Getting Started"]
+        assert rows[1] == ["API Reference"]
+
+    def test_nested_folders(self, tmp_path: Path) -> None:
+        """Collection with nested folder structure (3 levels)."""
+        from guru_sdk.contrib.workflows import dump_folder_hierarchy
+
+        g = _make_guru_mock()
+        home = _make_folder_obj(HOME_FOLDER_UUID, "Docs Home")
+        g.collections.home_folder.return_value = home
+
+        g.folders.items.side_effect = [
+            # Home → one sub-folder
+            [_make_folder_item(SUB_FOLDER_UUID_1, "folder")],
+            # Sub-folder 1 → one nested sub-folder
+            [_make_folder_item(SUB_SUB_FOLDER_UUID, "folder")],
+            # Sub-sub-folder → empty
+            [],
+        ]
+
+        def get_side_effect(folder_id: str) -> Folder:
+            if folder_id == SUB_FOLDER_UUID_1:
+                return _make_folder_obj(SUB_FOLDER_UUID_1, "Guides")
+            if folder_id == SUB_SUB_FOLDER_UUID:
+                return _make_folder_obj(SUB_SUB_FOLDER_UUID, "Advanced")
+            raise NotFoundError(f"Unknown folder {folder_id}")
+
+        g.folders.get.side_effect = get_side_effect
+
+        csv_path = tmp_path / "nested.csv"
+        dump_folder_hierarchy(g, COLL_UUID, path=str(csv_path))
+
+        with open(csv_path, newline="", encoding="utf-8") as f:
+            rows = list(csv.reader(f))
+
+        assert len(rows) == 2
+        assert rows[0] == ["Guides"]
+        assert rows[1] == ["Guides", "Advanced"]
+
+    def test_empty_collection(self, tmp_path: Path) -> None:
+        """Collection with no sub-folders → empty CSV."""
+        from guru_sdk.contrib.workflows import dump_folder_hierarchy
+
+        g = _make_guru_mock()
+        home = _make_folder_obj(HOME_FOLDER_UUID, "Empty Collection")
+        g.collections.home_folder.return_value = home
+        g.folders.items.return_value = []
+
+        csv_path = tmp_path / "empty.csv"
+        dump_folder_hierarchy(g, COLL_UUID, path=str(csv_path))
+
+        with open(csv_path, newline="", encoding="utf-8") as f:
+            rows = list(csv.reader(f))
+
+        assert rows == []
+
+    def test_default_path_uses_collection_title(self, tmp_path: Path) -> None:
+        """When no path is given, uses <collection_title>_folder_hierarchy.csv."""
+        from guru_sdk.contrib.workflows import dump_folder_hierarchy
+
+        g = _make_guru_mock()
+        home = _make_folder_obj(HOME_FOLDER_UUID, "Engineering")
+        g.collections.home_folder.return_value = home
+        g.folders.items.return_value = []
+
+        # Use tmp_path as working directory by providing output_dir
+        result_path = dump_folder_hierarchy(
+            g, COLL_UUID, output_dir=str(tmp_path)
+        )
+
+        assert result_path.endswith("Engineering_folder_hierarchy.csv")
+        assert Path(result_path).exists()
+
+    def test_returns_file_path(self, tmp_path: Path) -> None:
+        """Function returns the path to the created CSV file."""
+        from guru_sdk.contrib.workflows import dump_folder_hierarchy
+
+        g = _make_guru_mock()
+        home = _make_folder_obj(HOME_FOLDER_UUID, "My Collection")
+        g.collections.home_folder.return_value = home
+        g.folders.items.return_value = []
+
+        csv_path = tmp_path / "output.csv"
+        result = dump_folder_hierarchy(g, COLL_UUID, path=str(csv_path))
+
+        assert result == str(csv_path)
+
+    def test_cards_are_skipped(self, tmp_path: Path) -> None:
+        """Only folders are walked — cards in items() are ignored."""
+        from guru_sdk.contrib.workflows import dump_folder_hierarchy
+
+        g = _make_guru_mock()
+        home = _make_folder_obj(HOME_FOLDER_UUID, "Mixed")
+        g.collections.home_folder.return_value = home
+
+        # Home has only cards, no folders
+        g.folders.items.return_value = [
+            _make_folder_item("card-1", "card"),
+            _make_folder_item("card-2", "card"),
+        ]
+
+        csv_path = tmp_path / "cards_only.csv"
+        dump_folder_hierarchy(g, COLL_UUID, path=str(csv_path))
+
+        with open(csv_path, newline="", encoding="utf-8") as f:
+            rows = list(csv.reader(f))
+
+        # No folders → no rows
+        assert rows == []
