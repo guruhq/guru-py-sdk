@@ -8,6 +8,9 @@ Requires Python 3.10+.
 
 ```bash
 pip install guru-sdk
+
+# or with uv
+uv add guru-sdk
 ```
 
 ## Quick Start

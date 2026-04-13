@@ -22,29 +22,23 @@ The planned iterations for guru-py-sdk, derived from the [restructure plan](/RES
 | 014 | Contrib: Content + Hierarchy | Complete | 3 pure HTML content functions in `contrib/content.py` (has_text, find_urls, replace_url) + dump_folder_hierarchy workflow. Zero external dependencies — stdlib html.parser only. 28 new tests (586 total) |
 | 015 | Publisher | Complete | `CardChanges` frozen dataclass + `PublisherFolders` ABC framework in `contrib/publisher.py`. Folder-based content sync with metadata persistence, change detection, link rewriting, and abstract hooks for external systems. 25 new tests (611 total) |
 | 016 | Bundle | Complete | `Bundle` + `BundleNode` classes in `contrib/bundle.py`. Zip-based content import with tree structure, auto type assignment, Guru-specific HTML sanitization (`clean_html`), YAML generation, and upload via `/app/contentupload` (ADR-005). 44 new tests (655 total) |
-| 019 | Card Attachments | Complete | `CardResource.upload_file()` + `HttpClient.post_file()`. Multipart file upload via `POST /attachments/upload` (ADR-006). Returns URL for embedding in card HTML. 6 new tests (661 total) |
 | 017 | QA Environment Support | Complete | `qa=True` convenience flag + `GURU_BASE_URL` env var on `Guru` constructor. URL resolution: explicit arg → qa flag → env var → default. Conflict detection for qa + base_url. 8 new tests (669 total) |
+| 019 | Card Attachments | Complete | `CardResource.upload_file()` + `HttpClient.post_file()`. Multipart file upload via `POST /attachments/upload` (ADR-006). Returns URL for embedding in card HTML. 6 new tests (661 total) |
 | 020 | Migration Guide + README | Complete | Concise customer-facing README (resource table, quick start, contrib examples). Comprehensive migration guide mapping every legacy py-sdk method to its guru-py-sdk equivalent. PyPI publish deferred. |
 
-## Phase 3 — Extended Resources
+## Remaining
 
 | # | Title | Scope | Dependencies |
 |---|-------|-------|--------------|
-| 010a | Draft & Page Draft Updates + Collaborators | DraftResource update and PageDraftResource update (both with MPS/YJS "politely fail" for active editing sessions), card draft publishing context endpoints, card draft collaborator management, page draft update. Requires detecting draft editing state — applies to both card drafts and page drafts. | 010, 011 |
-| ~~021~~ | ~~Frameworks~~ | ~~Deferred — not in public spec, not in CLI. See ADR-007.~~ | ~~002, 003~~ |
-| ~~019~~ | ~~Card Attachments~~ | ~~Moved to Completed~~ | ~~004 ✅~~ |
+| 010a | Draft & Page Draft Updates + Collaborators | DraftResource update and PageDraftResource update (both with MPS/YJS "politely fail" for active editing sessions), card draft publishing context endpoints, card draft collaborator management, page draft update. Requires detecting draft editing state — applies to both card drafts and page drafts. Blocked on draft handling verdict. | 010, 011 |
 
-## Phase 4 — Contrib + Polish
+## Deferred
 
-| # | Title | Scope | Dependencies |
-|---|-------|-------|--------------|
-| ~~013~~ | ~~Contrib: Workflows~~ | ~~Moved to Completed~~ | ~~007 ✅~~ |
-| ~~014~~ | ~~Contrib: Content Utilities~~ | ~~Moved to Completed (expanded to include folder hierarchy)~~ | ~~007 ✅~~ |
-| ~~015~~ | ~~Publisher~~ | ~~Moved to Completed~~ | ~~004, 005 ✅~~ |
-| ~~016~~ | ~~Bundle~~ | ~~Moved to Completed~~ | ~~004, 005 ✅~~ |
-| ~~017~~ | ~~QA Environment Support~~ | ~~Moved to Completed~~ | ~~001 ✅~~ |
-| ~~018~~ | ~~Codegen Override Mechanism~~ | ~~Deferred — no concrete override needed today. `EXCLUDED_SCHEMAS` handles schema removal, `--use-default` handles field optionality, `_manual.py` handles internal-API types. Build `swagger/overrides.json` when a regeneration actually breaks something. guru-cli has no such mechanism either.~~ | ~~002~~ |
-| ~~020~~ | ~~Migration Guide + README~~ | ~~Split from PyPI publish. Concise customer-facing README + comprehensive migration guide (v1 → v2 method mapping). PyPI publish deferred to separate iteration.~~ | ~~All above ✅~~ |
+| # | Title | Reason |
+|---|-------|--------|
+| 018 | Codegen Override Mechanism | No concrete override needed today. `EXCLUDED_SCHEMAS` handles schema removal, `--use-default` handles field optionality, `_manual.py` handles internal-API types. Build `swagger/overrides.json` when a regeneration actually breaks something. guru-cli has no such mechanism either. |
+| 021 | Frameworks | Not in public spec, not in CLI. See ADR-007. |
+| — | PyPI Publish | Split from iteration 020. Needs decision on public vs. private distribution. |
 
 ## Notes
 
