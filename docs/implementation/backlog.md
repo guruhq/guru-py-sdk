@@ -29,7 +29,7 @@ The planned iterations for guru-py-sdk, derived from the [restructure plan](/RES
 | # | Title | Scope | Dependencies |
 |---|-------|-------|--------------|
 | 010a | Draft & Page Draft Updates + Collaborators | DraftResource update and PageDraftResource update (both with MPS/YJS "politely fail" for active editing sessions), card draft publishing context endpoints, card draft collaborator management, page draft update. Requires detecting draft editing state — applies to both card drafts and page drafts. | 010, 011 |
-| 021 | Frameworks | FrameworkResource — list, get, import (creates collection from template). Small surface (3 methods), used in collection creation UI. | 002, 003 |
+| ~~021~~ | ~~Frameworks~~ | ~~Deferred — not in public spec, not in CLI. See ADR-007.~~ | ~~002, 003~~ |
 | ~~019~~ | ~~Card Attachments~~ | ~~Moved to Completed~~ | ~~004 ✅~~ |
 
 ## Phase 4 — Contrib + Polish
