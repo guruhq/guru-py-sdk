@@ -2,7 +2,7 @@
 
 Workflows: convenience functions that compose multiple resource calls.
 Content: pure functions for working with card HTML content.
-Publisher: folder-based content sync from a local directory to Guru (future).
+Publisher: folder-based content sync framework for external systems.
 Bundle: export a collection's cards and metadata to a local directory (future).
 """
 
@@ -10,6 +10,10 @@ from guru_sdk.contrib.content import (
     find_urls,
     has_text,
     replace_url,
+)
+from guru_sdk.contrib.publisher import (
+    CardChanges,
+    PublisherFolders,
 )
 from guru_sdk.contrib.workflows import (
     add_tag_with_auto_create,
@@ -22,6 +26,8 @@ from guru_sdk.contrib.workflows import (
 )
 
 __all__ = [
+    "CardChanges",
+    "PublisherFolders",
     "add_tag_with_auto_create",
     "add_user_to_groups",
     "batch_add_users_to_group",
