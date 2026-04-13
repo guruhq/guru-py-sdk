@@ -21,6 +21,7 @@ The planned iterations for guru-py-sdk, derived from the [restructure plan](/RES
 | 013 | Contrib: Workflows | Complete | 6 convenience workflow functions in `contrib/workflows.py`: move_card_between_folders, batch_add_users_to_group, add_user_to_groups, remove_user_from_groups, make_collection_with_setup, add_tag_with_auto_create. 23 new tests (558 total) |
 | 014 | Contrib: Content + Hierarchy | Complete | 3 pure HTML content functions in `contrib/content.py` (has_text, find_urls, replace_url) + dump_folder_hierarchy workflow. Zero external dependencies — stdlib html.parser only. 28 new tests (586 total) |
 | 015 | Publisher | Complete | `CardChanges` frozen dataclass + `PublisherFolders` ABC framework in `contrib/publisher.py`. Folder-based content sync with metadata persistence, change detection, link rewriting, and abstract hooks for external systems. 25 new tests (611 total) |
+| 016 | Bundle | Complete | `Bundle` + `BundleNode` classes in `contrib/bundle.py`. Zip-based content import with tree structure, auto type assignment, Guru-specific HTML sanitization (`clean_html`), YAML generation, and upload via `/app/contentupload` (ADR-005). 44 new tests (655 total) |
 
 ## Phase 3 — Extended Resources
 
@@ -37,7 +38,7 @@ The planned iterations for guru-py-sdk, derived from the [restructure plan](/RES
 | ~~013~~ | ~~Contrib: Workflows~~ | ~~Moved to Completed~~ | ~~007 ✅~~ |
 | ~~014~~ | ~~Contrib: Content Utilities~~ | ~~Moved to Completed (expanded to include folder hierarchy)~~ | ~~007 ✅~~ |
 | ~~015~~ | ~~Publisher~~ | ~~Moved to Completed~~ | ~~004, 005 ✅~~ |
-| 016 | Bundle | Port `bundle.py` → `contrib/bundle.py`. Export/bundle, modernized. | 004, 005 |
+| ~~016~~ | ~~Bundle~~ | ~~Moved to Completed~~ | ~~004, 005 ✅~~ |
 | 017 | QA Environment Support | Add `base_url` override and `qa=True` convenience flag to `Guru` constructor (matches py-sdk `qa` param → `https://qaapi.getguru.com/api/v1`). Also support `GURU_BASE_URL` env var. | 001 |
 | 018 | Codegen Override Mechanism | Add a config file (e.g. `swagger/overrides.json`) to the model generation pipeline that can force specific fields optional, rename types, or skip schemas. Prevents manual fixes (like User.firstName optionality) from being lost on regeneration. Coordinate with backend on Swagger spec accuracy for agent/system users. | 002 |
 | 020 | Migration Guide + PyPI Publish | `docs/migration.md` (v1 → v2 method mapping from audit matrix), README polish, PyPI publish as `guru-sdk`. | All above |
