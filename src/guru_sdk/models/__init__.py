@@ -9,6 +9,8 @@ Models are generated from the Guru public Swagger spec. Re-generate with:
 
 from guru_sdk.models._base import GuruModel
 from guru_sdk.models._generated import (
+    AnnouncementInsightSummary,
+    AnnouncementUser,
     Answer,
     BasePage,
     Card,
@@ -33,6 +35,8 @@ from guru_sdk.models._generated import (
     KnowledgeAgent,
     KnowledgeAgentAccess,
     KnowledgeAgentConfig,
+    KnowledgeAlert,
+    KnowledgeAlertDelegated,
     NewCard,
     NewFolder,
     NLQSearchResponse,
@@ -56,6 +60,8 @@ from guru_sdk.models._manual import (
 )
 
 __all__ = [
+    "AnnouncementInsightSummary",
+    "AnnouncementUser",
     "Answer",
     "BasePage",
     "Card",
@@ -81,6 +87,8 @@ __all__ = [
     "KnowledgeAgent",
     "KnowledgeAgentAccess",
     "KnowledgeAgentConfig",
+    "KnowledgeAlert",
+    "KnowledgeAlertDelegated",
     "NLQSearchResponse",
     "NewCard",
     "NewFolder",

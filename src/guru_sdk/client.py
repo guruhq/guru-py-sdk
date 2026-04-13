@@ -24,6 +24,9 @@ import os
 
 from guru_sdk.errors import AuthenticationError
 from guru_sdk.http import DEFAULT_BASE_URL, HttpClient
+from guru_sdk.resources.agents import AgentResource
+from guru_sdk.resources.announcements import AnnouncementResource
+from guru_sdk.resources.answers import AnswerResource
 from guru_sdk.resources.cards import CardResource
 from guru_sdk.resources.collections import CollectionResource
 from guru_sdk.resources.drafts import DraftResource
@@ -86,6 +89,9 @@ class Guru:
 
         # Resource modules — one property per resource group, all sharing the
         # same HttpClient. Mirrors guru-cli's facade pattern.
+        self.agents = AgentResource(self._http)
+        self.announcements = AnnouncementResource(self._http)
+        self.answers = AnswerResource(self._http)
         self.cards = CardResource(self._http)
         self.collections = CollectionResource(self._http)
         self.drafts = DraftResource(self._http)

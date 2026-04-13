@@ -1,6 +1,6 @@
 # guru-py-sdk Architecture
 
-**Last updated**: 2026-04-13 (Iteration 011 — Pages + Page Drafts)
+**Last updated**: 2026-04-13 (Iteration 012 — Agents + Answers + Announcements)
 
 ## Overview
 
@@ -16,8 +16,8 @@ guru-py-sdk is a modern Python SDK for the Guru API. It mirrors the two-layer ar
                                        │ composes
               ┌────────────────────────┼────────────────────────┐
               │            │           │           │             │
-         CardResource  FolderResource  CollectionResource  SearchResource  PageResource  PageDraftResource
-         (Phase 2 ✓)   (Phase 2 ✓)    (Phase 2 ✓)         (Phase 3 ✓)     (Phase 3 ✓)  (Phase 3 ✓)
+         CardResource  FolderResource  CollectionResource  SearchResource  PageResource  AgentResource  AnswerResource  AnnouncementResource
+         (Phase 2 ✓)   (Phase 2 ✓)    (Phase 2 ✓)         (Phase 3 ✓)     (Phase 3 ✓)  (Phase 3 ✓)    (Phase 3 ✓)     (Phase 3 ✓)
               │            │           │           │             │
               └────────────┴───────────┴───────────┴─────────────┘
                                        │
@@ -48,13 +48,16 @@ src/guru_sdk/
 ├── http.py              # HttpClient (httpx sync transport)
 ├── errors.py            # Exception hierarchy
 ├── models/
-│   ├── __init__.py      # Re-exports 42 key models
+│   ├── __init__.py      # Re-exports 46 key models
 │   ├── _base.py         # GuruModel (Pydantic v2 base)
 │   ├── _generated.py    # 248 models + 122 enums (auto-generated from Swagger)
 │   └── _manual.py       # 3 manual models for internal API (PageDraft, PagePermission, PageDraftCollaborator)
 ├── resources/
 │   ├── __init__.py
 │   ├── _base.py         # BaseResource
+│   ├── agents.py        # AgentResource (CRUD, name resolution, group access)
+│   ├── announcements.py # AnnouncementResource (list, create, stats)
+│   ├── answers.py       # AnswerResource (ask, ask_minimal)
 │   ├── cards.py         # CardResource (CRUD, verify, tags, comments, folders, collaborators)
 │   ├── collections.py   # CollectionResource (CRUD, group access, home folder)
 │   ├── drafts.py        # DraftResource (CRD — no update due to MPS/YJS collaborative editing)

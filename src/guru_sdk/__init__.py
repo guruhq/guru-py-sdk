@@ -29,6 +29,9 @@ from guru_sdk.errors import (
     ValidationError,
 )
 from guru_sdk.models._base import GuruModel
+from guru_sdk.resources.agents import AgentResource
+from guru_sdk.resources.announcements import AnnouncementResource
+from guru_sdk.resources.answers import AnswerResource
 from guru_sdk.resources.cards import CardResource
 from guru_sdk.resources.collections import CollectionResource
 from guru_sdk.resources.drafts import DraftResource
@@ -42,6 +45,9 @@ from guru_sdk.resources.sources import SourceResource
 from guru_sdk.resources.tags import TagResource
 
 __all__ = [
+    "AgentResource",
+    "AnnouncementResource",
+    "AnswerResource",
     "AuthenticationError",
     "CardResource",
     "CollectionResource",

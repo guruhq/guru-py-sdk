@@ -242,6 +242,53 @@ g.page_drafts.remove_collaborator(draft.id, collaborator_id="collab-uuid")
 g.page_drafts.delete(draft.id)
 ```
 
+### Agents (`g.agents`)
+
+CRUD, name resolution, and group access management for Knowledge Agents.
+
+```python
+agents = g.agents.list()
+agent = g.agents.get("agent-uuid")
+agent = g.agents.resolve("Support Agent")  # find by name (case-insensitive)
+
+agent = g.agents.create(
+    name="Support Agent",
+    description="Answers support questions",
+    tone="professional",
+    use_all_sources=True,
+)
+g.agents.update(agent.id, tone="friendly", answer_prompt="Be concise.")
+
+groups = g.agents.list_groups(agent.id)
+g.agents.add_group(agent.id, "group-uuid", role="VIEWER")
+g.agents.remove_group(agent.id, "group-uuid")
+g.agents.delete(agent.id)
+```
+
+### Answers (`g.answers`)
+
+AI-powered Q&A against the Guru knowledge base.
+
+```python
+answer = g.answers.ask("How do I reset my password?")
+answer = g.answers.ask("PTO policy?", agent_id="agent-uuid")
+quick = g.answers.ask_minimal("Quick question?")
+```
+
+### Announcements (`g.announcements`)
+
+Broadcast cards to groups and track read stats.
+
+```python
+announcements = g.announcements.list()
+ann = g.announcements.create(
+    card_id="card-uuid",
+    group_ids=["group-1", "group-2"],
+    note="Please review this update.",
+)
+stats = g.announcements.stats(ann.alert_id)
+```
+
 ## Name Resolution
 
 All resources accept either UUIDs or human-readable names. When you pass a name, the SDK resolves it automatically:
