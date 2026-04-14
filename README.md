@@ -41,16 +41,16 @@ Credentials resolve in order: explicit arguments → `GURU_USER`/`GURU_TOKEN` en
 
 ## AI-Native by Design
 
-This SDK is built to be used with AI coding agents. Rather than memorizing the API surface, point your agent at this repo and let it build what you need.
+This SDK is built to be used with AI coding agents — Claude Code, Codex, Cursor, Copilot, or any tool that supports the [AGENTS.md](https://agents.md) standard. Rather than memorizing the API surface, point your agent at this repo and let it build what you need.
 
 ```
 You have access to the Guru Python SDK at ./guru-py-sdk.
-Read CLAUDE.md for architecture and patterns, then use the SDK
+Read AGENTS.md for architecture and patterns, then use the SDK
 to write a script that exports all cards tagged "onboarding"
 to markdown files.
 ```
 
-The codebase is structured so agents can quickly orient: `CLAUDE.md` documents every pattern and convention, resource modules follow a consistent interface, and Pydantic models provide type safety that agents can lean on. The `docs/examples/` directory has usage patterns, and `docs/migration.md` maps legacy methods to their new equivalents.
+The codebase is structured so agents can quickly orient: `AGENTS.md` provides project conventions (with `CLAUDE.md` symlinked for Claude Code), detailed patterns live in `docs/conventions.md`, and resource modules follow a consistent interface with Pydantic type safety. The `docs/examples/` directory has usage patterns, and `docs/migration.md` maps legacy methods to their new equivalents.
 
 If you need a custom integration — syncing Guru content to an external system, bulk-importing from a CSV, automating user provisioning — describe what you want and let your agent compose the right SDK calls. That's how this repo is designed to be used.
 

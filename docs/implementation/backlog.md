@@ -40,6 +40,7 @@ The planned iterations for guru-py-sdk, derived from the [restructure plan](/RES
 | 021 | Frameworks | Not in public spec, not in CLI. See ADR-007. |
 | — | PyPI Publish | Split from iteration 020. Needs decision on public vs. private distribution. |
 | — | Branching Strategy + CI | Protect main, require PRs, feature branch workflow. Add CI pipeline (GitHub Actions) to run quality gates (ruff, mypy, pytest) on every PR. Natural inflection point now that the SDK is feature-complete. |
+| — | Bundle Security Hardening | Security audit findings: (1) HIGH — `collection_id` not validated before URL construction in `Bundle.upload()`, add `validate_input()` call. (2) HIGH — `_to_yaml()` doesn't escape user-controlled values (titles with colons, newlines, `---` produce malformed YAML). (3) MEDIUM — `upload()` bypasses HttpClient public interface, reaches into `_g._http._client.post()` directly. (4) MEDIUM — `Publisher` metadata_path accepts arbitrary paths without traversal validation. |
 
 ## Notes
 
