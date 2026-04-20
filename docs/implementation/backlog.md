@@ -32,14 +32,22 @@ The planned iterations for guru-py-sdk, derived from the [restructure plan](/RES
 |---|-------|-------|--------------|
 | 010a | Draft & Page Draft Updates + Collaborators | DraftResource update and PageDraftResource update (both with MPS/YJS "politely fail" for active editing sessions), card draft publishing context endpoints, card draft collaborator management, page draft update. Requires detecting draft editing state — applies to both card drafts and page drafts. Blocked on draft handling verdict. | 010, 011 |
 
+## Up Next — Release Readiness
+
+These are sequenced in order of operation. Each depends on the one before it.
+
+| # | Title | Scope | Dependencies |
+|---|-------|-------|--------------|
+| ~~022~~ | ~~Branch Protection~~ | ~~Complete — main protected, PRs required.~~ | ~~—~~ |
+| 023 | CircleCI Pipeline | Quality gates in CI on every PR: `make lint`, `make typecheck`, `make test`. Coordinate with DevOps on project setup, provide Makefile targets and Python 3.10+ / uv requirements. | 022 |
+| 024 | PyPI Publish | Polish `pyproject.toml` metadata (description, author, license, classifiers, URLs). Create PyPI account under Guru org, add API token to CircleCI secrets, add publish step on version tags. Decide public vs. private distribution. | 022, 023 |
+
 ## Deferred
 
 | # | Title | Reason |
 |---|-------|--------|
 | 018 | Codegen Override Mechanism | No concrete override needed today. `EXCLUDED_SCHEMAS` handles schema removal, `--use-default` handles field optionality, `_manual.py` handles internal-API types. Build `swagger/overrides.json` when a regeneration actually breaks something. guru-cli has no such mechanism either. |
 | 021 | Frameworks | Not in public spec, not in CLI. See ADR-007. |
-| — | PyPI Publish | Split from iteration 020. Needs decision on public vs. private distribution. |
-| — | Branching Strategy + CI | Protect main, require PRs, feature branch workflow. Add CI pipeline (GitHub Actions) to run quality gates (ruff, mypy, pytest) on every PR. Natural inflection point now that the SDK is feature-complete. |
 | — | Bundle Security Hardening | Security audit findings: (1) HIGH — `collection_id` not validated before URL construction in `Bundle.upload()`, add `validate_input()` call. (2) HIGH — `_to_yaml()` doesn't escape user-controlled values (titles with colons, newlines, `---` produce malformed YAML). (3) MEDIUM — `upload()` bypasses HttpClient public interface, reaches into `_g._http._client.post()` directly. (4) MEDIUM — `Publisher` metadata_path accepts arbitrary paths without traversal validation. |
 
 ## Notes
