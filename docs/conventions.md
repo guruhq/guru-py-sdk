@@ -174,6 +174,10 @@ Resources accept either UUIDs or human-readable names. Non-UUID → list all + c
 
 Semver strict. Deprecated features survive one full minor cycle, removed in next major. `@deprecated` decorator emits `DeprecationWarning`. Single version in `_version.py`.
 
+### Branch-Based Installation
+
+Until PyPI publishing is live, users install directly from GitHub branches (`pip install git+...@branch`). Switching branches via `pip install` cleanly replaces the package code — no residual state. **Known edge case**: if a branch adds or removes a dependency in `pyproject.toml`, pip installs new deps but won't automatically uninstall removed ones. If this ever causes issues, `pip install --force-reinstall` resolves it. If this becomes a recurring problem, add a note to the README's Install section.
+
 ### Error Handling
 
 HTTP errors → typed exceptions: 401 → `AuthenticationError`, 403 → `ForbiddenError`, 404 → `NotFoundError`, 429 → `RateLimitError`. All inherit from `GuruApiError` with `status_code`, `message`, `body`.
