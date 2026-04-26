@@ -39,8 +39,7 @@ These are sequenced in order of operation. Each depends on the one before it.
 | # | Title | Scope | Dependencies |
 |---|-------|-------|--------------|
 | ~~022~~ | ~~Branch Protection~~ | ~~Complete — main protected, PRs required.~~ | ~~—~~ |
-| 023 | CircleCI Pipeline | Quality gates in CI on every PR: `make lint`, `make typecheck`, `make test`. Coordinate with DevOps on project setup, provide Makefile targets and Python 3.10+ / uv requirements. | 022 |
-| 024 | PyPI Publish | Polish `pyproject.toml` metadata (description, author, license, classifiers, URLs). Create PyPI account under Guru org, add API token to CircleCI secrets, add publish step on version tags. Decide public vs. private distribution. | 022, 023 |
+| 023 | CircleCI Pipeline + PyPI Publish | **CI setup**: Quality gates on every PR (`make lint`, `make typecheck`, `make test`). Coordinate with DevOps on project setup, provide Makefile targets and Python 3.10+ / uv requirements. **PyPI setup**: (1) Create `guru-sdk` project under the Guru PyPI org. (2) Generate a project-scoped API token (not account-wide). (3) Add token as `PYPI_TOKEN` environment variable in CircleCI. (4) Add publish step to CI pipeline that triggers on version tags. (5) Polish `pyproject.toml` metadata (description, author, license, classifiers, URLs) before first publish. | 022 |
 
 ## Deferred
 

@@ -28,6 +28,12 @@
 
 2. **Batch folder/tag fetching**: Currently `_compute_card_changes()` makes 2 extra API calls per card (list_folders + list_tags). A future optimization could batch these if the API supports it, or cache them during a publish run.
 
+## Bug Fix: item.id vs item.item_id (SC-152729)
+
+`FolderItem` has two ID fields: `id` (the actual card/folder UUID) and `item_id` (the placement UUID — Guru's internal reference for where the item sits in the folder tree). The publisher was using `item.item_id` to call `g.cards.get()` and `g.folders.get()`, which is the wrong ID. The fix was straightforward (`item.item_id` → `item.id`), but the bug was masked in tests because the original `_make_folder_item` fixture derived both IDs from the same value. The regression test now uses clearly distinct values (`id=CARD_UUID`, `itemId="placement-{CARD_UUID}"`) so this class of bug can't hide again.
+
+**Takeaway**: When a model has multiple ID-like fields, test fixtures must use distinct values for each — otherwise tests pass even when the code uses the wrong one.
+
 ## Patterns for Future Iterations
 
 - **Frozen dataclasses for change tracking**: `CardChanges` pattern works well — immutable, with a predicate method. Reuse this for any "what changed?" detection.
