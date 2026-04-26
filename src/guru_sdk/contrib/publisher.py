@@ -205,9 +205,7 @@ class PublisherFolders(ABC):
         """Create a collection in the external system. Returns external_id or None."""
         return None
 
-    def update_external_collection(
-        self, external_id: str, collection: CollectionModel
-    ) -> bool:
+    def update_external_collection(self, external_id: str, collection: CollectionModel) -> bool:
         """Update an existing collection in the external system."""
         return False
 
@@ -331,9 +329,7 @@ class PublisherFolders(ABC):
             self._results[card_id] = "update"
             self._log("update card", external_id, card.preferred_phrase)
             if not self._dry_run:
-                result = self.update_external_card(
-                    external_id, card, changes, folder, collection
-                )
+                result = self.update_external_card(external_id, card, changes, folder, collection)
                 successful = bool(result)
         else:
             self._results[card_id] = "create"
@@ -487,10 +483,10 @@ class PublisherFolders(ABC):
         items = self._g.folders.items(folder_id)
 
         for item in items:
-            if item.type == Type9.folder and item.item_id:
-                self.publish_folder(item.item_id, collection)
-            elif item.type == Type9.card and item.item_id:
-                card = self._g.cards.get(item.item_id)
+            if item.type == Type9.folder and item.id:
+                self.publish_folder(item.id, collection)
+            elif item.type == Type9.card and item.id:
+                card = self._g.cards.get(item.id)
                 self.publish_card(card, collection, folder)
 
     # -------------------------------------------------------------------------
