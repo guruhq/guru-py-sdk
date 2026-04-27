@@ -144,6 +144,7 @@ Models for endpoints not in the public Swagger spec live in `models/_manual.py` 
 - Three-way field access: create from API dicts via camelCase alias, access via snake_case field name, serialize to API via `model_dump(by_alias=True)`
 - Tests for generated models use realistic API shapes (real UUIDs, correct enum values, required fields)
 - **No override mechanism yet** — if a regeneration breaks something, that's the signal to add `swagger/overrides.json` with post-processing rules. Until then, `EXCLUDED_SCHEMAS` in the generator and `models/_manual.py` are sufficient.
+- **`Type1`, `Type2`, ... `TypeN` enums** — the Swagger spec has inline enums without explicit names (e.g., the `type` field on `FolderItem` can be `"card"` or `"folder"`). Since these enums aren't named in the spec, `datamodel-code-generator` assigns sequential names like `Type9`. The numbers are arbitrary — they reflect the order the enum was encountered during generation and can change on regeneration. When working with these, check `_generated.py` for the actual enum values rather than guessing from the name. If this becomes a readability problem, the deferred codegen override mechanism (iteration 018) could rename them in post-processing.
 
 ## Patterns and Rules
 
@@ -172,6 +173,10 @@ Resources accept either UUIDs or human-readable names. Non-UUID → list all + c
 ### Versioning
 
 Semver strict. Deprecated features survive one full minor cycle, removed in next major. `@deprecated` decorator emits `DeprecationWarning`. Single version in `_version.py`.
+
+### Branch-Based Installation
+
+Until PyPI publishing is live, users install directly from GitHub branches (`pip install git+...@branch`). Switching branches via `pip install` cleanly replaces the package code — no residual state. **Known edge case**: if a branch adds or removes a dependency in `pyproject.toml`, pip installs new deps but won't automatically uninstall removed ones. If this ever causes issues, `pip install --force-reinstall` resolves it. If this becomes a recurring problem, add a note to the README's Install section.
 
 ### Error Handling
 

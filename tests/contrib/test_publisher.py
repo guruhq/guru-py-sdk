@@ -70,7 +70,7 @@ def _make_folder(
 
 def _make_folder_item(item_id: str, entry_type: str = "folder") -> FolderItem:
     return FolderItem.model_validate(
-        {"id": f"item-{item_id}", "itemId": item_id, "type": entry_type}
+        {"id": item_id, "itemId": f"placement-{item_id}", "type": entry_type}
     )
 
 
@@ -491,6 +491,29 @@ class TestPublishFolder:
 
         assert len(pub.created_folders) == 2
 
+    def test_cards_get_called_with_card_uuid_not_placement_uuid(self) -> None:
+        """Regression: cards.get must be called with item.id (card UUID), not item.item_id (placement UUID)."""
+        g = _make_guru_mock()
+        pub = _make_test_publisher(g)
+
+        folder = _make_folder()
+        card = _make_card()
+
+        g.folders.get.return_value = folder
+        # _make_folder_item sets id=CARD_UUID and itemId="placement-{CARD_UUID}"
+        folder_item = _make_folder_item(CARD_UUID, "card")
+        g.folders.items.return_value = [folder_item]
+        g.cards.get.return_value = card
+        g.cards.list_folders.return_value = []
+        g.cards.list_tags.return_value = []
+
+        pub.publish_folder(FOLDER_UUID)
+
+        # cards.get must be called with the card UUID (item.id), not the placement UUID (item.item_id)
+        g.cards.get.assert_called_once_with(CARD_UUID)
+        assert folder_item.id == CARD_UUID
+        assert folder_item.item_id == f"placement-{CARD_UUID}"
+
 
 # =============================================================================
 # publish_collection
@@ -558,9 +581,7 @@ class TestProcessDeletions:
     def test_deletes_folders(self) -> None:
         """Folder in metadata but not visited → delete hook called."""
         g = _make_guru_mock()
-        metadata = {
-            FOLDER_UUID: {"external_id": "ext-old-folder", "type": "folder"}
-        }
+        metadata = {FOLDER_UUID: {"external_id": "ext-old-folder", "type": "folder"}}
         pub = _make_test_publisher(g, metadata=metadata)
 
         pub.process_deletions()
@@ -570,9 +591,7 @@ class TestProcessDeletions:
     def test_removes_deleted_items_from_metadata(self) -> None:
         """After deletion, item is removed from metadata."""
         g = _make_guru_mock()
-        metadata = {
-            CARD_UUID: {"external_id": "ext-gone", "type": "card"}
-        }
+        metadata = {CARD_UUID: {"external_id": "ext-gone", "type": "card"}}
         pub = _make_test_publisher(g, metadata=metadata)
 
         pub.process_deletions()

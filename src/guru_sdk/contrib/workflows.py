@@ -345,8 +345,8 @@ def _walk_folder_items(
         if item.type != Type9.folder:
             continue
 
-        # item_id is the folder UUID — fetch the folder to get its title
-        sub_folder_id = item.item_id
+        # item.id is the actual folder UUID; item.item_id is the placement UUID
+        sub_folder_id = item.id
         if sub_folder_id is None:
             continue
 

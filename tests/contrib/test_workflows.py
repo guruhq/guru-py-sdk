@@ -526,9 +526,14 @@ SUB_SUB_FOLDER_UUID = "s3s3s3s3-s3s3-s3s3-s3s3-s3s3s3s3s3s3"
 
 
 def _make_folder_item(item_id: str, entry_type: str = "folder") -> FolderItem:
-    """Build a FolderItem (folder or card) for mocking items() responses."""
+    """Build a FolderItem (folder or card) for mocking items() responses.
+
+    id = actual folder/card UUID (used by folders.get / cards.get)
+    itemId = placement UUID (Guru's internal position reference — NOT used for lookups)
+    These must be distinct so tests catch id vs item_id misuse (see SC-152729).
+    """
     return FolderItem.model_validate(
-        {"id": f"item-{item_id}", "itemId": item_id, "type": entry_type}
+        {"id": item_id, "itemId": f"placement-{item_id}", "type": entry_type}
     )
 
 
@@ -690,3 +695,32 @@ class TestDumpFolderHierarchy:
 
         # No folders → no rows
         assert rows == []
+
+    def test_uses_item_id_not_item_id_placement(self, tmp_path: Path) -> None:
+        """Regression: folders.get must use item.id (folder UUID), not item.item_id (placement UUID).
+
+        See SC-152729 — same bug class as publisher.py. The _make_folder_item fixture
+        uses distinct values for id vs itemId so this test catches the wrong field.
+        """
+        from guru_sdk.contrib.workflows import dump_folder_hierarchy
+
+        g = _make_guru_mock()
+        home = _make_folder_obj(HOME_FOLDER_UUID, "Regression Home")
+        g.collections.home_folder.return_value = home
+
+        folder_item = _make_folder_item(SUB_FOLDER_UUID_1, "folder")
+        # Verify fixture uses distinct values
+        assert folder_item.id == SUB_FOLDER_UUID_1
+        assert folder_item.item_id == f"placement-{SUB_FOLDER_UUID_1}"
+
+        g.folders.items.side_effect = [
+            [folder_item],
+            [],  # sub-folder is empty
+        ]
+        g.folders.get.return_value = _make_folder_obj(SUB_FOLDER_UUID_1, "Test Folder")
+
+        csv_path = tmp_path / "regression.csv"
+        dump_folder_hierarchy(g, COLL_UUID, path=str(csv_path))
+
+        # folders.get must be called with the actual folder UUID, not the placement UUID
+        g.folders.get.assert_called_with(SUB_FOLDER_UUID_1)
