@@ -36,6 +36,10 @@ dev = [
 codegen = [
     "datamodel-code-generator>=0.25",
 ]
+publish = [
+    "build>=1.0",
+    "twine>=5.0",
+]
 
 [project.urls]
 Homepage = "https://github.com/guruhq/guru-py-sdk"

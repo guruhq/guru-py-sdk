@@ -1,0 +1,119 @@
+# =============================================================================
+# guru-py-sdk CI/CD Pipeline
+# =============================================================================
+#
+# Two jobs:
+#   1. check  — runs on every PR and push to main (lint + typecheck + tests)
+#   2. publish — runs only on version tags (v*) to publish to PyPI
+#
+# Required CircleCI environment variables:
+#   PYPI_TOKEN — project-scoped PyPI API token (starts with "pypi-")
+#
+# Python dependency management uses uv (fast, lockfile-based).
+# Quality gates mirror local development: `make check` = lint + typecheck + test.
+# =============================================================================
+
+version: 2.1
+
+# =============================================================================
+# Executors
+# =============================================================================
+executors:
+  python:
+    docker:
+      - image: cimg/python:3.12
+    working_directory: ~/project
+
+# =============================================================================
+# Commands (reusable steps)
+# =============================================================================
+commands:
+  install-deps:
+    description: "Install uv and project dependencies"
+    steps:
+      - run:
+          name: Install uv
+          command: curl -LsSf https://astral.sh/uv/install.sh | sh
+      - run:
+          name: Install dependencies
+          command: |
+            export PATH="$HOME/.local/bin:$PATH"
+            uv sync --all-extras
+
+# =============================================================================
+# Jobs
+# =============================================================================
+jobs:
+  check:
+    executor: python
+    steps:
+      - checkout
+      - install-deps
+      - run:
+          name: Lint (ruff)
+          command: |
+            export PATH="$HOME/.local/bin:$PATH"
+            uv run ruff check src tests
+      - run:
+          name: Typecheck (mypy)
+          command: |
+            export PATH="$HOME/.local/bin:$PATH"
+            uv run mypy src/guru_sdk/ --strict
+      - run:
+          name: Test (pytest)
+          command: |
+            export PATH="$HOME/.local/bin:$PATH"
+            uv run pytest
+      - store_test_results:
+          path: test-results
+
+  publish:
+    executor: python
+    steps:
+      - checkout
+      - install-deps
+      - run:
+          name: Build package
+          command: |
+            export PATH="$HOME/.local/bin:$PATH"
+            uv run python -m build
+      - run:
+          name: Publish to PyPI
+          command: |
+            export PATH="$HOME/.local/bin:$PATH"
+            uv run python -m twine upload dist/* \
+              --username __token__ \
+              --password "${PYPI_TOKEN}" \
+              --non-interactive
+
+# =============================================================================
+# Workflows
+# =============================================================================
+workflows:
+  version: 2
+
+  # Run quality gates on every PR and push to main
+  ci:
+    jobs:
+      - check:
+          filters:
+            tags:
+              only: /.*/
+
+  # Publish to PyPI only on version tags (e.g., v0.1.0, v1.2.3)
+  release:
+    jobs:
+      - check:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v\d+\.\d+\.\d+$/
+      - publish:
+          requires:
+            - check
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v\d+\.\d+\.\d+$/

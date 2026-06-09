@@ -254,3 +254,100 @@ class TestReplaceUrl:
         )
         assert modified is True
         assert "https://new.example.com/docs/page1" in result_html
+
+
+# =============================================================================
+# replace_text
+# =============================================================================
+
+
+class TestReplaceText:
+    """replace_text(html, old_text, new_text, *, case_sensitive)."""
+
+    def test_replaces_visible_text(self) -> None:
+        """Replaces a phrase found in visible HTML content."""
+        from guru_sdk.contrib.content import replace_text
+
+        html = "<p>Welcome to Acme Corp!</p>"
+        result_html, modified = replace_text(html, "Acme Corp", "Acme Inc.")
+        assert modified is True
+        assert "Acme Inc." in result_html
+        assert "Acme Corp" not in result_html
+
+    def test_replaces_all_occurrences(self) -> None:
+        """Every occurrence is replaced, not just the first."""
+        from guru_sdk.contrib.content import replace_text
+
+        html = "<p>old old old</p><div>old</div>"
+        result_html, modified = replace_text(html, "old", "new")
+        assert modified is True
+        assert result_html.count("new") == 4
+        assert "old" not in result_html
+
+    def test_no_match_returns_unchanged(self) -> None:
+        """If the text is absent, returns the original HTML and False."""
+        from guru_sdk.contrib.content import replace_text
+
+        result_html, modified = replace_text(SIMPLE_HTML, "missing phrase", "x")
+        assert modified is False
+        assert result_html == SIMPLE_HTML
+
+    def test_case_sensitive_by_default(self) -> None:
+        """Default is exact-case matching (mirrors str.replace)."""
+        from guru_sdk.contrib.content import replace_text
+
+        html = "<p>Guru and guru</p>"
+        result_html, modified = replace_text(html, "Guru", "GURU")
+        assert modified is True
+        assert "GURU and guru" in result_html
+
+    def test_case_insensitive_when_requested(self) -> None:
+        """case_sensitive=False matches regardless of case."""
+        from guru_sdk.contrib.content import replace_text
+
+        html = "<p>Guru and GURU and guru</p>"
+        result_html, modified = replace_text(
+            html, "guru", "Acme", case_sensitive=False
+        )
+        assert modified is True
+        assert result_html.count("Acme") == 3
+
+    def test_case_insensitive_no_match(self) -> None:
+        """case_sensitive=False but no match → unchanged."""
+        from guru_sdk.contrib.content import replace_text
+
+        result_html, modified = replace_text(
+            SIMPLE_HTML, "nope", "x", case_sensitive=False
+        )
+        assert modified is False
+        assert result_html == SIMPLE_HTML
+
+    def test_special_regex_chars_treated_literally(self) -> None:
+        """Regex special chars in old_text are escaped (case-insensitive path)."""
+        from guru_sdk.contrib.content import replace_text
+
+        html = "<p>price: $1.99 (sale)</p>"
+        result_html, modified = replace_text(
+            html, "$1.99", "$2.99", case_sensitive=False
+        )
+        assert modified is True
+        assert "$2.99" in result_html
+        assert "$1.99" not in result_html
+
+    def test_empty_old_text_is_noop(self) -> None:
+        """Empty old_text is a no-op (avoids pathological empty-string match)."""
+        from guru_sdk.contrib.content import replace_text
+
+        result_html, modified = replace_text(SIMPLE_HTML, "", "x")
+        assert modified is False
+        assert result_html == SIMPLE_HTML
+
+    def test_replaces_inside_attributes(self) -> None:
+        """Operates on raw HTML — matches inside attributes too (mirrors replace_url)."""
+        from guru_sdk.contrib.content import replace_text
+
+        html = '<a href="https://example.com/old-path">old</a>'
+        result_html, modified = replace_text(html, "old", "new")
+        assert modified is True
+        assert 'href="https://example.com/new-path"' in result_html
+        assert ">new</a>" in result_html

@@ -20,6 +20,7 @@ import pytest
 
 from guru_sdk.errors import NotFoundError
 from guru_sdk.models._generated import (
+    Card,
     CollectionModel,
     Folder,
     FolderItem,
@@ -724,3 +725,275 @@ class TestDumpFolderHierarchy:
 
         # folders.get must be called with the actual folder UUID, not the placement UUID
         g.folders.get.assert_called_with(SUB_FOLDER_UUID_1)
+
+
+# =============================================================================
+# replace_text_in_collection_cards
+# =============================================================================
+
+CARD_UUID_1 = "ca111111-1111-1111-1111-111111111111"
+CARD_UUID_2 = "ca222222-2222-2222-2222-222222222222"
+CARD_UUID_3 = "ca333333-3333-3333-3333-333333333333"
+
+
+def _make_card(
+    card_id: str,
+    *,
+    content: str,
+    title: str = "Test Card",
+) -> Card:
+    """Build a minimal Card for cards.get() responses."""
+    return Card.model_validate(
+        {
+            "id": card_id,
+            "preferredPhrase": title,
+            "content": content,
+        }
+    )
+
+
+class TestReplaceTextInCollectionCards:
+    """replace_text_in_collection_cards(g, collection_id, old_text, new_text, ...)."""
+
+    def test_updates_cards_containing_text(self) -> None:
+        """Cards containing old_text get patched with new content."""
+        from guru_sdk.contrib.workflows import replace_text_in_collection_cards
+
+        g = _make_guru_mock()
+        home = _make_folder_obj(HOME_FOLDER_UUID, "Home")
+        g.collections.home_folder.return_value = home
+
+        # Home folder has two cards
+        g.folders.items.return_value = [
+            _make_folder_item(CARD_UUID_1, "card"),
+            _make_folder_item(CARD_UUID_2, "card"),
+        ]
+
+        cards_by_id = {
+            CARD_UUID_1: _make_card(
+                CARD_UUID_1, content="<p>Welcome to Acme Corp!</p>", title="Welcome"
+            ),
+            CARD_UUID_2: _make_card(
+                CARD_UUID_2, content="<p>Acme Corp rocks.</p>", title="About"
+            ),
+        }
+        g.cards.get.side_effect = lambda cid: cards_by_id[cid]
+        g.cards.patch.return_value = None
+
+        results = replace_text_in_collection_cards(
+            g, COLL_UUID, "Acme Corp", "Acme Inc."
+        )
+
+        assert g.cards.patch.call_count == 2
+        # patch should pass new content and keep_verification by default
+        for call in g.cards.patch.call_args_list:
+            _args, kwargs = call
+            assert "Acme Inc." in kwargs["content"]
+            assert "Acme Corp" not in kwargs["content"]
+            assert kwargs.get("keep_verification") is True
+
+        statuses = sorted(r.status for r in results)
+        assert statuses == ["updated", "updated"]
+
+    def test_skips_cards_without_text(self) -> None:
+        """Cards that don't contain old_text are reported as unchanged and not patched."""
+        from guru_sdk.contrib.workflows import replace_text_in_collection_cards
+
+        g = _make_guru_mock()
+        home = _make_folder_obj(HOME_FOLDER_UUID, "Home")
+        g.collections.home_folder.return_value = home
+
+        g.folders.items.return_value = [
+            _make_folder_item(CARD_UUID_1, "card"),
+            _make_folder_item(CARD_UUID_2, "card"),
+        ]
+
+        cards_by_id = {
+            CARD_UUID_1: _make_card(CARD_UUID_1, content="<p>Has Acme Corp here.</p>"),
+            CARD_UUID_2: _make_card(CARD_UUID_2, content="<p>Nothing to see.</p>"),
+        }
+        g.cards.get.side_effect = lambda cid: cards_by_id[cid]
+
+        results = replace_text_in_collection_cards(
+            g, COLL_UUID, "Acme Corp", "Acme Inc."
+        )
+
+        # Only CARD_UUID_1 gets patched
+        g.cards.patch.assert_called_once()
+        called_card_id = g.cards.patch.call_args.args[0]
+        assert called_card_id == CARD_UUID_1
+
+        statuses = {r.card_id: r.status for r in results}
+        assert statuses[CARD_UUID_1] == "updated"
+        assert statuses[CARD_UUID_2] == "unchanged"
+
+    def test_walks_nested_folders(self) -> None:
+        """Recursively descends into sub-folders to find cards."""
+        from guru_sdk.contrib.workflows import replace_text_in_collection_cards
+
+        g = _make_guru_mock()
+        home = _make_folder_obj(HOME_FOLDER_UUID, "Home")
+        g.collections.home_folder.return_value = home
+
+        # Home contains a sub-folder and one card
+        # Sub-folder contains another card
+        g.folders.items.side_effect = [
+            [
+                _make_folder_item(SUB_FOLDER_UUID_1, "folder"),
+                _make_folder_item(CARD_UUID_1, "card"),
+            ],
+            [_make_folder_item(CARD_UUID_2, "card")],
+        ]
+
+        cards_by_id = {
+            CARD_UUID_1: _make_card(CARD_UUID_1, content="<p>Foo bar.</p>"),
+            CARD_UUID_2: _make_card(CARD_UUID_2, content="<p>Foo baz.</p>"),
+        }
+        g.cards.get.side_effect = lambda cid: cards_by_id[cid]
+
+        results = replace_text_in_collection_cards(
+            g, COLL_UUID, "Foo", "Bar"
+        )
+
+        assert {r.card_id for r in results} == {CARD_UUID_1, CARD_UUID_2}
+        assert all(r.status == "updated" for r in results)
+        assert g.cards.patch.call_count == 2
+
+    def test_dry_run_does_not_patch(self) -> None:
+        """dry_run=True records what *would* change but skips the patch call."""
+        from guru_sdk.contrib.workflows import replace_text_in_collection_cards
+
+        g = _make_guru_mock()
+        home = _make_folder_obj(HOME_FOLDER_UUID, "Home")
+        g.collections.home_folder.return_value = home
+
+        g.folders.items.return_value = [
+            _make_folder_item(CARD_UUID_1, "card"),
+        ]
+        g.cards.get.return_value = _make_card(
+            CARD_UUID_1, content="<p>old text here</p>"
+        )
+
+        results = replace_text_in_collection_cards(
+            g, COLL_UUID, "old", "new", dry_run=True
+        )
+
+        g.cards.patch.assert_not_called()
+        assert len(results) == 1
+        assert results[0].status == "would_update"
+
+    def test_case_insensitive_match(self) -> None:
+        """case_sensitive=False matches regardless of case."""
+        from guru_sdk.contrib.workflows import replace_text_in_collection_cards
+
+        g = _make_guru_mock()
+        home = _make_folder_obj(HOME_FOLDER_UUID, "Home")
+        g.collections.home_folder.return_value = home
+
+        g.folders.items.return_value = [
+            _make_folder_item(CARD_UUID_1, "card"),
+        ]
+        g.cards.get.return_value = _make_card(
+            CARD_UUID_1, content="<p>GURU and guru and Guru</p>"
+        )
+
+        results = replace_text_in_collection_cards(
+            g, COLL_UUID, "guru", "Acme", case_sensitive=False
+        )
+
+        assert results[0].status == "updated"
+        patched_content = g.cards.patch.call_args.kwargs["content"]
+        assert patched_content.count("Acme") == 3
+
+    def test_failed_card_is_recorded(self) -> None:
+        """Errors fetching or patching a card are captured and walking continues."""
+        from guru_sdk.contrib.workflows import replace_text_in_collection_cards
+
+        g = _make_guru_mock()
+        home = _make_folder_obj(HOME_FOLDER_UUID, "Home")
+        g.collections.home_folder.return_value = home
+
+        g.folders.items.return_value = [
+            _make_folder_item(CARD_UUID_1, "card"),
+            _make_folder_item(CARD_UUID_2, "card"),
+        ]
+
+        def get_side_effect(cid: str) -> Card:
+            if cid == CARD_UUID_1:
+                raise NotFoundError("Card vanished")
+            return _make_card(CARD_UUID_2, content="<p>old</p>")
+
+        g.cards.get.side_effect = get_side_effect
+
+        results = replace_text_in_collection_cards(
+            g, COLL_UUID, "old", "new"
+        )
+
+        statuses = {r.card_id: r.status for r in results}
+        assert statuses[CARD_UUID_1] == "failed"
+        assert statuses[CARD_UUID_2] == "updated"
+        # The second card still got patched
+        g.cards.patch.assert_called_once()
+
+    def test_duplicate_card_only_processed_once(self) -> None:
+        """A card appearing in multiple folders is only updated once."""
+        from guru_sdk.contrib.workflows import replace_text_in_collection_cards
+
+        g = _make_guru_mock()
+        home = _make_folder_obj(HOME_FOLDER_UUID, "Home")
+        g.collections.home_folder.return_value = home
+
+        # Home contains one sub-folder + the same card
+        # Sub-folder contains the same card again
+        g.folders.items.side_effect = [
+            [
+                _make_folder_item(SUB_FOLDER_UUID_1, "folder"),
+                _make_folder_item(CARD_UUID_1, "card"),
+            ],
+            [_make_folder_item(CARD_UUID_1, "card")],
+        ]
+        g.cards.get.return_value = _make_card(
+            CARD_UUID_1, content="<p>old text</p>"
+        )
+
+        results = replace_text_in_collection_cards(
+            g, COLL_UUID, "old", "new"
+        )
+
+        # Card is processed once, patched once
+        assert sum(1 for r in results if r.card_id == CARD_UUID_1) == 1
+        g.cards.patch.assert_called_once()
+
+    def test_empty_old_text_raises(self) -> None:
+        """Empty old_text is rejected (would otherwise be a pathological no-op)."""
+        from guru_sdk.contrib.workflows import replace_text_in_collection_cards
+
+        g = _make_guru_mock()
+
+        with pytest.raises(ValueError, match="old_text"):
+            replace_text_in_collection_cards(g, COLL_UUID, "", "anything")
+
+    def test_uses_card_id_not_placement_id(self) -> None:
+        """Regression: cards.get must use item.id (card UUID), not item.item_id (placement UUID)."""
+        from guru_sdk.contrib.workflows import replace_text_in_collection_cards
+
+        g = _make_guru_mock()
+        home = _make_folder_obj(HOME_FOLDER_UUID, "Home")
+        g.collections.home_folder.return_value = home
+
+        card_item = _make_folder_item(CARD_UUID_1, "card")
+        # Verify fixture has distinct id vs itemId
+        assert card_item.id == CARD_UUID_1
+        assert card_item.item_id == f"placement-{CARD_UUID_1}"
+
+        g.folders.items.return_value = [card_item]
+        g.cards.get.return_value = _make_card(
+            CARD_UUID_1, content="<p>old</p>"
+        )
+
+        replace_text_in_collection_cards(g, COLL_UUID, "old", "new")
+
+        # cards.get must be called with the actual card UUID
+        g.cards.get.assert_called_with(CARD_UUID_1)
+        # patch must also be called with the card UUID
+        assert g.cards.patch.call_args.args[0] == CARD_UUID_1

@@ -16,6 +16,7 @@ Usage::
 from __future__ import annotations
 
 import csv
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from guru_sdk.errors import NotFoundError
@@ -359,3 +360,183 @@ def _walk_folder_items(
 
         # Recurse into sub-folder
         _walk_folder_items(g, sub_folder_id, writer, current_chain)
+
+
+# =============================================================================
+# Bulk Content Edits
+# =============================================================================
+
+
+@dataclass(frozen=True)
+class CardReplaceResult:
+    """Per-card outcome from :func:`replace_text_in_collection_cards`.
+
+    Attributes:
+        card_id: The card's UUID.
+        title: The card's preferred phrase (display title), if known.
+        status: One of ``"updated"``, ``"unchanged"``, ``"would_update"``
+            (dry-run hit), or ``"failed"``.
+        error: Error message when ``status == "failed"``, otherwise None.
+    """
+
+    card_id: str
+    title: str
+    status: str
+    error: str | None = None
+
+
+def replace_text_in_collection_cards(
+    g: Guru,
+    collection_id: str,
+    old_text: str,
+    new_text: str,
+    *,
+    dry_run: bool = False,
+    case_sensitive: bool = True,
+    keep_verification: bool = True,
+) -> list[CardReplaceResult]:
+    """Replace a text string in every card in a collection.
+
+    Walks the collection's folder hierarchy starting at the home folder and,
+    for each card it finds, replaces all occurrences of ``old_text`` with
+    ``new_text``. Cards that don't contain the text are reported as
+    ``"unchanged"`` and not patched. Errors fetching or patching an individual
+    card are captured in the returned list — they don't stop the walk.
+
+    Replacement is delegated to :func:`guru_sdk.contrib.content.replace_text`,
+    which operates on the raw HTML string (matches in both visible text and
+    attribute values).
+
+    Updates use :meth:`Guru.cards.patch`, which preserves verification state
+    by default (``keep_verification=True``). Pass ``keep_verification=False``
+    to trigger re-verification for every modified card.
+
+    Args:
+        g: Guru client instance.
+        collection_id: Collection UUID or name.
+        old_text: Text to find. Must be non-empty.
+        new_text: Replacement text.
+        dry_run: If True, walk the collection and report ``"would_update"``
+            for cards containing the text, but issue no PATCH calls.
+        case_sensitive: If False, match regardless of case.
+        keep_verification: Forwarded to :meth:`Guru.cards.patch`.
+
+    Returns:
+        A :class:`CardReplaceResult` per card visited (cards that appear in
+        multiple folders are visited only once).
+
+    Raises:
+        ValueError: If ``old_text`` is empty.
+        NotFoundError: If the collection has no home folder / does not exist.
+    """
+    if not old_text:
+        msg = "old_text must not be empty"
+        raise ValueError(msg)
+
+    home = g.collections.home_folder(collection_id)
+
+    results: list[CardReplaceResult] = []
+    visited: set[str] = set()
+    _replace_text_walk(
+        g,
+        home.id or "",
+        old_text=old_text,
+        new_text=new_text,
+        dry_run=dry_run,
+        case_sensitive=case_sensitive,
+        keep_verification=keep_verification,
+        results=results,
+        visited=visited,
+    )
+    return results
+
+
+def _replace_text_walk(
+    g: Guru,
+    folder_id: str,
+    *,
+    old_text: str,
+    new_text: str,
+    dry_run: bool,
+    case_sensitive: bool,
+    keep_verification: bool,
+    results: list[CardReplaceResult],
+    visited: set[str],
+) -> None:
+    """Recursively walk a folder, processing each card it finds."""
+    from guru_sdk.contrib.content import replace_text
+    from guru_sdk.models._generated import Type9
+
+    items = g.folders.items(folder_id)
+
+    for item in items:
+        item_id = item.id
+        if item_id is None:
+            continue
+
+        if item.type == Type9.folder:
+            _replace_text_walk(
+                g,
+                item_id,
+                old_text=old_text,
+                new_text=new_text,
+                dry_run=dry_run,
+                case_sensitive=case_sensitive,
+                keep_verification=keep_verification,
+                results=results,
+                visited=visited,
+            )
+            continue
+
+        if item.type != Type9.card:
+            continue
+
+        # Cards can appear in multiple folders — only process each once.
+        if item_id in visited:
+            continue
+        visited.add(item_id)
+
+        try:
+            card = g.cards.get(item_id)
+            content = card.content or ""
+            modified_content, changed = replace_text(
+                content,
+                old_text,
+                new_text,
+                case_sensitive=case_sensitive,
+            )
+            title = card.preferred_phrase or ""
+
+            if not changed:
+                results.append(
+                    CardReplaceResult(
+                        card_id=item_id, title=title, status="unchanged"
+                    )
+                )
+                continue
+
+            if dry_run:
+                results.append(
+                    CardReplaceResult(
+                        card_id=item_id, title=title, status="would_update"
+                    )
+                )
+                continue
+
+            g.cards.patch(
+                item_id,
+                content=modified_content,
+                keep_verification=keep_verification,
+            )
+            results.append(
+                CardReplaceResult(card_id=item_id, title=title, status="updated")
+            )
+        except Exception as exc:
+            results.append(
+                CardReplaceResult(
+                    card_id=item_id,
+                    title="",
+                    status="failed",
+                    error=str(exc),
+                )
+            )

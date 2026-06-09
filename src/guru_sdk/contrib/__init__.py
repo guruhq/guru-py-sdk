@@ -14,6 +14,7 @@ from guru_sdk.contrib.bundle import (
 from guru_sdk.contrib.content import (
     find_urls,
     has_text,
+    replace_text,
     replace_url,
 )
 from guru_sdk.contrib.publisher import (
@@ -21,6 +22,7 @@ from guru_sdk.contrib.publisher import (
     PublisherFolders,
 )
 from guru_sdk.contrib.workflows import (
+    CardReplaceResult,
     add_tag_with_auto_create,
     add_user_to_groups,
     batch_add_users_to_group,
@@ -28,12 +30,14 @@ from guru_sdk.contrib.workflows import (
     make_collection_with_setup,
     move_card_between_folders,
     remove_user_from_groups,
+    replace_text_in_collection_cards,
 )
 
 __all__ = [
     "Bundle",
     "BundleNode",
     "CardChanges",
+    "CardReplaceResult",
     "PublisherFolders",
     "add_tag_with_auto_create",
     "add_user_to_groups",
@@ -45,5 +49,7 @@ __all__ = [
     "make_collection_with_setup",
     "move_card_between_folders",
     "remove_user_from_groups",
+    "replace_text",
+    "replace_text_in_collection_cards",
     "replace_url",
 ]

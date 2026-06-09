@@ -6,17 +6,19 @@ HTML string.
 
 Usage::
 
-    from guru_sdk.contrib.content import has_text, find_urls, replace_url
+    from guru_sdk.contrib.content import has_text, find_urls, replace_url, replace_text
 
     if has_text(card.content, "deprecated"):
         print("Card mentions deprecated content")
 
     urls = find_urls(card.content)
     html, changed = replace_url(card.content, "old.com", "new.com")
+    html, changed = replace_text(card.content, "Acme Corp", "Acme Inc.")
 """
 
 from __future__ import annotations
 
+import re
 from html.parser import HTMLParser
 
 # =============================================================================
@@ -104,6 +106,51 @@ def replace_url(
 
     modified = html.replace(old_url, new_url)
     return modified, True
+
+
+# =============================================================================
+# Text Replacement
+# =============================================================================
+
+
+def replace_text(
+    html: str,
+    old_text: str,
+    new_text: str,
+    *,
+    case_sensitive: bool = True,
+) -> tuple[str, bool]:
+    """Replace all occurrences of a text string in HTML content.
+
+    Performs a string-level replacement on the raw HTML — like ``replace_url``,
+    this matches inside attribute values as well as visible text. For visibility
+    checks before replacing, use :func:`has_text`.
+
+    The ``old_text`` is matched literally; in case-insensitive mode it is
+    escaped before being compiled as a regex so characters like ``.`` and ``$``
+    have no special meaning.
+
+    Args:
+        html: Raw HTML string.
+        old_text: Text to find. Empty strings are a no-op.
+        new_text: Replacement text.
+        case_sensitive: If False, match without regard to case (default True).
+
+    Returns:
+        Tuple of (modified_html, was_modified). ``was_modified`` is True if at
+        least one replacement was made.
+    """
+    if not old_text:
+        return html, False
+
+    if case_sensitive:
+        if old_text not in html:
+            return html, False
+        return html.replace(old_text, new_text), True
+
+    pattern = re.compile(re.escape(old_text), flags=re.IGNORECASE)
+    modified, count = pattern.subn(new_text, html)
+    return modified, count > 0
 
 
 # =============================================================================
