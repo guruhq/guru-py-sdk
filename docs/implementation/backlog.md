@@ -25,6 +25,7 @@ The planned iterations for guru-py-sdk, derived from the [restructure plan](/RES
 | 017 | QA Environment Support | Complete | `qa=True` convenience flag + `GURU_BASE_URL` env var on `Guru` constructor. URL resolution: explicit arg → qa flag → env var → default. Conflict detection for qa + base_url. 8 new tests (669 total) |
 | 019 | Card Attachments | Complete | `CardResource.upload_file()` + `HttpClient.post_file()`. Multipart file upload via `POST /attachments/upload` (ADR-006). Returns URL for embedding in card HTML. 6 new tests (661 total) |
 | 020 | Migration Guide + README | Complete | Concise customer-facing README (resource table, quick start, contrib examples). Comprehensive migration guide mapping every legacy py-sdk method to its guru-py-sdk equivalent. PyPI publish deferred. |
+| 021 | Draft Collaborators | Complete | `DraftCollaborator` manual model + 3 methods on `DraftResource` (list/add/remove collaborators), matching guru-cli's card-draft surface (no `update`, unlike page drafts). 9 new tests (698 total). Epic 156474 ("Add Collaborator" for agent tools). |
 
 ## Remaining
 

@@ -1,8 +1,8 @@
-"""Draft resource — CRD operations on draft cards.
+"""Draft resource — CRD + collaborators for draft cards.
 
 Drafts are unpublished card edits. They can be standalone (new card drafts) or
 linked to an existing card (edit drafts). This resource provides create, read,
-and delete operations.
+delete operations and collaborator management.
 
 **Update is intentionally omitted.** When a draft is opened in the web app, it
 enters collaborative editing mode (MPS/YJS). Updates from outside that
@@ -10,17 +10,21 @@ experience must "politely fail" if the draft is actively being edited. The
 update operation will be added in a future iteration once the architecture
 supports detecting and handling the collaborative editing state.
 
-API surface mirrors guru-cli's DraftResource (CRD subset).
+API surface mirrors guru-cli's DraftResource (CRD subset + collaborators).
 """
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from guru_sdk._compat import validate_free_text, validate_input
 from guru_sdk.errors import ValidationError
 from guru_sdk.models._generated import DraftCard
+from guru_sdk.models._manual import DraftCollaborator
 from guru_sdk.resources._base import BaseResource
+
+if TYPE_CHECKING:
+    import builtins
 
 # =============================================================================
 # Public API — DraftResource
@@ -31,10 +35,13 @@ class DraftResource(BaseResource):
     """Guru Drafts — create, read, and delete draft cards.
 
     Methods:
-        list()    — list all drafts or filter by card ID (GET /drafts)
-        get()     — get a draft by ID (GET /drafts/{draftId})
-        create()  — create a new draft (POST /drafts)
-        delete()  — delete a draft (DELETE /drafts/{draftId})
+        list()                — list all drafts or filter by card ID (GET /drafts)
+        get()                 — get a draft by ID (GET /drafts/{draftId})
+        create()              — create a new draft (POST /drafts)
+        delete()              — delete a draft (DELETE /drafts/{draftId})
+        list_collaborators()  — list collaborators (GET /drafts/{id}/collaborators)
+        add_collaborators()   — add collaborators (POST /drafts/{id}/collaborators)
+        remove_collaborator() — remove collaborator (DELETE /drafts/{id}/collaborators/{cId})
 
     Update is deferred — see module docstring for rationale.
     """
@@ -110,3 +117,49 @@ class DraftResource(BaseResource):
         """
         validate_input(draft_id, "draft_id")
         self._http.delete(f"/drafts/{draft_id}")
+
+    # -------------------------------------------------------------------------
+    # Collaborators — manage who can see/edit a draft
+    # -------------------------------------------------------------------------
+
+    def list_collaborators(self, draft_id: str) -> builtins.list[DraftCollaborator]:
+        """List collaborators on a draft.
+
+        Args:
+            draft_id: Draft UUID.
+        """
+        validate_input(draft_id, "draft_id")
+        return self._http.get_list(
+            f"/drafts/{draft_id}/collaborators",
+            DraftCollaborator,
+        )
+
+    def add_collaborators(
+        self,
+        draft_id: str,
+        collaborators: builtins.list[dict[str, Any]],
+    ) -> builtins.list[DraftCollaborator]:
+        """Add collaborators to a draft.
+
+        Args:
+            draft_id: Draft UUID.
+            collaborators: List of collaborator dicts, each with 'type' (e.g.
+                "user") and a nested 'user' (e.g. ``{"email": ...}``) or 'group'.
+        """
+        validate_input(draft_id, "draft_id")
+        return self._http.post_list(
+            f"/drafts/{draft_id}/collaborators",
+            {"collaborators": collaborators},
+            DraftCollaborator,
+        )
+
+    def remove_collaborator(self, draft_id: str, collaborator_id: str) -> None:
+        """Remove a collaborator from a draft.
+
+        Args:
+            draft_id: Draft UUID.
+            collaborator_id: Collaborator ID.
+        """
+        validate_input(draft_id, "draft_id")
+        validate_input(collaborator_id, "collaborator_id")
+        self._http.delete(f"/drafts/{draft_id}/collaborators/{collaborator_id}")

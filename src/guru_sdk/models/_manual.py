@@ -117,3 +117,25 @@ class PageDraftCollaborator(GuruModel):
     ] = None
     user: User | None = None
     group: Annotated[dict[str, str | None] | None, Field(None)] = None
+
+
+# =============================================================================
+# Draft Collaborator — collaborator on a card draft
+# =============================================================================
+
+
+class DraftCollaborator(GuruModel):
+    """A collaborator on a card draft — a user or group with access to the draft.
+
+    Returned by GET/POST /drafts/{id}/collaborators. Unlike PageDraftCollaborator,
+    card draft collaborators have no objectRole; they carry a dateCreated instead.
+    Mirrors guru-cli's DraftCollaborator shape.
+    """
+
+    id: str | None = None
+    type: str | None = None  # "user"
+    user: User | None = None
+    group: Annotated[dict[str, str | None] | None, Field(None)] = None
+    date_created: Annotated[
+        AwareDatetime | None, Field(alias="dateCreated")
+    ] = None
