@@ -68,7 +68,7 @@ Every Guru API area is a resource on the client. All accept names or UUIDs.
 | Tags | `g.tags` | Tags and categories |
 | Search | `g.search` | Keyword and semantic search across cards, sources, and documents |
 | Sources | `g.sources` | Read-only access to external connectors (Confluence, Jira, Slack, etc.) |
-| Drafts | `g.drafts` | Create, read, delete card drafts |
+| Drafts | `g.drafts` | Create, read, delete card drafts, collaborator management |
 | Pages | `g.pages` | CRUD, nested tree, permissions, repositioning |
 | Page Drafts | `g.page_drafts` | Create, read, delete, collaborator management |
 | Agents | `g.agents` | CRUD and group access for Knowledge Agents |
