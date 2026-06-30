@@ -54,6 +54,7 @@ from guru_sdk.models._generated import (
     WhoAmI,
 )
 from guru_sdk.models._manual import (
+    DraftCollaborator,
     PageDraft,
     PageDraftCollaborator,
     PagePermission,
@@ -78,6 +79,7 @@ __all__ = [
     "Document",
     "DocumentSearchResponse",
     "DraftCard",
+    "DraftCollaborator",
     "EffectivePermissions",
     "Folder",
     "FolderCard",

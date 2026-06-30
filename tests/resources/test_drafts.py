@@ -1,10 +1,13 @@
 """Tests for guru_sdk.resources.drafts — DraftResource.
 
-TDD tests covering the draft API surface (CRD only — no update):
+TDD tests covering the draft API surface (CRD + collaborators — no update):
 - list() — list all drafts or filter by card ID (GET /drafts)
 - get() — get a specific draft (GET /drafts/{draftId})
 - create() — create a new draft (POST /drafts)
 - delete() — delete a draft (DELETE /drafts/{draftId})
+- list_collaborators() — list collaborators (GET /drafts/{id}/collaborators)
+- add_collaborators() — add collaborators (POST /drafts/{id}/collaborators)
+- remove_collaborator() — remove collaborator (DELETE /drafts/{id}/collaborators/{cId})
 - Input validation
 
 Update is explicitly deferred due to collaborative editing (MPS/YJS) complexity.
@@ -19,6 +22,7 @@ import pytest
 
 from guru_sdk.errors import ValidationError
 from guru_sdk.models._generated import DraftCard
+from guru_sdk.models._manual import DraftCollaborator
 from guru_sdk.resources.drafts import DraftResource
 
 if TYPE_CHECKING:
@@ -32,6 +36,24 @@ DRAFT_UUID = "a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1"
 DRAFT_UUID_2 = "b2b2b2b2-b2b2-b2b2-b2b2-b2b2b2b2b2b2"
 CARD_UUID = "c3c3c3c3-c3c3-c3c3-c3c3-c3c3c3c3c3c3"
 COLLECTION_UUID = "d4d4d4d4-d4d4-d4d4-d4d4-d4d4d4d4d4d4"
+COLLAB_UUID = "e5e5e5e5-e5e5-e5e5-e5e5-e5e5e5e5e5e5"
+
+
+def _collaborator_json(
+    collab_id: str = COLLAB_UUID,
+    email: str = "collab@example.com",
+) -> dict:
+    """Build a realistic DraftCollaborator API response dict."""
+    return {
+        "id": collab_id,
+        "type": "user",
+        "user": {
+            "email": email,
+            "firstName": "Collab",
+            "lastName": "User",
+        },
+        "dateCreated": "2025-06-15T10:00:00.000+0000",
+    }
 
 
 def _draft_json(
@@ -271,3 +293,110 @@ class TestDelete:
         """Empty draft_id raises ValidationError."""
         with pytest.raises(ValidationError):
             drafts.delete("")
+
+
+# =============================================================================
+# list_collaborators() — GET /drafts/{draftId}/collaborators
+# =============================================================================
+
+
+class TestListCollaborators:
+    """List collaborators on a draft."""
+
+    def test_list_collaborators(self, drafts: DraftResource, httpx_mock) -> None:
+        """List returns DraftCollaborator objects."""
+        httpx_mock.add_response(
+            url=f"https://api.getguru.com/api/v1/drafts/{DRAFT_UUID}/collaborators",
+            json=[_collaborator_json(), _collaborator_json("c2", "other@example.com")],
+        )
+        result = drafts.list_collaborators(DRAFT_UUID)
+        assert len(result) == 2
+        assert isinstance(result[0], DraftCollaborator)
+        assert result[0].type == "user"
+        assert result[0].user is not None
+        assert result[0].user.email == "collab@example.com"
+        assert result[1].user is not None
+        assert result[1].user.email == "other@example.com"
+
+    def test_list_collaborators_empty(self, drafts: DraftResource, httpx_mock) -> None:
+        """No collaborators returns empty list."""
+        httpx_mock.add_response(
+            url=f"https://api.getguru.com/api/v1/drafts/{DRAFT_UUID}/collaborators",
+            json=[],
+        )
+        result = drafts.list_collaborators(DRAFT_UUID)
+        assert result == []
+
+    def test_validates_draft_id(self, drafts: DraftResource) -> None:
+        """Empty draft_id raises ValidationError."""
+        with pytest.raises(ValidationError):
+            drafts.list_collaborators("")
+
+
+# =============================================================================
+# add_collaborators() — POST /drafts/{draftId}/collaborators
+# =============================================================================
+
+
+class TestAddCollaborators:
+    """Add collaborators to a draft."""
+
+    def test_add_collaborators(self, drafts: DraftResource, httpx_mock) -> None:
+        """Add collaborators returns the updated list."""
+        httpx_mock.add_response(
+            url=f"https://api.getguru.com/api/v1/drafts/{DRAFT_UUID}/collaborators",
+            json=[_collaborator_json()],
+        )
+        collabs = [{"type": "user", "user": {"email": "collab@example.com"}}]
+        result = drafts.add_collaborators(DRAFT_UUID, collabs)
+        assert len(result) == 1
+        assert isinstance(result[0], DraftCollaborator)
+        assert result[0].user is not None
+        assert result[0].user.email == "collab@example.com"
+
+    def test_add_collaborators_body(self, drafts: DraftResource, httpx_mock) -> None:
+        """Verify the request body wraps collaborators."""
+        httpx_mock.add_response(
+            url=f"https://api.getguru.com/api/v1/drafts/{DRAFT_UUID}/collaborators",
+            json=[_collaborator_json()],
+        )
+        collabs = [{"type": "user", "user": {"email": "collab@example.com"}}]
+        drafts.add_collaborators(DRAFT_UUID, collabs)
+        request = httpx_mock.get_request()
+        body = json.loads(request.content)
+        assert "collaborators" in body
+        assert body["collaborators"] == collabs
+
+    def test_validates_draft_id(self, drafts: DraftResource) -> None:
+        """Empty draft_id raises ValidationError."""
+        with pytest.raises(ValidationError):
+            drafts.add_collaborators("", [])
+
+
+# =============================================================================
+# remove_collaborator() — DELETE /drafts/{draftId}/collaborators/{collaboratorId}
+# =============================================================================
+
+
+class TestRemoveCollaborator:
+    """Remove a collaborator from a draft."""
+
+    def test_remove_collaborator(self, drafts: DraftResource, httpx_mock) -> None:
+        """Delete removes a collaborator."""
+        httpx_mock.add_response(
+            url=f"https://api.getguru.com/api/v1/drafts/{DRAFT_UUID}/collaborators/{COLLAB_UUID}",
+            method="DELETE",
+            status_code=204,
+        )
+        # Should not raise
+        drafts.remove_collaborator(DRAFT_UUID, COLLAB_UUID)
+
+    def test_validates_draft_id(self, drafts: DraftResource) -> None:
+        """Empty draft_id raises ValidationError."""
+        with pytest.raises(ValidationError):
+            drafts.remove_collaborator("", COLLAB_UUID)
+
+    def test_validates_collaborator_id(self, drafts: DraftResource) -> None:
+        """Empty collaborator_id raises ValidationError."""
+        with pytest.raises(ValidationError):
+            drafts.remove_collaborator(DRAFT_UUID, "")
