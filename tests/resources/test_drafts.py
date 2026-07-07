@@ -37,6 +37,7 @@ DRAFT_UUID_2 = "b2b2b2b2-b2b2-b2b2-b2b2-b2b2b2b2b2b2"
 CARD_UUID = "c3c3c3c3-c3c3-c3c3-c3c3-c3c3c3c3c3c3"
 COLLECTION_UUID = "d4d4d4d4-d4d4-d4d4-d4d4-d4d4d4d4d4d4"
 COLLAB_UUID = "e5e5e5e5-e5e5-e5e5-e5e5-e5e5e5e5e5e5"
+GROUP_UUID = "f6f6f6f6-f6f6-f6f6-f6f6-f6f6f6f6f6f6"
 
 
 def _collaborator_json(
@@ -52,6 +53,19 @@ def _collaborator_json(
             "firstName": "Collab",
             "lastName": "User",
         },
+        "dateCreated": "2025-06-15T10:00:00.000+0000",
+    }
+
+
+def _group_collaborator_json(
+    collab_id: str = GROUP_UUID,
+    group_id: str = GROUP_UUID,
+) -> dict:
+    """Build a realistic group DraftCollaborator API response dict."""
+    return {
+        "id": collab_id,
+        "type": "user-group",
+        "userGroup": {"id": group_id},
         "dateCreated": "2025-06-15T10:00:00.000+0000",
     }
 
@@ -103,9 +117,7 @@ def drafts(http_client: HttpClient) -> DraftResource:
 class TestList:
     """List drafts, optionally filtered by card ID."""
 
-    def test_list_all(
-        self, drafts: DraftResource, httpx_mock
-    ) -> None:
+    def test_list_all(self, drafts: DraftResource, httpx_mock) -> None:
         """List all drafts returns list of DraftCard objects."""
         httpx_mock.add_response(
             url="https://api.getguru.com/api/v1/drafts",
@@ -120,9 +132,7 @@ class TestList:
         assert result[0].title == "First Draft"
         assert result[1].title == "Second Draft"
 
-    def test_list_empty(
-        self, drafts: DraftResource, httpx_mock
-    ) -> None:
+    def test_list_empty(self, drafts: DraftResource, httpx_mock) -> None:
         """No drafts returns empty list."""
         httpx_mock.add_response(
             url="https://api.getguru.com/api/v1/drafts",
@@ -131,9 +141,7 @@ class TestList:
         result = drafts.list()
         assert result == []
 
-    def test_list_by_card_id(
-        self, drafts: DraftResource, httpx_mock
-    ) -> None:
+    def test_list_by_card_id(self, drafts: DraftResource, httpx_mock) -> None:
         """Filtering by card_id passes query param."""
         httpx_mock.add_response(
             url=f"https://api.getguru.com/api/v1/drafts?cardId={CARD_UUID}",
@@ -143,9 +151,7 @@ class TestList:
         assert len(result) == 1
         assert result[0].card_id == CARD_UUID
 
-    def test_draft_nested_fields(
-        self, drafts: DraftResource, httpx_mock
-    ) -> None:
+    def test_draft_nested_fields(self, drafts: DraftResource, httpx_mock) -> None:
         """DraftCard model correctly parses nested user and collection."""
         httpx_mock.add_response(
             url="https://api.getguru.com/api/v1/drafts",
@@ -167,9 +173,7 @@ class TestList:
 class TestGet:
     """Get a specific draft by ID."""
 
-    def test_get_by_id(
-        self, drafts: DraftResource, httpx_mock
-    ) -> None:
+    def test_get_by_id(self, drafts: DraftResource, httpx_mock) -> None:
         """Get a draft by UUID."""
         httpx_mock.add_response(
             url=f"https://api.getguru.com/api/v1/drafts/{DRAFT_UUID}",
@@ -199,9 +203,7 @@ class TestGet:
 class TestCreate:
     """Create a new draft card."""
 
-    def test_create_minimal(
-        self, drafts: DraftResource, httpx_mock
-    ) -> None:
+    def test_create_minimal(self, drafts: DraftResource, httpx_mock) -> None:
         """Create a draft with just a title."""
         httpx_mock.add_response(
             url="https://api.getguru.com/api/v1/drafts",
@@ -212,9 +214,7 @@ class TestCreate:
         assert isinstance(result, DraftCard)
         assert result.title == "Draft Card"
 
-    def test_create_sends_body(
-        self, drafts: DraftResource, httpx_mock
-    ) -> None:
+    def test_create_sends_body(self, drafts: DraftResource, httpx_mock) -> None:
         """Create sends title and content in the POST body."""
         httpx_mock.add_response(
             url="https://api.getguru.com/api/v1/drafts",
@@ -227,9 +227,7 @@ class TestCreate:
         assert body["title"] == "My Draft"
         assert body["content"] == "<p>Hello</p>"
 
-    def test_create_with_all_fields(
-        self, drafts: DraftResource, httpx_mock
-    ) -> None:
+    def test_create_with_all_fields(self, drafts: DraftResource, httpx_mock) -> None:
         """Create with all optional fields."""
         httpx_mock.add_response(
             url="https://api.getguru.com/api/v1/drafts",
@@ -249,9 +247,7 @@ class TestCreate:
         assert body["jsonContent"] == '{"type":"doc"}'
         assert body["cardId"] == CARD_UUID
 
-    def test_create_omits_none_fields(
-        self, drafts: DraftResource, httpx_mock
-    ) -> None:
+    def test_create_omits_none_fields(self, drafts: DraftResource, httpx_mock) -> None:
         """None/default fields are not sent in the body."""
         httpx_mock.add_response(
             url="https://api.getguru.com/api/v1/drafts",
@@ -277,9 +273,7 @@ class TestCreate:
 class TestDelete:
     """Delete a draft."""
 
-    def test_delete(
-        self, drafts: DraftResource, httpx_mock
-    ) -> None:
+    def test_delete(self, drafts: DraftResource, httpx_mock) -> None:
         """Delete a draft by ID."""
         httpx_mock.add_response(
             url=f"https://api.getguru.com/api/v1/drafts/{DRAFT_UUID}",
@@ -400,3 +394,87 @@ class TestRemoveCollaborator:
         """Empty collaborator_id raises ValidationError."""
         with pytest.raises(ValidationError):
             drafts.remove_collaborator(DRAFT_UUID, "")
+
+
+# =============================================================================
+# add_group_collaborators() — POST /drafts/{draftId}/collaborators (group type)
+# =============================================================================
+
+
+class TestAddGroupCollaborators:
+    """Add group collaborators to a draft."""
+
+    def test_add_group_collaborators_body(self, drafts: DraftResource, httpx_mock) -> None:
+        """POST body is correctly shaped for group collaborators."""
+        httpx_mock.add_response(
+            url=f"https://api.getguru.com/api/v1/drafts/{DRAFT_UUID}/collaborators",
+            json=[_group_collaborator_json()],
+        )
+        drafts.add_group_collaborators(DRAFT_UUID, [GROUP_UUID])
+        request = httpx_mock.get_request()
+        body = json.loads(request.content)
+        assert body == {"collaborators": [{"type": "user-group", "userGroup": {"id": GROUP_UUID}}]}
+
+    def test_add_group_collaborators_returns_collaborators(
+        self, drafts: DraftResource, httpx_mock
+    ) -> None:
+        """Returns a list of DraftCollaborator objects."""
+        httpx_mock.add_response(
+            url=f"https://api.getguru.com/api/v1/drafts/{DRAFT_UUID}/collaborators",
+            json=[_group_collaborator_json()],
+        )
+        result = drafts.add_group_collaborators(DRAFT_UUID, [GROUP_UUID])
+        assert len(result) == 1
+        assert isinstance(result[0], DraftCollaborator)
+        assert result[0].type == "user-group"
+
+    def test_user_group_field_populated(self, drafts: DraftResource, httpx_mock) -> None:
+        """Response with userGroup key populates .user_group on DraftCollaborator."""
+        httpx_mock.add_response(
+            url=f"https://api.getguru.com/api/v1/drafts/{DRAFT_UUID}/collaborators",
+            json=[_group_collaborator_json(group_id=GROUP_UUID)],
+        )
+        result = drafts.add_group_collaborators(DRAFT_UUID, [GROUP_UUID])
+        collab = result[0]
+        assert collab.type == "user-group"
+        assert collab.user_group is not None
+        assert collab.user_group["id"] == GROUP_UUID
+
+    def test_validates_draft_id(self, drafts: DraftResource) -> None:
+        """Empty draft_id raises ValidationError."""
+        with pytest.raises(ValidationError):
+            drafts.add_group_collaborators("", [GROUP_UUID])
+
+    def test_validates_group_id(self, drafts: DraftResource) -> None:
+        """Empty string in group_ids list raises ValidationError."""
+        with pytest.raises(ValidationError):
+            drafts.add_group_collaborators(DRAFT_UUID, [""])
+
+
+# =============================================================================
+# remove_group_collaborator() — DELETE /drafts/{draftId}/collaborators/{groupId}
+# =============================================================================
+
+
+class TestRemoveGroupCollaborator:
+    """Remove a group collaborator from a draft."""
+
+    def test_remove_group_collaborator(self, drafts: DraftResource, httpx_mock) -> None:
+        """Delete removes a group collaborator by group UUID."""
+        httpx_mock.add_response(
+            url=f"https://api.getguru.com/api/v1/drafts/{DRAFT_UUID}/collaborators/{GROUP_UUID}",
+            method="DELETE",
+            status_code=204,
+        )
+        # Should not raise
+        drafts.remove_group_collaborator(DRAFT_UUID, GROUP_UUID)
+
+    def test_validates_draft_id(self, drafts: DraftResource) -> None:
+        """Empty draft_id raises ValidationError."""
+        with pytest.raises(ValidationError):
+            drafts.remove_group_collaborator("", GROUP_UUID)
+
+    def test_validates_group_id(self, drafts: DraftResource) -> None:
+        """Empty group_id raises ValidationError."""
+        with pytest.raises(ValidationError):
+            drafts.remove_group_collaborator(DRAFT_UUID, "")

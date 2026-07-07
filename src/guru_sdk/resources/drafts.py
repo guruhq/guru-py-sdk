@@ -35,13 +35,15 @@ class DraftResource(BaseResource):
     """Guru Drafts — create, read, and delete draft cards.
 
     Methods:
-        list()                — list all drafts or filter by card ID (GET /drafts)
-        get()                 — get a draft by ID (GET /drafts/{draftId})
-        create()              — create a new draft (POST /drafts)
-        delete()              — delete a draft (DELETE /drafts/{draftId})
-        list_collaborators()  — list collaborators (GET /drafts/{id}/collaborators)
-        add_collaborators()   — add collaborators (POST /drafts/{id}/collaborators)
-        remove_collaborator() — remove collaborator (DELETE /drafts/{id}/collaborators/{cId})
+        list()                     — list all drafts or filter by card ID (GET /drafts)
+        get()                      — get a draft by ID (GET /drafts/{draftId})
+        create()                   — create a new draft (POST /drafts)
+        delete()                   — delete a draft (DELETE /drafts/{draftId})
+        list_collaborators()       — list collaborators (GET /drafts/{id}/collaborators)
+        add_collaborators()        — add collaborators (POST /drafts/{id}/collaborators)
+        add_group_collaborators()  — add group collaborators (POST /drafts/{id}/collaborators)
+        remove_collaborator()      — remove collaborator (DELETE /drafts/{id}/collaborators/{cId})
+        remove_group_collaborator() — remove group collaborator (DELETE /drafts/{id}/collaborators/{gId})
 
     Update is deferred — see module docstring for rationale.
     """
@@ -153,6 +155,29 @@ class DraftResource(BaseResource):
             DraftCollaborator,
         )
 
+    def add_group_collaborators(
+        self,
+        draft_id: str,
+        group_ids: builtins.list[str],
+    ) -> builtins.list[DraftCollaborator]:
+        """Add group collaborators to a draft.
+
+        Args:
+            draft_id: Draft UUID.
+            group_ids: List of group UUIDs to add as collaborators.
+        """
+        validate_input(draft_id, "draft_id")
+        if not group_ids:
+            raise ValidationError("group_ids must not be empty")
+        for gid in group_ids:
+            validate_input(gid, "group_id")
+        collaborators = [{"type": "user-group", "userGroup": {"id": gid}} for gid in group_ids]
+        return self._http.post_list(
+            f"/drafts/{draft_id}/collaborators",
+            {"collaborators": collaborators},
+            DraftCollaborator,
+        )
+
     def remove_collaborator(self, draft_id: str, collaborator_id: str) -> None:
         """Remove a collaborator from a draft.
 
@@ -163,3 +188,16 @@ class DraftResource(BaseResource):
         validate_input(draft_id, "draft_id")
         validate_input(collaborator_id, "collaborator_id")
         self._http.delete(f"/drafts/{draft_id}/collaborators/{collaborator_id}")
+
+    def remove_group_collaborator(self, draft_id: str, group_id: str) -> None:
+        """Remove a group collaborator from a draft.
+
+        For group collaborators the collaborator ID is the group UUID.
+
+        Args:
+            draft_id: Draft UUID.
+            group_id: Group UUID (used as the collaborator ID).
+        """
+        validate_input(draft_id, "draft_id")
+        validate_input(group_id, "group_id")
+        self.remove_collaborator(draft_id, group_id)

@@ -58,18 +58,10 @@ class PageDraft(GuruModel):
         bool | None,
         Field(alias="onlyNavigable", description="Navigation-only page (no content)"),
     ] = None
-    date_created: Annotated[
-        AwareDatetime | None, Field(alias="dateCreated")
-    ] = None
-    last_modified: Annotated[
-        AwareDatetime | None, Field(alias="lastModified")
-    ] = None
-    last_modified_by: Annotated[
-        User | None, Field(alias="lastModifiedBy")
-    ] = None
-    created_by: Annotated[
-        User | None, Field(alias="createdBy")
-    ] = None
+    date_created: Annotated[AwareDatetime | None, Field(alias="dateCreated")] = None
+    last_modified: Annotated[AwareDatetime | None, Field(alias="lastModified")] = None
+    last_modified_by: Annotated[User | None, Field(alias="lastModifiedBy")] = None
+    created_by: Annotated[User | None, Field(alias="createdBy")] = None
     team: Team | None = None
 
 
@@ -130,12 +122,22 @@ class DraftCollaborator(GuruModel):
     Returned by GET/POST /drafts/{id}/collaborators. Unlike PageDraftCollaborator,
     card draft collaborators have no objectRole; they carry a dateCreated instead.
     Mirrors guru-cli's DraftCollaborator shape.
+
+    The ``type`` field is ``"user"`` for individual users or ``"user-group"`` for
+    group collaborators. For group collaborators, ``user_group`` (aliased from
+    ``userGroup`` in the API response) is populated with a dict containing the
+    group ``id``.
+
+    Note: Card drafts use ``userGroup`` (not ``group``) for group collaborators.
+    Page drafts use ``group`` instead — see ``PageDraftCollaborator``. This
+    divergence is intentional (ADR-014).
     """
 
     id: str | None = None
-    type: str | None = None  # "user"
+    type: str | None = None  # "user" or "user-group"
     user: User | None = None
-    group: Annotated[dict[str, str | None] | None, Field(None)] = None
-    date_created: Annotated[
-        AwareDatetime | None, Field(alias="dateCreated")
+    user_group: Annotated[
+        dict[str, str | None] | None,
+        Field(None, alias="userGroup"),
     ] = None
+    date_created: Annotated[AwareDatetime | None, Field(alias="dateCreated")] = None
