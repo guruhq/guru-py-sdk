@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `DraftResource.add_group_collaborators(draft_id, group_ids)` — POST /drafts/{id}/collaborators with `type: "user-group"` body; returns `list[DraftCollaborator]`
+- `DraftResource.remove_group_collaborator(draft_id, group_id)` — remove a group collaborator from a card draft
+
+### Fixed
+- `DraftCollaborator` now correctly parses group collaborators returned by the card drafts API. The API returns `{"userGroup": {...}}` (camelCase); the field was previously named `group` with no alias, silently dropping group identity on parse.
+
+### Breaking Changes
+- `DraftCollaborator.group` renamed to `DraftCollaborator.user_group` (JSON alias `userGroup`). Callers reading `.group` on card-draft collaborator objects must update to `.user_group`. `PageDraftCollaborator.group` is not affected.
+
+---
+
+### Added
 - Project skeleton: `pyproject.toml`, package structure, CI config
 - `GuruModel` base class (Pydantic v2, `extra="ignore"`, `frozen=True`)
 - `HttpClient` — synchronous HTTP transport with httpx

@@ -26,6 +26,7 @@ The planned iterations for guru-py-sdk, derived from the [restructure plan](/RES
 | 019 | Card Attachments | Complete | `CardResource.upload_file()` + `HttpClient.post_file()`. Multipart file upload via `POST /attachments/upload` (ADR-006). Returns URL for embedding in card HTML. 6 new tests (661 total) |
 | 020 | Migration Guide + README | Complete | Concise customer-facing README (resource table, quick start, contrib examples). Comprehensive migration guide mapping every legacy py-sdk method to its guru-py-sdk equivalent. PyPI publish deferred. |
 | 021 | Draft Collaborators | Complete | `DraftCollaborator` manual model + 3 methods on `DraftResource` (list/add/remove collaborators), matching guru-cli's card-draft surface (no `update`, unlike page drafts). 9 new tests (698 total). Epic 156474 ("Add Collaborator" for agent tools). |
+| 022 | Draft Group Collaborators | Complete | `DraftCollaborator.group` renamed to `user_group` (alias `userGroup`) to correctly parse group collaborators from card drafts API. Added `add_group_collaborators` and `remove_group_collaborator` to `DraftResource`. 8 new tests (706 total). Story sc-156806. |
 
 ## Remaining
 
