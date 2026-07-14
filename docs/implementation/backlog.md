@@ -26,12 +26,14 @@ The planned iterations for guru-py-sdk, derived from the [restructure plan](/RES
 | 019 | Card Attachments | Complete | `CardResource.upload_file()` + `HttpClient.post_file()`. Multipart file upload via `POST /attachments/upload` (ADR-006). Returns URL for embedding in card HTML. 6 new tests (661 total) |
 | 020 | Migration Guide + README | Complete | Concise customer-facing README (resource table, quick start, contrib examples). Comprehensive migration guide mapping every legacy py-sdk method to its guru-py-sdk equivalent. PyPI publish deferred. |
 | 021 | Draft Collaborators | Complete | `DraftCollaborator` manual model + 3 methods on `DraftResource` (list/add/remove collaborators), matching guru-cli's card-draft surface (no `update`, unlike page drafts). 9 new tests (698 total). Epic 156474 ("Add Collaborator" for agent tools). |
+| 024 | Draft Group Collaborators | Complete | Fixed `DraftCollaborator` model (`group` → `user_group`/`userGroup`, typed `UserGroup`) so card-draft group collaborators parse (ADR-014). Added `DraftResource.add_group_collaborators` + `remove_group_collaborator` alias, mirroring guru-cli. 8 new tests (706 total). Ticket sc-156806, epic 156474. |
 
 ## Remaining
 
 | # | Title | Scope | Dependencies |
 |---|-------|-------|--------------|
 | 010a | Draft & Page Draft Updates + Collaborators | DraftResource update and PageDraftResource update (both with MPS/YJS "politely fail" for active editing sessions), card draft publishing context endpoints, card draft collaborator management, page draft update. Requires detecting draft editing state — applies to both card drafts and page drafts. Blocked on draft handling verdict. | 010, 011 |
+| 024a | Draft collaborator eligibility ergonomics | `add_collaborators`/`add_group_collaborators` are all-or-nothing: guru-server throws a generic `400 "Invalid collaborator"` if *any* target is ineligible, without indicating which. A valid user collaborator must be an ACTIVE team member with author rights on a collection (standalone drafts) or write access to the card (edit drafts); groups need author/publish rights on a collection (`DraftOperationService.instantiateValidUserCollaborator` / `instantiateValidGroupCollaborator`). Consider (a) a `contrib` helper to pre-filter via the eligible-collaborators search endpoint, and/or (b) documenting the all-or-nothing behavior + eligibility rules on the resource methods. Verified against prod during sc-156806. | 024 |
 
 ## Up Next — Release Readiness
 

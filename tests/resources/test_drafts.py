@@ -37,6 +37,8 @@ DRAFT_UUID_2 = "b2b2b2b2-b2b2-b2b2-b2b2-b2b2b2b2b2b2"
 CARD_UUID = "c3c3c3c3-c3c3-c3c3-c3c3-c3c3c3c3c3c3"
 COLLECTION_UUID = "d4d4d4d4-d4d4-d4d4-d4d4-d4d4d4d4d4d4"
 COLLAB_UUID = "e5e5e5e5-e5e5-e5e5-e5e5-e5e5e5e5e5e5"
+GROUP_UUID = "f6f6f6f6-f6f6-f6f6-f6f6-f6f6f6f6f6f6"
+GROUP_UUID_2 = "07070707-0707-0707-0707-070707070707"
 
 
 def _collaborator_json(
@@ -51,6 +53,26 @@ def _collaborator_json(
             "email": email,
             "firstName": "Collab",
             "lastName": "User",
+        },
+        "dateCreated": "2025-06-15T10:00:00.000+0000",
+    }
+
+
+def _group_collaborator_json(
+    group_id: str = GROUP_UUID,
+    name: str = "Engineering",
+) -> dict:
+    """Build a realistic user-group DraftCollaborator API response dict.
+
+    Card drafts use the ``userGroup`` key (pages use ``group`` — ADR-014).
+    For a user-group collaborator the collaborator ``id`` is the group ID.
+    """
+    return {
+        "id": group_id,
+        "type": "user-group",
+        "userGroup": {
+            "id": group_id,
+            "name": name,
         },
         "dateCreated": "2025-06-15T10:00:00.000+0000",
     }
@@ -327,6 +349,19 @@ class TestListCollaborators:
         result = drafts.list_collaborators(DRAFT_UUID)
         assert result == []
 
+    def test_list_parses_group_collaborator(self, drafts: DraftResource, httpx_mock) -> None:
+        """A user-group collaborator populates type and user_group (ADR-014)."""
+        httpx_mock.add_response(
+            url=f"https://api.getguru.com/api/v1/drafts/{DRAFT_UUID}/collaborators",
+            json=[_group_collaborator_json()],
+        )
+        result = drafts.list_collaborators(DRAFT_UUID)
+        assert len(result) == 1
+        assert result[0].type == "user-group"
+        assert result[0].user_group is not None
+        assert result[0].user_group.id == GROUP_UUID
+        assert result[0].user_group.name == "Engineering"
+
     def test_validates_draft_id(self, drafts: DraftResource) -> None:
         """Empty draft_id raises ValidationError."""
         with pytest.raises(ValidationError):
@@ -400,3 +435,85 @@ class TestRemoveCollaborator:
         """Empty collaborator_id raises ValidationError."""
         with pytest.raises(ValidationError):
             drafts.remove_collaborator(DRAFT_UUID, "")
+
+
+# =============================================================================
+# add_group_collaborators() — POST /drafts/{draftId}/collaborators (user-group)
+# =============================================================================
+
+
+class TestAddGroupCollaborators:
+    """Add User Group collaborators to a card draft."""
+
+    def test_add_group_collaborators(self, drafts: DraftResource, httpx_mock) -> None:
+        """Add group collaborators returns parsed DraftCollaborator objects."""
+        httpx_mock.add_response(
+            url=f"https://api.getguru.com/api/v1/drafts/{DRAFT_UUID}/collaborators",
+            json=[_group_collaborator_json()],
+        )
+        result = drafts.add_group_collaborators(DRAFT_UUID, [GROUP_UUID])
+        assert len(result) == 1
+        assert isinstance(result[0], DraftCollaborator)
+        assert result[0].type == "user-group"
+        assert result[0].user_group is not None
+        assert result[0].user_group.id == GROUP_UUID
+
+    def test_add_group_collaborators_body(self, drafts: DraftResource, httpx_mock) -> None:
+        """Body wraps each group as {type: user-group, userGroup: {id}} (ADR-014)."""
+        httpx_mock.add_response(
+            url=f"https://api.getguru.com/api/v1/drafts/{DRAFT_UUID}/collaborators",
+            json=[_group_collaborator_json(), _group_collaborator_json(GROUP_UUID_2, "Support")],
+        )
+        drafts.add_group_collaborators(DRAFT_UUID, [GROUP_UUID, GROUP_UUID_2])
+        request = httpx_mock.get_request()
+        body = json.loads(request.content)
+        assert body == {
+            "collaborators": [
+                {"type": "user-group", "userGroup": {"id": GROUP_UUID}},
+                {"type": "user-group", "userGroup": {"id": GROUP_UUID_2}},
+            ]
+        }
+
+    def test_validates_draft_id(self, drafts: DraftResource) -> None:
+        """Empty draft_id raises ValidationError."""
+        with pytest.raises(ValidationError):
+            drafts.add_group_collaborators("", [GROUP_UUID])
+
+    def test_validates_group_id(self, drafts: DraftResource) -> None:
+        """Empty group ID raises ValidationError."""
+        with pytest.raises(ValidationError):
+            drafts.add_group_collaborators(DRAFT_UUID, [""])
+
+
+# =============================================================================
+# remove_group_collaborator() — DELETE /drafts/{draftId}/collaborators/{groupId}
+# =============================================================================
+
+
+class TestRemoveGroupCollaborator:
+    """Remove a User Group collaborator from a card draft.
+
+    For a user-group collaborator the collaborator ID *is* the group ID
+    (ADR-014), so this delegates to the same DELETE endpoint as
+    remove_collaborator.
+    """
+
+    def test_remove_group_collaborator(self, drafts: DraftResource, httpx_mock) -> None:
+        """Delete removes a group collaborator by group ID."""
+        httpx_mock.add_response(
+            url=f"https://api.getguru.com/api/v1/drafts/{DRAFT_UUID}/collaborators/{GROUP_UUID}",
+            method="DELETE",
+            status_code=204,
+        )
+        # Should not raise
+        drafts.remove_group_collaborator(DRAFT_UUID, GROUP_UUID)
+
+    def test_validates_draft_id(self, drafts: DraftResource) -> None:
+        """Empty draft_id raises ValidationError."""
+        with pytest.raises(ValidationError):
+            drafts.remove_group_collaborator("", GROUP_UUID)
+
+    def test_validates_group_id(self, drafts: DraftResource) -> None:
+        """Empty group_id raises ValidationError."""
+        with pytest.raises(ValidationError):
+            drafts.remove_group_collaborator(DRAFT_UUID, "")
