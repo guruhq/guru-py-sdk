@@ -145,8 +145,11 @@ class DraftResource(BaseResource):
 
         Args:
             draft_id: Draft UUID.
-            collaborators: List of collaborator dicts, each with 'type' (e.g.
-                "user") and a nested 'user' (e.g. ``{"email": ...}``) or 'group'.
+            collaborators: List of collaborator dicts, each with 'type' and a
+                nested object: for users, ``{"type": "user", "user": {"email":
+                ...}}``; for groups, ``{"type": "user-group", "userGroup":
+                {"id": ...}}`` (card drafts use ``userGroup``, not ``group`` —
+                ADR-014). Prefer ``add_group_collaborators`` for the group case.
         """
         validate_input(draft_id, "draft_id")
         return self._http.post_list(
