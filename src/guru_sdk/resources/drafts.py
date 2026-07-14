@@ -39,9 +39,11 @@ class DraftResource(BaseResource):
         get()                 — get a draft by ID (GET /drafts/{draftId})
         create()              — create a new draft (POST /drafts)
         delete()              — delete a draft (DELETE /drafts/{draftId})
-        list_collaborators()  — list collaborators (GET /drafts/{id}/collaborators)
-        add_collaborators()   — add collaborators (POST /drafts/{id}/collaborators)
-        remove_collaborator() — remove collaborator (DELETE /drafts/{id}/collaborators/{cId})
+        list_collaborators()        — list collaborators (GET /drafts/{id}/collaborators)
+        add_collaborators()         — add collaborators (POST /drafts/{id}/collaborators)
+        add_group_collaborators()   — add User Group collaborators (POST /drafts/{id}/collaborators)
+        remove_collaborator()       — remove collaborator (DELETE /drafts/{id}/collaborators/{cId})
+        remove_group_collaborator() — remove a User Group collaborator (DELETE, by group ID)
 
     Update is deferred — see module docstring for rationale.
     """
@@ -153,13 +155,60 @@ class DraftResource(BaseResource):
             DraftCollaborator,
         )
 
-    def remove_collaborator(self, draft_id: str, collaborator_id: str) -> None:
-        """Remove a collaborator from a draft.
+    def add_group_collaborators(
+        self,
+        draft_id: str,
+        group_ids: builtins.list[str],
+    ) -> builtins.list[DraftCollaborator]:
+        """Add User Group collaborators to a card draft.
+
+        Mirrors guru-cli's ``DraftResource.addGroupCollaborators``. Card drafts
+        use the ``userGroup`` key (page drafts use ``group`` — different
+        backends, ADR-014).
 
         Args:
             draft_id: Draft UUID.
-            collaborator_id: Collaborator ID.
+            group_ids: Group UUIDs to add as collaborators. Names are not
+                resolved here — resolve via ``g.groups`` first, or use a
+                ``contrib`` helper (resources never depend on each other).
+        """
+        validate_input(draft_id, "draft_id")
+        for gid in group_ids:
+            validate_input(gid, "group_id")
+        collaborators = [
+            {"type": "user-group", "userGroup": {"id": gid}} for gid in group_ids
+        ]
+        return self._http.post_list(
+            f"/drafts/{draft_id}/collaborators",
+            {"collaborators": collaborators},
+            DraftCollaborator,
+        )
+
+    def remove_collaborator(self, draft_id: str, collaborator_id: str) -> None:
+        """Remove a collaborator from a draft.
+
+        For a user-group collaborator the collaborator ID *is* the group ID
+        (ADR-014), so this also removes group collaborators. See
+        ``remove_group_collaborator`` for a group-oriented alias.
+
+        Args:
+            draft_id: Draft UUID.
+            collaborator_id: Collaborator ID (the group ID for user-group
+                collaborators).
         """
         validate_input(draft_id, "draft_id")
         validate_input(collaborator_id, "collaborator_id")
         self._http.delete(f"/drafts/{draft_id}/collaborators/{collaborator_id}")
+
+    def remove_group_collaborator(self, draft_id: str, group_id: str) -> None:
+        """Remove a User Group collaborator from a card draft.
+
+        Thin alias over ``remove_collaborator`` — for a user-group collaborator
+        the collaborator ID is the group ID (ADR-014), so this hits the same
+        DELETE endpoint. Provided for agent-tool clarity.
+
+        Args:
+            draft_id: Draft UUID.
+            group_id: Group UUID (== the collaborator ID for user-group).
+        """
+        self.remove_collaborator(draft_id, group_id)

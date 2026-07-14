@@ -16,7 +16,7 @@ from typing import Annotated
 from pydantic import AwareDatetime, Field
 
 from guru_sdk.models._base import GuruModel
-from guru_sdk.models._generated import Team, User
+from guru_sdk.models._generated import Team, User, UserGroup
 
 # =============================================================================
 # Page Draft — response model for /pagedrafts endpoints
@@ -125,17 +125,21 @@ class PageDraftCollaborator(GuruModel):
 
 
 class DraftCollaborator(GuruModel):
-    """A collaborator on a card draft — a user or group with access to the draft.
+    """A collaborator on a card draft — a user or user-group with access.
 
     Returned by GET/POST /drafts/{id}/collaborators. Unlike PageDraftCollaborator,
     card draft collaborators have no objectRole; they carry a dateCreated instead.
     Mirrors guru-cli's DraftCollaborator shape.
+
+    Card drafts use ``userGroup`` for the group object; page drafts use ``group``
+    (different backends — ADR-014; don't converge). For a user-group collaborator
+    the ``id`` *is* the group ID.
     """
 
     id: str | None = None
-    type: str | None = None  # "user"
+    type: str | None = None  # "user" or "user-group"
     user: User | None = None
-    group: Annotated[dict[str, str | None] | None, Field(None)] = None
+    user_group: Annotated[UserGroup | None, Field(alias="userGroup")] = None
     date_created: Annotated[
         AwareDatetime | None, Field(alias="dateCreated")
     ] = None
