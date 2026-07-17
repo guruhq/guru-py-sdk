@@ -335,13 +335,13 @@ def _walk_folder_items(
     For each sub-folder found in items(), writes its parent chain to CSV
     and recurses into it. Cards are skipped.
     """
-    from guru_sdk.models._generated import Type9
+    from guru_sdk.models._generated import Type8
 
     items = g.folders.items(folder_id)
 
     for item in items:
         # Only process folders, skip cards
-        if item.type != Type9.folder:
+        if item.type != Type8.folder:
             continue
 
         # item.id is the actual folder UUID; item.item_id is the placement UUID
@@ -463,7 +463,7 @@ def _replace_text_walk(
 ) -> None:
     """Recursively walk a folder, processing each card it finds."""
     from guru_sdk.contrib.content import replace_text
-    from guru_sdk.models._generated import Type9
+    from guru_sdk.models._generated import Type8
 
     items = g.folders.items(folder_id)
 
@@ -472,7 +472,7 @@ def _replace_text_walk(
         if item_id is None:
             continue
 
-        if item.type == Type9.folder:
+        if item.type == Type8.folder:
             _replace_text_walk(
                 g,
                 item_id,
@@ -486,7 +486,7 @@ def _replace_text_walk(
             )
             continue
 
-        if item.type != Type9.card:
+        if item.type != Type8.card:
             continue
 
         # Cards can appear in multiple folders — only process each once.

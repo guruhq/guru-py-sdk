@@ -478,14 +478,14 @@ class PublisherFolders(ABC):
         folder: Folder | None,
     ) -> None:
         """Walk a folder's items, dispatching folders and cards."""
-        from guru_sdk.models._generated import Type9
+        from guru_sdk.models._generated import Type8
 
         items = self._g.folders.items(folder_id)
 
         for item in items:
-            if item.type == Type9.folder and item.id:
+            if item.type == Type8.folder and item.id:
                 self.publish_folder(item.id, collection)
-            elif item.type == Type9.card and item.id:
+            elif item.type == Type8.card and item.id:
                 card = self._g.cards.get(item.id)
                 self.publish_card(card, collection, folder)
 
