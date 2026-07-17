@@ -25,6 +25,7 @@ from guru_sdk.models import (
     CardCollaborator,
     CardComment,
     CardCommentReply,
+    CardCommentResult,
     Folder,
     Tag,
 )
@@ -110,6 +111,36 @@ def _reply_json(reply_id: str = REPLY_UUID, content: str = "Thanks!") -> dict:
         "owner": {"id": "user-1", "email": USER_EMAIL, "firstName": "Test", "lastName": "Author"},
         "dateCreated": "2025-06-02T09:00:00.000+0000",
         "lastModified": "2025-06-02T09:00:00.000+0000",
+    }
+
+
+def _card_comment_result_json(
+    comment_id: str = COMMENT_UUID,
+    content: str = "Looks good!",
+    status: str = "OPEN",
+    card_id: str = CARD_UUID,
+    card_title: str = "Getting Started Guide",
+) -> dict:
+    """Build a realistic CardCommentResult API response dict.
+
+    Returned by the team-wide GET /comments endpoint (bulk_get_comments) —
+    unlike CardComment (per-card /cards/{id}/comments), the comment fields are
+    flat at the top level and the card identity is nested under `card`.
+    """
+    return {
+        "id": comment_id,
+        "content": content,
+        "status": status,
+        "totalReplies": 1,
+        "replies": [_reply_json()],
+        "owner": {"id": "user-1", "email": USER_EMAIL, "firstName": "Test", "lastName": "Author"},
+        "dateCreated": "2025-06-01T14:30:00.000+0000",
+        "lastModified": "2025-06-01T14:30:00.000+0000",
+        "card": {
+            "id": card_id,
+            "preferredPhrase": card_title,
+            "slug": "getting-started-guide",
+        },
     }
 
 
@@ -1013,6 +1044,74 @@ class TestListCommentsWithStatus:
         request = httpx_mock.get_request()
         assert request is not None
         assert "status" not in str(request.url)
+
+
+# =============================================================================
+# CardResource.bulk_get_comments() — GET /comments (team-wide, not per-card)
+# =============================================================================
+
+
+class TestBulkGetComments:
+    """Bulk-retrieve card comment threads team-wide via GET /comments."""
+
+    def test_sends_all_filters_as_query_params(self, cards: CardResource, httpx_mock) -> None:
+        httpx_mock.add_response(json=[])
+        cards.bulk_get_comments(
+            status="OPEN",
+            created_after="2026-01-01",
+            created_before="2026-02-01",
+        )
+        request = httpx_mock.get_request()
+        assert request is not None
+        assert "status=OPEN" in str(request.url)
+        assert "createdAfter=2026-01-01" in str(request.url)
+        assert "createdBefore=2026-02-01" in str(request.url)
+
+    def test_no_filters_sends_no_query_params(self, cards: CardResource, httpx_mock) -> None:
+        httpx_mock.add_response(json=[])
+        cards.bulk_get_comments()
+        request = httpx_mock.get_request()
+        assert request is not None
+        assert request.url.query == b""
+
+    def test_path_is_team_wide_not_nested_under_card(self, cards: CardResource, httpx_mock) -> None:
+        httpx_mock.add_response(json=[])
+        cards.bulk_get_comments()
+        request = httpx_mock.get_request()
+        assert request is not None
+        assert request.url.path == "/api/v1/comments"
+
+    def test_deserializes_into_card_comment_result_with_nested_card(
+        self, cards: CardResource, httpx_mock
+    ) -> None:
+        httpx_mock.add_response(json=[_card_comment_result_json()])
+        result = cards.bulk_get_comments()
+        assert len(result) == 1
+        comment = result[0]
+        assert isinstance(comment, CardCommentResult)
+        # Comment fields live at the top level, not nested under `.comment`.
+        assert comment.content == "Looks good!"
+        assert comment.status.value == "OPEN"
+        assert comment.total_replies == 1
+        assert len(comment.replies) == 1
+        assert comment.replies[0].content == "Thanks!"
+        # Card identity is nested under `.card` as a CardReference.
+        assert comment.card is not None
+        assert comment.card.id == CARD_UUID
+        assert comment.card.preferred_phrase == "Getting Started Guide"
+        assert comment.card.slug == "getting-started-guide"
+
+    def test_paginates_across_link_header_pages(self, cards: CardResource, httpx_mock) -> None:
+        httpx_mock.add_response(
+            json=[_card_comment_result_json(comment_id=COMMENT_UUID)],
+            headers={"Link": '<https://api.getguru.com/api/v1/comments?page=2>; rel="next"'},
+        )
+        httpx_mock.add_response(json=[_card_comment_result_json(comment_id=REPLY_UUID)])
+
+        result = cards.bulk_get_comments()
+
+        assert len(result) == 2
+        assert {c.id for c in result} == {COMMENT_UUID, REPLY_UUID}
 
 
 # =============================================================================

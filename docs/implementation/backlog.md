@@ -27,6 +27,7 @@ The planned iterations for guru-py-sdk, derived from the [restructure plan](/RES
 | 020 | Migration Guide + README | Complete | Concise customer-facing README (resource table, quick start, contrib examples). Comprehensive migration guide mapping every legacy py-sdk method to its guru-py-sdk equivalent. PyPI publish deferred. |
 | 021 | Draft Collaborators | Complete | `DraftCollaborator` manual model + 3 methods on `DraftResource` (list/add/remove collaborators), matching guru-cli's card-draft surface (no `update`, unlike page drafts). 9 new tests (698 total). Epic 156474 ("Add Collaborator" for agent tools). |
 | 024 | Draft Group Collaborators | Complete | Fixed `DraftCollaborator` model (`group` → `user_group`/`userGroup`, typed `UserGroup`) so card-draft group collaborators parse (ADR-014). Added `DraftResource.add_group_collaborators` + `remove_group_collaborator` alias, mirroring guru-cli. 8 new tests (706 total). Ticket sc-156806, epic 156474. |
+| 025 | Bulk Card Comments | Complete | Refreshed vendored `swagger.json` + regenerated `_generated.py`, adding `CardCommentResult`/`CardReference` (ADR-008, supersedes a hand-authored `_manual.py` plan once the live spec was found to already publish them). Added `CardResource.bulk_get_comments()` — team-wide `GET /comments`, `status`/`created_after`/`created_before` filters, `Link`-header pagination via existing `get_paginated`, no `card_id`/`_resolve_card`. 5 new tests (711 total). Ticket sc-157622. |
 
 ## Remaining
 
