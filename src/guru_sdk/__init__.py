@@ -28,6 +28,7 @@ from guru_sdk.errors import (
     RateLimitError,
     ValidationError,
 )
+from guru_sdk.http import PaginatedList
 from guru_sdk.models._base import GuruModel
 from guru_sdk.resources.agents import AgentResource
 from guru_sdk.resources.announcements import AnnouncementResource
@@ -63,6 +64,7 @@ __all__ = [
     "NotFoundError",
     "PageDraftResource",
     "PageResource",
+    "PaginatedList",
     "RateLimitError",
     "SearchResource",
     "SourceResource",

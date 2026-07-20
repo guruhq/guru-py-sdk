@@ -1113,6 +1113,24 @@ class TestBulkGetComments:
         assert len(result) == 2
         assert {c.id for c in result} == {COMMENT_UUID, REPLY_UUID}
 
+    def test_reports_complete_when_all_pages_fetched(
+        self, cards: CardResource, httpx_mock
+    ) -> None:
+        httpx_mock.add_response(json=[_card_comment_result_json()])
+        result = cards.bulk_get_comments()
+        assert result.complete is True
+
+    def test_reports_incomplete_when_truncated_by_max_pages(
+        self, cards: CardResource, httpx_mock
+    ) -> None:
+        # More pages remain (Link header present) but max_pages caps the walk.
+        httpx_mock.add_response(
+            json=[_card_comment_result_json()],
+            headers={"Link": '<https://api.getguru.com/api/v1/comments?page=2>; rel="next"'},
+        )
+        result = cards.bulk_get_comments(max_pages=1)
+        assert result.complete is False
+
 
 # =============================================================================
 # CardResource.favorite() / unfavorite()

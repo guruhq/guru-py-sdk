@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import mimetypes
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from urllib.parse import quote
 
 from guru_sdk._compat import is_uuid, validate_free_text, validate_input
@@ -28,6 +28,9 @@ from guru_sdk.models import (
     Tag,
 )
 from guru_sdk.resources._base import BaseResource
+
+if TYPE_CHECKING:
+    from guru_sdk.http import PaginatedList
 
 # =============================================================================
 # Public API — CardResource
@@ -393,7 +396,7 @@ class CardResource(BaseResource):
         created_after: str | None = None,
         created_before: str | None = None,
         max_pages: int = 10,
-    ) -> list[CardCommentResult]:
+    ) -> PaginatedList[CardCommentResult]:
         """Bulk-retrieve card comment threads across all accessible cards.
 
         Consumes the team-wide GET /api/v1/comments endpoint. Results are
@@ -405,6 +408,10 @@ class CardResource(BaseResource):
             created_after / created_before: ISO-8601 bounds on the thread's
                 most-recent activity (inclusive).
             max_pages: Safety cap on pages walked (default 10).
+
+        Returns a :class:`PaginatedList`; check its ``complete`` attribute to
+        detect when ``max_pages`` truncated the result before all matching
+        comments were retrieved.
         """
         params: dict[str, Any] = {}
         if status is not None:
