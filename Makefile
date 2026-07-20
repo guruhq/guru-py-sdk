@@ -1,4 +1,4 @@
-.PHONY: lint format typecheck test check update-lock clean help
+.PHONY: lint format format-check typecheck test check update-lock clean help
 
 # =============================================================================
 # Help — default target
@@ -7,15 +7,16 @@ help:
 	@echo "Available commands:"
 	@echo ""
 	@echo "Code Quality:"
-	@echo "  lint        - Run ruff linter on src and tests"
-	@echo "  format      - Format code with ruff"
-	@echo "  typecheck   - Run mypy strict type checker"
+	@echo "  lint         - Run ruff linter on src and tests"
+	@echo "  format       - Format code with ruff"
+	@echo "  format-check - Verify formatting without modifying files"
+	@echo "  typecheck    - Run mypy strict type checker"
 	@echo ""
 	@echo "Testing:"
 	@echo "  test        - Run pytest"
 	@echo ""
 	@echo "Combined:"
-	@echo "  check       - Run lint + typecheck + test (CI gate)"
+	@echo "  check        - Run lint + format-check + typecheck + test (CI gate)"
 	@echo ""
 	@echo "Utilities:"
 	@echo "  update-lock - Regenerate uv.lock from pyproject.toml"
@@ -31,6 +32,9 @@ format:
 	ruff format src tests
 	ruff check --fix src tests
 
+format-check:
+	ruff format --check src tests
+
 typecheck:
 	mypy src/guru_sdk/ --strict
 
@@ -43,7 +47,7 @@ test:
 # =============================================================================
 # Combined — the CI gate (mirrors guru-cli: pnpm lint && pnpm build && pnpm test)
 # =============================================================================
-check: lint typecheck test
+check: lint format-check typecheck test
 
 # =============================================================================
 # Utilities
