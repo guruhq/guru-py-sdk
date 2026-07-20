@@ -102,9 +102,7 @@ def _comment_json(
     }
 
 
-def _reply_json(
-    reply_id: str = REPLY_UUID, content: str = "Thanks!"
-) -> dict:
+def _reply_json(reply_id: str = REPLY_UUID, content: str = "Thanks!") -> dict:
     """Build a realistic CardCommentReply API response dict."""
     return {
         "id": reply_id,
@@ -532,9 +530,7 @@ class TestReplyComment:
         cards.reply_comment(CARD_UUID, COMMENT_UUID, "Thanks!")
         request = httpx_mock.get_request()
         assert request is not None
-        assert request.url.path == (
-            f"/api/v1/cards/{CARD_UUID}/comments/{COMMENT_UUID}/replies"
-        )
+        assert request.url.path == (f"/api/v1/cards/{CARD_UUID}/comments/{COMMENT_UUID}/replies")
         body = json.loads(request.content)
         assert body["content"] == "Thanks!"
 
@@ -570,9 +566,7 @@ class TestResolveComment:
         cards.resolve_comment(CARD_UUID, COMMENT_UUID)
         request = httpx_mock.get_request()
         assert request is not None
-        assert request.url.path == (
-            f"/api/v1/cards/{CARD_UUID}/comments/{COMMENT_UUID}/resolve"
-        )
+        assert request.url.path == (f"/api/v1/cards/{CARD_UUID}/comments/{COMMENT_UUID}/resolve")
         assert request.method == "PUT"
 
 
@@ -589,9 +583,7 @@ class TestUnresolveComment:
         cards.unresolve_comment(CARD_UUID, COMMENT_UUID)
         request = httpx_mock.get_request()
         assert request is not None
-        assert request.url.path == (
-            f"/api/v1/cards/{CARD_UUID}/comments/{COMMENT_UUID}/unresolve"
-        )
+        assert request.url.path == (f"/api/v1/cards/{CARD_UUID}/comments/{COMMENT_UUID}/unresolve")
         assert request.method == "PUT"
 
 
@@ -1097,7 +1089,9 @@ class TestGetBulk:
     """Retrieve multiple cards in a single request."""
 
     def test_get_bulk_returns_cards(self, cards: CardResource, httpx_mock) -> None:
-        httpx_mock.add_response(json=[_card_json(), _card_json(card_id=CARD_UUID_2, title="Second")])
+        httpx_mock.add_response(
+            json=[_card_json(), _card_json(card_id=CARD_UUID_2, title="Second")]
+        )
         result = cards.get_bulk([CARD_UUID, CARD_UUID_2])
         assert len(result) == 2
         assert all(isinstance(c, Card) for c in result)
@@ -1125,9 +1119,7 @@ class TestGetBulk:
 class TestUploadFile:
     """Upload a file attachment and get back a URL for embedding in card content."""
 
-    def test_upload_file_returns_url(
-        self, cards: CardResource, httpx_mock, tmp_path
-    ) -> None:
+    def test_upload_file_returns_url(self, cards: CardResource, httpx_mock, tmp_path) -> None:
         attachment_response = {
             "attachmentId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
             "link": "https://content.api.getguru.com/files/view/aaaaaaaa",
@@ -1148,13 +1140,15 @@ class TestUploadFile:
     def test_upload_file_sends_multipart_post(
         self, cards: CardResource, httpx_mock, tmp_path
     ) -> None:
-        httpx_mock.add_response(json={
-            "attachmentId": "abc",
-            "link": "https://content.api.getguru.com/files/view/abc",
-            "filename": "notes.pdf",
-            "mimeType": "application/pdf",
-            "size": 999,
-        })
+        httpx_mock.add_response(
+            json={
+                "attachmentId": "abc",
+                "link": "https://content.api.getguru.com/files/view/abc",
+                "filename": "notes.pdf",
+                "mimeType": "application/pdf",
+                "size": 999,
+            }
+        )
 
         test_file = tmp_path / "notes.pdf"
         test_file.write_bytes(b"%PDF-1.4 fake")
@@ -1173,17 +1167,17 @@ class TestUploadFile:
         with pytest.raises(FileNotFoundError):
             cards.upload_file("/nonexistent/path/file.png")
 
-    def test_upload_file_with_pathlib(
-        self, cards: CardResource, httpx_mock, tmp_path
-    ) -> None:
+    def test_upload_file_with_pathlib(self, cards: CardResource, httpx_mock, tmp_path) -> None:
         """Accepts pathlib.Path as well as str."""
-        httpx_mock.add_response(json={
-            "attachmentId": "xyz",
-            "link": "https://content.api.getguru.com/files/view/xyz",
-            "filename": "photo.jpg",
-            "mimeType": "image/jpeg",
-            "size": 500,
-        })
+        httpx_mock.add_response(
+            json={
+                "attachmentId": "xyz",
+                "link": "https://content.api.getguru.com/files/view/xyz",
+                "filename": "photo.jpg",
+                "mimeType": "image/jpeg",
+                "size": 500,
+            }
+        )
 
         test_file = tmp_path / "photo.jpg"
         test_file.write_bytes(b"fake-jpeg")

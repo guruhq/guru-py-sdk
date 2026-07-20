@@ -212,9 +212,7 @@ class TestCreate:
         with pytest.raises(ValidationError):
             announcements.create(card_id=CARD_UUID, group_ids=[""])
 
-    def test_create_validates_empty_group_list(
-        self, announcements: AnnouncementResource
-    ) -> None:
+    def test_create_validates_empty_group_list(self, announcements: AnnouncementResource) -> None:
         """Empty group_ids list raises ValidationError."""
         with pytest.raises(ValidationError):
             announcements.create(card_id=CARD_UUID, group_ids=[])

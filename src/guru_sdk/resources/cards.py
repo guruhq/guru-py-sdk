@@ -355,9 +355,7 @@ class CardResource(BaseResource):
         """
         resolved = self._resolve_card(card_id)
         validate_input(tag_id, "tag_id")
-        return self._http.put_list(
-            f"/cards/{resolved}/tags/{tag_id}", Tag
-        )
+        return self._http.put_list(f"/cards/{resolved}/tags/{tag_id}", Tag)
 
     def remove_tag(self, card_id: str, tag_id: str) -> None:
         """Remove a tag from a card.
@@ -374,9 +372,7 @@ class CardResource(BaseResource):
     # Comments
     # -------------------------------------------------------------------------
 
-    def list_comments(
-        self, card_id: str, *, status: str | None = None
-    ) -> list[CardComment]:
+    def list_comments(self, card_id: str, *, status: str | None = None) -> list[CardComment]:
         """List comments on a card.
 
         Args:
@@ -386,9 +382,7 @@ class CardResource(BaseResource):
         """
         resolved = self._resolve_card(card_id)
         if status is not None:
-            return self._http.get_list(
-                f"/cards/{resolved}/comments", CardComment, status=status
-            )
+            return self._http.get_list(f"/cards/{resolved}/comments", CardComment, status=status)
         return self._http.get_list(f"/cards/{resolved}/comments", CardComment)
 
     def add_comment(self, card_id: str, content: str) -> CardComment:
@@ -401,9 +395,7 @@ class CardResource(BaseResource):
         resolved = self._resolve_card(card_id)
         # Comments are natural language — use lenient validation
         validate_free_text(content, "comment content")
-        return self._http.post(
-            f"/cards/{resolved}/comments", {"content": content}, CardComment
-        )
+        return self._http.post(f"/cards/{resolved}/comments", {"content": content}, CardComment)
 
     def delete_comment(self, card_id: str, comment_id: str) -> None:
         """Delete a comment from a card.
@@ -416,9 +408,7 @@ class CardResource(BaseResource):
         validate_input(comment_id, "comment_id")
         self._http.delete(f"/cards/{resolved}/comments/{comment_id}")
 
-    def update_comment(
-        self, card_id: str, comment_id: str, content: str
-    ) -> CardComment:
+    def update_comment(self, card_id: str, comment_id: str, content: str) -> CardComment:
         """Update an existing comment's content.
 
         Args:
@@ -435,9 +425,7 @@ class CardResource(BaseResource):
             CardComment,
         )
 
-    def reply_comment(
-        self, card_id: str, comment_id: str, content: str
-    ) -> CardCommentReply:
+    def reply_comment(self, card_id: str, comment_id: str, content: str) -> CardCommentReply:
         """Reply to a comment on a card.
 
         Args:
@@ -454,9 +442,7 @@ class CardResource(BaseResource):
             CardCommentReply,
         )
 
-    def delete_reply(
-        self, card_id: str, comment_id: str, reply_id: str
-    ) -> None:
+    def delete_reply(self, card_id: str, comment_id: str, reply_id: str) -> None:
         """Delete a reply from a comment.
 
         Args:
@@ -467,9 +453,7 @@ class CardResource(BaseResource):
         resolved = self._resolve_card(card_id)
         validate_input(comment_id, "comment_id")
         validate_input(reply_id, "reply_id")
-        self._http.delete(
-            f"/cards/{resolved}/comments/{comment_id}/replies/{reply_id}"
-        )
+        self._http.delete(f"/cards/{resolved}/comments/{comment_id}/replies/{reply_id}")
 
     def resolve_comment(self, card_id: str, comment_id: str) -> None:
         """Resolve a comment on a card.
@@ -480,9 +464,7 @@ class CardResource(BaseResource):
         """
         resolved = self._resolve_card(card_id)
         validate_input(comment_id, "comment_id")
-        self._http.put_no_content(
-            f"/cards/{resolved}/comments/{comment_id}/resolve"
-        )
+        self._http.put_no_content(f"/cards/{resolved}/comments/{comment_id}/resolve")
 
     def unresolve_comment(self, card_id: str, comment_id: str) -> None:
         """Unresolve a comment on a card.
@@ -493,9 +475,7 @@ class CardResource(BaseResource):
         """
         resolved = self._resolve_card(card_id)
         validate_input(comment_id, "comment_id")
-        self._http.put_no_content(
-            f"/cards/{resolved}/comments/{comment_id}/unresolve"
-        )
+        self._http.put_no_content(f"/cards/{resolved}/comments/{comment_id}/unresolve")
 
     # -------------------------------------------------------------------------
     # Folders
@@ -522,9 +502,7 @@ class CardResource(BaseResource):
         """
         resolved = self._resolve_card(card_id)
         validate_input(folder_id, "folder_id")
-        return self._http.post(
-            f"/cards/{resolved}/folders", {"id": folder_id}, Folder
-        )
+        return self._http.post(f"/cards/{resolved}/folders", {"id": folder_id}, Folder)
 
     def remove_from_folder(self, card_id: str, folder_id: str) -> None:
         """Remove a card from a folder.
@@ -548,13 +526,9 @@ class CardResource(BaseResource):
             card_id: Card UUID or title.
         """
         resolved = self._resolve_card(card_id)
-        return self._http.get_list(
-            f"/cards/{resolved}/collaborators", CardCollaborator
-        )
+        return self._http.get_list(f"/cards/{resolved}/collaborators", CardCollaborator)
 
-    def add_collaborator(
-        self, card_id: str, email: str
-    ) -> list[CardCollaborator]:
+    def add_collaborator(self, card_id: str, email: str) -> list[CardCollaborator]:
         """Add a collaborator to a card.
 
         Args:
@@ -569,9 +543,7 @@ class CardResource(BaseResource):
         validate_free_text(email, "collaborator email")
         # API expects an array of collaborator objects
         body = [{"type": "user", "user": {"email": email}}]
-        return self._http.post_list(
-            f"/cards/{resolved}/collaborators", body, CardCollaborator
-        )
+        return self._http.post_list(f"/cards/{resolved}/collaborators", body, CardCollaborator)
 
     def remove_collaborator(self, card_id: str, email: str) -> None:
         """Remove a collaborator from a card.
@@ -597,9 +569,7 @@ class CardResource(BaseResource):
             card_id: Card UUID or title.
         """
         resolved = self._resolve_card(card_id)
-        return self._http.get_list(
-            f"/cards/{resolved}/verifiers", CardVerifier
-        )
+        return self._http.get_list(f"/cards/{resolved}/verifiers", CardVerifier)
 
     # -------------------------------------------------------------------------
     # Attachments
@@ -678,14 +648,11 @@ class CardResource(BaseResource):
                 and card.preferred_phrase.lower() == card_id.lower()
             ):
                 if card.id is None:
-                    raise NotFoundError(
-                        f"Card '{card_id}' found but has no ID."
-                    )
+                    raise NotFoundError(f"Card '{card_id}' found but has no ID.")
                 return card.id
 
         raise NotFoundError(
-            f"No card found with title '{card_id}'. "
-            "Pass a card UUID for exact lookup."
+            f"No card found with title '{card_id}'. Pass a card UUID for exact lookup."
         )
 
 

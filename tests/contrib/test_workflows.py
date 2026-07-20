@@ -167,9 +167,7 @@ class TestBatchAddUsersToGroup:
         emails = [f"user{i}@example.com" for i in range(10)]
         result = batch_add_users_to_group(g, GROUP_UUID, emails)
 
-        g.groups.add_members.assert_called_once_with(
-            GROUP_UUID, emails=emails
-        )
+        g.groups.add_members.assert_called_once_with(GROUP_UUID, emails=emails)
         # All should be marked successful
         assert all(result[e] for e in emails)
         assert len(result) == 10
@@ -251,9 +249,7 @@ class TestAddUserToGroups:
         g = _make_guru_mock()
         g.groups.add_members.return_value = None
 
-        result = add_user_to_groups(
-            g, "alice@example.com", [GROUP_UUID, GROUP_UUID_2]
-        )
+        result = add_user_to_groups(g, "alice@example.com", [GROUP_UUID, GROUP_UUID_2])
 
         assert g.groups.add_members.call_count == 2
         assert result[GROUP_UUID] is True
@@ -271,9 +267,7 @@ class TestAddUserToGroups:
 
         g.groups.add_members.side_effect = side_effect
 
-        result = add_user_to_groups(
-            g, "alice@example.com", [GROUP_UUID, GROUP_UUID_2]
-        )
+        result = add_user_to_groups(g, "alice@example.com", [GROUP_UUID, GROUP_UUID_2])
 
         assert result[GROUP_UUID] is True
         assert result[GROUP_UUID_2] is False
@@ -297,9 +291,7 @@ class TestAddUserToGroups:
 
         result = add_user_to_groups(g, "alice@example.com", [GROUP_UUID])
 
-        g.groups.add_members.assert_called_once_with(
-            GROUP_UUID, emails=["alice@example.com"]
-        )
+        g.groups.add_members.assert_called_once_with(GROUP_UUID, emails=["alice@example.com"])
         assert result == {GROUP_UUID: True}
 
 
@@ -318,9 +310,7 @@ class TestRemoveUserFromGroups:
         g = _make_guru_mock()
         g.groups.remove_member.return_value = None
 
-        result = remove_user_from_groups(
-            g, "alice@example.com", [GROUP_UUID, GROUP_UUID_2]
-        )
+        result = remove_user_from_groups(g, "alice@example.com", [GROUP_UUID, GROUP_UUID_2])
 
         assert g.groups.remove_member.call_count == 2
         assert result[GROUP_UUID] is True
@@ -338,9 +328,7 @@ class TestRemoveUserFromGroups:
 
         g.groups.remove_member.side_effect = side_effect
 
-        result = remove_user_from_groups(
-            g, "alice@example.com", [GROUP_UUID, GROUP_UUID_2]
-        )
+        result = remove_user_from_groups(g, "alice@example.com", [GROUP_UUID, GROUP_UUID_2])
 
         assert result[GROUP_UUID] is True
         assert result[GROUP_UUID_2] is False
@@ -383,9 +371,7 @@ class TestMakeCollectionWithSetup:
         g.collections.create.assert_called_once_with(
             name="Engineering", description=None, color=None
         )
-        g.collections.add_group.assert_called_once_with(
-            COLL_UUID, GROUP_UUID, role="COLL_ADMIN"
-        )
+        g.collections.add_group.assert_called_once_with(COLL_UUID, GROUP_UUID, role="COLL_ADMIN")
         assert result.id == COLL_UUID
 
     def test_with_optional_fields(self) -> None:
@@ -418,9 +404,7 @@ class TestMakeCollectionWithSetup:
         g.collections.create.side_effect = Exception("Name taken")
 
         with pytest.raises(Exception, match="Name taken"):
-            make_collection_with_setup(
-                g, name="Duplicate", group_id=GROUP_UUID, role="COLL_ADMIN"
-            )
+            make_collection_with_setup(g, name="Duplicate", group_id=GROUP_UUID, role="COLL_ADMIN")
 
         g.collections.add_group.assert_not_called()
 
@@ -432,9 +416,7 @@ class TestMakeCollectionWithSetup:
         coll = _make_collection()
         g.collections.create.return_value = coll
 
-        result = make_collection_with_setup(
-            g, name="Standalone", group_id=None, role="COLL_ADMIN"
-        )
+        result = make_collection_with_setup(g, name="Standalone", group_id=None, role="COLL_ADMIN")
 
         g.collections.create.assert_called_once()
         g.collections.add_group.assert_not_called()
@@ -458,9 +440,7 @@ class TestAddTagWithAutoCreate:
         g.tags.get_tag.return_value = existing_tag
         g.cards.add_tag.return_value = [existing_tag]
 
-        result = add_tag_with_auto_create(
-            g, CARD_UUID, "important", CAT_UUID
-        )
+        result = add_tag_with_auto_create(g, CARD_UUID, "important", CAT_UUID)
 
         g.tags.get_tag.assert_called_once_with("important")
         g.tags.create_tag.assert_not_called()
@@ -477,14 +457,10 @@ class TestAddTagWithAutoCreate:
         g.tags.create_tag.return_value = new_tag
         g.cards.add_tag.return_value = [new_tag]
 
-        result = add_tag_with_auto_create(
-            g, CARD_UUID, "urgent", CAT_UUID
-        )
+        result = add_tag_with_auto_create(g, CARD_UUID, "urgent", CAT_UUID)
 
         g.tags.get_tag.assert_called_once_with("urgent")
-        g.tags.create_tag.assert_called_once_with(
-            category_id=CAT_UUID, value="urgent"
-        )
+        g.tags.create_tag.assert_called_once_with(category_id=CAT_UUID, value="urgent")
         g.cards.add_tag.assert_called_once_with(CARD_UUID, TAG_UUID)
         assert result.id == TAG_UUID
 
@@ -653,9 +629,7 @@ class TestDumpFolderHierarchy:
         g.folders.items.return_value = []
 
         # Use tmp_path as working directory by providing output_dir
-        result_path = dump_folder_hierarchy(
-            g, COLL_UUID, output_dir=str(tmp_path)
-        )
+        result_path = dump_folder_hierarchy(g, COLL_UUID, output_dir=str(tmp_path))
 
         assert result_path.endswith("Engineering_folder_hierarchy.csv")
         assert Path(result_path).exists()
@@ -773,16 +747,12 @@ class TestReplaceTextInCollectionCards:
             CARD_UUID_1: _make_card(
                 CARD_UUID_1, content="<p>Welcome to Acme Corp!</p>", title="Welcome"
             ),
-            CARD_UUID_2: _make_card(
-                CARD_UUID_2, content="<p>Acme Corp rocks.</p>", title="About"
-            ),
+            CARD_UUID_2: _make_card(CARD_UUID_2, content="<p>Acme Corp rocks.</p>", title="About"),
         }
         g.cards.get.side_effect = lambda cid: cards_by_id[cid]
         g.cards.patch.return_value = None
 
-        results = replace_text_in_collection_cards(
-            g, COLL_UUID, "Acme Corp", "Acme Inc."
-        )
+        results = replace_text_in_collection_cards(g, COLL_UUID, "Acme Corp", "Acme Inc.")
 
         assert g.cards.patch.call_count == 2
         # patch should pass new content and keep_verification by default
@@ -814,9 +784,7 @@ class TestReplaceTextInCollectionCards:
         }
         g.cards.get.side_effect = lambda cid: cards_by_id[cid]
 
-        results = replace_text_in_collection_cards(
-            g, COLL_UUID, "Acme Corp", "Acme Inc."
-        )
+        results = replace_text_in_collection_cards(g, COLL_UUID, "Acme Corp", "Acme Inc.")
 
         # Only CARD_UUID_1 gets patched
         g.cards.patch.assert_called_once()
@@ -851,9 +819,7 @@ class TestReplaceTextInCollectionCards:
         }
         g.cards.get.side_effect = lambda cid: cards_by_id[cid]
 
-        results = replace_text_in_collection_cards(
-            g, COLL_UUID, "Foo", "Bar"
-        )
+        results = replace_text_in_collection_cards(g, COLL_UUID, "Foo", "Bar")
 
         assert {r.card_id for r in results} == {CARD_UUID_1, CARD_UUID_2}
         assert all(r.status == "updated" for r in results)
@@ -870,13 +836,9 @@ class TestReplaceTextInCollectionCards:
         g.folders.items.return_value = [
             _make_folder_item(CARD_UUID_1, "card"),
         ]
-        g.cards.get.return_value = _make_card(
-            CARD_UUID_1, content="<p>old text here</p>"
-        )
+        g.cards.get.return_value = _make_card(CARD_UUID_1, content="<p>old text here</p>")
 
-        results = replace_text_in_collection_cards(
-            g, COLL_UUID, "old", "new", dry_run=True
-        )
+        results = replace_text_in_collection_cards(g, COLL_UUID, "old", "new", dry_run=True)
 
         g.cards.patch.assert_not_called()
         assert len(results) == 1
@@ -893,9 +855,7 @@ class TestReplaceTextInCollectionCards:
         g.folders.items.return_value = [
             _make_folder_item(CARD_UUID_1, "card"),
         ]
-        g.cards.get.return_value = _make_card(
-            CARD_UUID_1, content="<p>GURU and guru and Guru</p>"
-        )
+        g.cards.get.return_value = _make_card(CARD_UUID_1, content="<p>GURU and guru and Guru</p>")
 
         results = replace_text_in_collection_cards(
             g, COLL_UUID, "guru", "Acme", case_sensitive=False
@@ -925,9 +885,7 @@ class TestReplaceTextInCollectionCards:
 
         g.cards.get.side_effect = get_side_effect
 
-        results = replace_text_in_collection_cards(
-            g, COLL_UUID, "old", "new"
-        )
+        results = replace_text_in_collection_cards(g, COLL_UUID, "old", "new")
 
         statuses = {r.card_id: r.status for r in results}
         assert statuses[CARD_UUID_1] == "failed"
@@ -952,13 +910,9 @@ class TestReplaceTextInCollectionCards:
             ],
             [_make_folder_item(CARD_UUID_1, "card")],
         ]
-        g.cards.get.return_value = _make_card(
-            CARD_UUID_1, content="<p>old text</p>"
-        )
+        g.cards.get.return_value = _make_card(CARD_UUID_1, content="<p>old text</p>")
 
-        results = replace_text_in_collection_cards(
-            g, COLL_UUID, "old", "new"
-        )
+        results = replace_text_in_collection_cards(g, COLL_UUID, "old", "new")
 
         # Card is processed once, patched once
         assert sum(1 for r in results if r.card_id == CARD_UUID_1) == 1
@@ -987,9 +941,7 @@ class TestReplaceTextInCollectionCards:
         assert card_item.item_id == f"placement-{CARD_UUID_1}"
 
         g.folders.items.return_value = [card_item]
-        g.cards.get.return_value = _make_card(
-            CARD_UUID_1, content="<p>old</p>"
-        )
+        g.cards.get.return_value = _make_card(CARD_UUID_1, content="<p>old</p>")
 
         replace_text_in_collection_cards(g, COLL_UUID, "old", "new")
 

@@ -261,9 +261,7 @@ def make_collection_with_setup(
     Returns:
         The newly created CollectionModel.
     """
-    collection = g.collections.create(
-        name=name, description=description, color=color
-    )
+    collection = g.collections.create(name=name, description=description, color=color)
 
     # Add group access if a group was specified
     if group_id is not None:
@@ -508,18 +506,12 @@ def _replace_text_walk(
             title = card.preferred_phrase or ""
 
             if not changed:
-                results.append(
-                    CardReplaceResult(
-                        card_id=item_id, title=title, status="unchanged"
-                    )
-                )
+                results.append(CardReplaceResult(card_id=item_id, title=title, status="unchanged"))
                 continue
 
             if dry_run:
                 results.append(
-                    CardReplaceResult(
-                        card_id=item_id, title=title, status="would_update"
-                    )
+                    CardReplaceResult(card_id=item_id, title=title, status="would_update")
                 )
                 continue
 
@@ -528,9 +520,7 @@ def _replace_text_walk(
                 content=modified_content,
                 keep_verification=keep_verification,
             )
-            results.append(
-                CardReplaceResult(card_id=item_id, title=title, status="updated")
-            )
+            results.append(CardReplaceResult(card_id=item_id, title=title, status="updated"))
         except Exception as exc:
             results.append(
                 CardReplaceResult(

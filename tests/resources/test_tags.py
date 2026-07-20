@@ -102,9 +102,7 @@ class TestListCategories:
         assert isinstance(result[0], TagCategory)
         assert result[0].name == "Tags"
 
-    def test_list_categories_sends_correct_path(
-        self, tags: TagResource, httpx_mock
-    ) -> None:
+    def test_list_categories_sends_correct_path(self, tags: TagResource, httpx_mock) -> None:
         httpx_mock.add_response(json=_whoami_json())
         httpx_mock.add_response(json=[_category_json()])
         tags.list_categories()
@@ -199,9 +197,7 @@ class TestUpdateTag:
         assert isinstance(result, Tag)
         assert result.value == "new-value"
 
-    def test_update_tag_sends_correct_request(
-        self, tags: TagResource, httpx_mock
-    ) -> None:
+    def test_update_tag_sends_correct_request(self, tags: TagResource, httpx_mock) -> None:
         httpx_mock.add_response(json=_whoami_json())
         httpx_mock.add_response(json=_tag_json(value="new-value"))
         tags.update_tag(TAG_UUID, value="new-value")
@@ -225,18 +221,14 @@ class TestUpdateTag:
 class TestCreateCategory:
     """Create a new tag category."""
 
-    def test_create_category_returns_category(
-        self, tags: TagResource, httpx_mock
-    ) -> None:
+    def test_create_category_returns_category(self, tags: TagResource, httpx_mock) -> None:
         httpx_mock.add_response(json=_whoami_json())
         httpx_mock.add_response(json=_category_json(name="Priority"))
         result = tags.create_category(name="Priority")
         assert isinstance(result, TagCategory)
         assert result.name == "Priority"
 
-    def test_create_category_sends_correct_body(
-        self, tags: TagResource, httpx_mock
-    ) -> None:
+    def test_create_category_sends_correct_body(self, tags: TagResource, httpx_mock) -> None:
         httpx_mock.add_response(json=_whoami_json())
         httpx_mock.add_response(json=_category_json(name="Priority"))
         tags.create_category(name="Priority")
@@ -260,17 +252,13 @@ class TestCreateCategory:
 class TestUpdateCategory:
     """Update a tag category's name."""
 
-    def test_update_category_returns_category(
-        self, tags: TagResource, httpx_mock
-    ) -> None:
+    def test_update_category_returns_category(self, tags: TagResource, httpx_mock) -> None:
         httpx_mock.add_response(json=_whoami_json())
         httpx_mock.add_response(json=_category_json(name="New Name"))
         result = tags.update_category(CATEGORY_UUID, name="New Name")
         assert isinstance(result, TagCategory)
 
-    def test_update_category_sends_correct_request(
-        self, tags: TagResource, httpx_mock
-    ) -> None:
+    def test_update_category_sends_correct_request(self, tags: TagResource, httpx_mock) -> None:
         httpx_mock.add_response(json=_whoami_json())
         httpx_mock.add_response(json=_category_json(name="New Name"))
         tags.update_category(CATEGORY_UUID, name="New Name")
@@ -292,9 +280,7 @@ class TestUpdateCategory:
 class TestDeleteCategory:
     """Delete a tag category and all its tags."""
 
-    def test_delete_category_sends_correct_request(
-        self, tags: TagResource, httpx_mock
-    ) -> None:
+    def test_delete_category_sends_correct_request(self, tags: TagResource, httpx_mock) -> None:
         httpx_mock.add_response(json=_whoami_json())
         httpx_mock.add_response(status_code=204)
         tags.delete_category(CATEGORY_UUID)
@@ -336,9 +322,7 @@ class TestTagNameResolution:
 
     def test_resolve_tag_case_insensitive(self, tags: TagResource, httpx_mock) -> None:
         httpx_mock.add_response(json=_whoami_json())
-        httpx_mock.add_response(
-            json=[_category_json(tags=[_tag_json(value="Onboarding")])]
-        )
+        httpx_mock.add_response(json=[_category_json(tags=[_tag_json(value="Onboarding")])])
         httpx_mock.add_response(json=_tag_json(value="Onboarding"))
         result = tags.get_tag("onboarding")
         assert isinstance(result, Tag)

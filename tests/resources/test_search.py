@@ -69,9 +69,7 @@ def _document_json(doc_id: str = "doc-1", title: str = "Test Doc") -> dict:
     }
 
 
-def _document_search_response(
-    total: int = 2, docs: list[dict] | None = None
-) -> dict:
+def _document_search_response(total: int = 2, docs: list[dict] | None = None) -> dict:
     """Build a DocumentSearchResponse dict."""
     if docs is None:
         docs = [
@@ -90,9 +88,7 @@ def _document_search_response(
     }
 
 
-def _nlq_search_response(
-    total: int = 2, docs: list[dict] | None = None
-) -> dict:
+def _nlq_search_response(total: int = 2, docs: list[dict] | None = None) -> dict:
     """Build an NLQSearchResponse dict."""
     if docs is None:
         docs = [
@@ -132,9 +128,7 @@ def search(http_client: HttpClient) -> SearchResource:
 class TestCards:
     """Keyword card search via GET /search/cardmgr."""
 
-    def test_basic_search(
-        self, search: SearchResource, httpx_mock
-    ) -> None:
+    def test_basic_search(self, search: SearchResource, httpx_mock) -> None:
         """Simple keyword search returns list of Card objects."""
         httpx_mock.add_response(
             url="https://api.getguru.com/api/v1/search/cardmgr?q=onboarding",
@@ -145,9 +139,7 @@ class TestCards:
         assert isinstance(results[0], Card)
         assert results[0].preferred_phrase == "Onboarding Guide"
 
-    def test_empty_results(
-        self, search: SearchResource, httpx_mock
-    ) -> None:
+    def test_empty_results(self, search: SearchResource, httpx_mock) -> None:
         """Search with no matches returns empty list."""
         httpx_mock.add_response(
             url="https://api.getguru.com/api/v1/search/cardmgr?q=nonexistent",
@@ -156,9 +148,7 @@ class TestCards:
         results = search.cards("nonexistent")
         assert results == []
 
-    def test_multiple_results(
-        self, search: SearchResource, httpx_mock
-    ) -> None:
+    def test_multiple_results(self, search: SearchResource, httpx_mock) -> None:
         """Search returning multiple cards."""
         httpx_mock.add_response(
             url="https://api.getguru.com/api/v1/search/cardmgr?q=test",
@@ -172,9 +162,7 @@ class TestCards:
         assert results[0].id == CARD_UUID
         assert results[1].id == CARD_UUID_2
 
-    def test_with_max_results(
-        self, search: SearchResource, httpx_mock
-    ) -> None:
+    def test_with_max_results(self, search: SearchResource, httpx_mock) -> None:
         """max_results is passed as query param."""
         httpx_mock.add_response(
             url="https://api.getguru.com/api/v1/search/cardmgr?q=test&maxResults=5",
@@ -183,9 +171,7 @@ class TestCards:
         results = search.cards("test", max_results=5)
         assert len(results) == 1
 
-    def test_with_show_archived(
-        self, search: SearchResource, httpx_mock
-    ) -> None:
+    def test_with_show_archived(self, search: SearchResource, httpx_mock) -> None:
         """showArchived=true is passed as query param."""
         httpx_mock.add_response(
             url="https://api.getguru.com/api/v1/search/cardmgr?q=old&showArchived=true",
@@ -194,9 +180,7 @@ class TestCards:
         results = search.cards("old", show_archived=True)
         assert len(results) == 1
 
-    def test_with_query_type(
-        self, search: SearchResource, httpx_mock
-    ) -> None:
+    def test_with_query_type(self, search: SearchResource, httpx_mock) -> None:
         """queryType param controls which card types to search."""
         httpx_mock.add_response(
             url="https://api.getguru.com/api/v1/search/cardmgr?q=draft&queryType=draft",
@@ -224,9 +208,7 @@ class TestCards:
 class TestDocuments:
     """Keyword document search via POST /search/documents."""
 
-    def test_basic_search(
-        self, search: SearchResource, httpx_mock
-    ) -> None:
+    def test_basic_search(self, search: SearchResource, httpx_mock) -> None:
         """Basic keyword search returns DocumentSearchResponse."""
         httpx_mock.add_response(
             url="https://api.getguru.com/api/v1/search/documents",
@@ -237,9 +219,7 @@ class TestDocuments:
         assert result.total == 2
         assert len(result.documents) == 2
 
-    def test_sends_search_terms_in_body(
-        self, search: SearchResource, httpx_mock
-    ) -> None:
+    def test_sends_search_terms_in_body(self, search: SearchResource, httpx_mock) -> None:
         """searchTerms is sent in the POST body."""
         httpx_mock.add_response(
             url="https://api.getguru.com/api/v1/search/documents",
@@ -251,9 +231,7 @@ class TestDocuments:
         body = json.loads(request.content)
         assert body["searchTerms"] == "API reference"
 
-    def test_with_optional_params(
-        self, search: SearchResource, httpx_mock
-    ) -> None:
+    def test_with_optional_params(self, search: SearchResource, httpx_mock) -> None:
         """Optional params are included in the POST body."""
         httpx_mock.add_response(
             url="https://api.getguru.com/api/v1/search/documents",
@@ -276,9 +254,7 @@ class TestDocuments:
         assert body["sourceIds"] == [SOURCE_UUID]
         assert body["sourceTypes"] == ["SALESFORCE"]
 
-    def test_omits_none_params(
-        self, search: SearchResource, httpx_mock
-    ) -> None:
+    def test_omits_none_params(self, search: SearchResource, httpx_mock) -> None:
         """None/default params are not sent in the body."""
         httpx_mock.add_response(
             url="https://api.getguru.com/api/v1/search/documents",
@@ -294,9 +270,7 @@ class TestDocuments:
         with pytest.raises(ValidationError):
             search.documents("")
 
-    def test_empty_documents_list(
-        self, search: SearchResource, httpx_mock
-    ) -> None:
+    def test_empty_documents_list(self, search: SearchResource, httpx_mock) -> None:
         """Response with no documents returns empty list."""
         httpx_mock.add_response(
             url="https://api.getguru.com/api/v1/search/documents",
@@ -315,9 +289,7 @@ class TestDocuments:
 class TestDocumentsSemantic:
     """Semantic/NLQ search via GET /search/documents."""
 
-    def test_basic_search(
-        self, search: SearchResource, httpx_mock
-    ) -> None:
+    def test_basic_search(self, search: SearchResource, httpx_mock) -> None:
         """Basic semantic search returns NLQSearchResponse."""
         httpx_mock.add_response(
             method="GET",
@@ -331,9 +303,7 @@ class TestDocumentsSemantic:
         request = httpx_mock.get_request()
         assert "searchTerms=what" in str(request.url)
 
-    def test_with_max_results(
-        self, search: SearchResource, httpx_mock
-    ) -> None:
+    def test_with_max_results(self, search: SearchResource, httpx_mock) -> None:
         """maxResults is passed as query param."""
         httpx_mock.add_response(
             method="GET",
@@ -344,9 +314,7 @@ class TestDocumentsSemantic:
         request = httpx_mock.get_request()
         assert "maxResults=5" in str(request.url)
 
-    def test_with_agent_id(
-        self, search: SearchResource, httpx_mock
-    ) -> None:
+    def test_with_agent_id(self, search: SearchResource, httpx_mock) -> None:
         """agentId is passed as query param."""
         agent_id = "e5e5e5e5-e5e5-e5e5-e5e5-e5e5e5e5e5e5"
         httpx_mock.add_response(
@@ -358,9 +326,7 @@ class TestDocumentsSemantic:
         request = httpx_mock.get_request()
         assert f"agentId={agent_id}" in str(request.url)
 
-    def test_with_include_content(
-        self, search: SearchResource, httpx_mock
-    ) -> None:
+    def test_with_include_content(self, search: SearchResource, httpx_mock) -> None:
         """includeContent is passed as query param."""
         httpx_mock.add_response(
             method="GET",
@@ -375,9 +341,7 @@ class TestDocumentsSemantic:
         with pytest.raises(ValidationError):
             search.documents_semantic("")
 
-    def test_query_spec_in_response(
-        self, search: SearchResource, httpx_mock
-    ) -> None:
+    def test_query_spec_in_response(self, search: SearchResource, httpx_mock) -> None:
         """NLQSearchResponse includes the resolved querySpec."""
         httpx_mock.add_response(
             method="GET",
@@ -396,9 +360,7 @@ class TestDocumentsSemantic:
 class TestSources:
     """Source record search via POST /search/sourcemgr."""
 
-    def test_basic_search(
-        self, search: SearchResource, httpx_mock
-    ) -> None:
+    def test_basic_search(self, search: SearchResource, httpx_mock) -> None:
         """Basic source search returns DocumentSearchResponse."""
         httpx_mock.add_response(
             url="https://api.getguru.com/api/v1/search/sourcemgr",
@@ -408,9 +370,7 @@ class TestSources:
         assert isinstance(result, DocumentSearchResponse)
         assert result.total == 2
 
-    def test_sends_body(
-        self, search: SearchResource, httpx_mock
-    ) -> None:
+    def test_sends_body(self, search: SearchResource, httpx_mock) -> None:
         """Search terms and filters are sent in the POST body."""
         httpx_mock.add_response(
             url="https://api.getguru.com/api/v1/search/sourcemgr",
@@ -431,9 +391,7 @@ class TestSources:
         assert body["sourceIds"] == [SOURCE_UUID]
         assert body["sourceTypes"] == ["JIRA"]
 
-    def test_no_search_terms(
-        self, search: SearchResource, httpx_mock
-    ) -> None:
+    def test_no_search_terms(self, search: SearchResource, httpx_mock) -> None:
         """sources() can be called without search_terms (browse mode)."""
         httpx_mock.add_response(
             url="https://api.getguru.com/api/v1/search/sourcemgr",
@@ -446,9 +404,7 @@ class TestSources:
         assert body["sourceIds"] == [SOURCE_UUID]
         assert result.total == 2
 
-    def test_empty_body(
-        self, search: SearchResource, httpx_mock
-    ) -> None:
+    def test_empty_body(self, search: SearchResource, httpx_mock) -> None:
         """sources() with no params sends empty body."""
         httpx_mock.add_response(
             url="https://api.getguru.com/api/v1/search/sourcemgr",
@@ -460,9 +416,7 @@ class TestSources:
         assert body == {}
         assert result.total == 0
 
-    def test_validates_search_terms_control_chars(
-        self, search: SearchResource
-    ) -> None:
+    def test_validates_search_terms_control_chars(self, search: SearchResource) -> None:
         """Control chars in search_terms are rejected."""
         with pytest.raises(ValidationError):
             search.sources(search_terms="test\x00query")

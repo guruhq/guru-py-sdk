@@ -207,10 +207,7 @@ class PageResource(BaseResource):
             validate_input(parent_page_id, "parent_page_id")
         # prev_sibling_page_id can be "first" or "last" — only validate if it
         # looks like a real ID (not a position anchor keyword)
-        if (
-            prev_sibling_page_id is not None
-            and prev_sibling_page_id not in ("first", "last")
-        ):
+        if prev_sibling_page_id is not None and prev_sibling_page_id not in ("first", "last"):
             validate_input(prev_sibling_page_id, "prev_sibling_page_id")
 
         body: dict[str, Any] = {}

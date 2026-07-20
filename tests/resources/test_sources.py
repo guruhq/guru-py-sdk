@@ -137,9 +137,7 @@ def sources(http_client: HttpClient) -> SourceResource:
 class TestList:
     """List all sources."""
 
-    def test_returns_sources(
-        self, sources: SourceResource, httpx_mock
-    ) -> None:
+    def test_returns_sources(self, sources: SourceResource, httpx_mock) -> None:
         """Basic list returns list of Source objects."""
         httpx_mock.add_response(
             url="https://api.getguru.com/api/v1/sources",
@@ -154,9 +152,7 @@ class TestList:
         assert result[0].name == "Confluence"
         assert result[1].name == "Jira"
 
-    def test_empty_list(
-        self, sources: SourceResource, httpx_mock
-    ) -> None:
+    def test_empty_list(self, sources: SourceResource, httpx_mock) -> None:
         """No sources returns empty list."""
         httpx_mock.add_response(
             url="https://api.getguru.com/api/v1/sources",
@@ -165,9 +161,7 @@ class TestList:
         result = sources.list()
         assert result == []
 
-    def test_source_nested_fields(
-        self, sources: SourceResource, httpx_mock
-    ) -> None:
+    def test_source_nested_fields(self, sources: SourceResource, httpx_mock) -> None:
         """Source model correctly parses nested definition and createdBy."""
         httpx_mock.add_response(
             url="https://api.getguru.com/api/v1/sources",
@@ -189,9 +183,7 @@ class TestList:
 class TestGet:
     """Get a source by ID."""
 
-    def test_get_by_id(
-        self, sources: SourceResource, httpx_mock
-    ) -> None:
+    def test_get_by_id(self, sources: SourceResource, httpx_mock) -> None:
         """Get a specific source by UUID."""
         httpx_mock.add_response(
             url=f"https://api.getguru.com/api/v1/sources/{SOURCE_UUID}",
@@ -222,9 +214,7 @@ class TestGet:
 class TestObjectTypes:
     """List object types for a source."""
 
-    def test_returns_object_types(
-        self, sources: SourceResource, httpx_mock
-    ) -> None:
+    def test_returns_object_types(self, sources: SourceResource, httpx_mock) -> None:
         """Returns list of ObjectType with facets and fields."""
         httpx_mock.add_response(
             url=f"https://api.getguru.com/api/v1/sources/{SOURCE_UUID}/objecttypes",
@@ -236,9 +226,7 @@ class TestObjectTypes:
         assert result[0].name == "Pages"
         assert result[0].external_id == "page"
 
-    def test_facets_parsed(
-        self, sources: SourceResource, httpx_mock
-    ) -> None:
+    def test_facets_parsed(self, sources: SourceResource, httpx_mock) -> None:
         """ObjectType.facets are parsed into ObjectFacet models."""
         httpx_mock.add_response(
             url=f"https://api.getguru.com/api/v1/sources/{SOURCE_UUID}/objecttypes",
@@ -250,9 +238,7 @@ class TestObjectTypes:
         assert len(facets) == 1
         assert facets[0].name == "Space"
 
-    def test_fields_parsed(
-        self, sources: SourceResource, httpx_mock
-    ) -> None:
+    def test_fields_parsed(self, sources: SourceResource, httpx_mock) -> None:
         """ObjectType.fields are parsed into ObjectField models."""
         httpx_mock.add_response(
             url=f"https://api.getguru.com/api/v1/sources/{SOURCE_UUID}/objecttypes",
@@ -264,9 +250,7 @@ class TestObjectTypes:
         assert len(fields) == 1
         assert fields[0].name == "Title"
 
-    def test_empty_object_types(
-        self, sources: SourceResource, httpx_mock
-    ) -> None:
+    def test_empty_object_types(self, sources: SourceResource, httpx_mock) -> None:
         """Source with no object types returns empty list."""
         httpx_mock.add_response(
             url=f"https://api.getguru.com/api/v1/sources/{SOURCE_UUID}/objecttypes",
@@ -289,9 +273,7 @@ class TestObjectTypes:
 class TestConnections:
     """List grouped source connections."""
 
-    def test_returns_connections(
-        self, sources: SourceResource, httpx_mock
-    ) -> None:
+    def test_returns_connections(self, sources: SourceResource, httpx_mock) -> None:
         """Returns list of GroupedSourceConnection objects."""
         httpx_mock.add_response(
             url="https://api.getguru.com/api/v1/sources/groups",
@@ -306,9 +288,7 @@ class TestConnections:
         assert result[0].name == "Confluence"
         assert result[0].source_count == 2
 
-    def test_empty_connections(
-        self, sources: SourceResource, httpx_mock
-    ) -> None:
+    def test_empty_connections(self, sources: SourceResource, httpx_mock) -> None:
         """No connections returns empty list."""
         httpx_mock.add_response(
             url="https://api.getguru.com/api/v1/sources/groups",
@@ -326,9 +306,7 @@ class TestConnections:
 class TestGetConnection:
     """Get a single grouped source connection."""
 
-    def test_get_by_id(
-        self, sources: SourceResource, httpx_mock
-    ) -> None:
+    def test_get_by_id(self, sources: SourceResource, httpx_mock) -> None:
         """Get a specific connection by ID."""
         httpx_mock.add_response(
             url=f"https://api.getguru.com/api/v1/sources/groups/{CONNECTION_UUID}",

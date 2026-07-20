@@ -315,7 +315,14 @@ class TestExcludedSchemas:
 
     @pytest.mark.parametrize(
         "class_name",
-        ["Board", "BoardIdExpression", "BoardPermission", "BoardPermissions", "Framework", "Question"],
+        [
+            "Board",
+            "BoardIdExpression",
+            "BoardPermission",
+            "BoardPermissions",
+            "Framework",
+            "Question",
+        ],
     )
     def test_excluded_schema_not_importable(self, class_name: str) -> None:
         """Excluded schemas should not exist in the generated module."""

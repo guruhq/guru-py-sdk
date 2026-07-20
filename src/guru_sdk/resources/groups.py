@@ -146,17 +146,11 @@ class GroupResource(BaseResource):
         # Name resolution: list groups and match by name
         all_groups = self._http.get_list("/groups", UserGroup)
         for group in all_groups:
-            if (
-                group.name is not None
-                and group.name.lower() == group_id.lower()
-            ):
+            if group.name is not None and group.name.lower() == group_id.lower():
                 if group.id is None:
-                    raise NotFoundError(
-                        f"Group '{group_id}' found but has no ID."
-                    )
+                    raise NotFoundError(f"Group '{group_id}' found but has no ID.")
                 return group.id
 
         raise NotFoundError(
-            f"No group found with name '{group_id}'. "
-            "Pass a group UUID for exact lookup."
+            f"No group found with name '{group_id}'. Pass a group UUID for exact lookup."
         )

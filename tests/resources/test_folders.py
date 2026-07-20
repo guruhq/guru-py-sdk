@@ -189,7 +189,9 @@ class TestCreate:
 
     def test_create_sends_correct_body(self, folders: FolderResource, httpx_mock) -> None:
         httpx_mock.add_response(json=_folder_json())
-        folders.create(title="Onboarding", collection_id=COLLECTION_UUID, description="Welcome docs")
+        folders.create(
+            title="Onboarding", collection_id=COLLECTION_UUID, description="Welcome docs"
+        )
         request = httpx_mock.get_request()
         assert request is not None
         assert request.url.path == "/api/v1/folders"
@@ -396,9 +398,7 @@ class TestRemovePermission:
         folders.remove_permission(FOLDER_UUID, PERMISSION_UUID)
         request = httpx_mock.get_request()
         assert request is not None
-        assert request.url.path == (
-            f"/api/v1/folders/{FOLDER_UUID}/permissions/{PERMISSION_UUID}"
-        )
+        assert request.url.path == (f"/api/v1/folders/{FOLDER_UUID}/permissions/{PERMISSION_UUID}")
         assert request.method == "DELETE"
 
 

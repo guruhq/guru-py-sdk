@@ -241,9 +241,7 @@ class TestMembers:
 class TestAddMembers:
     """Add members to a group by email."""
 
-    def test_add_members_sends_correct_request(
-        self, groups: GroupResource, httpx_mock
-    ) -> None:
+    def test_add_members_sends_correct_request(self, groups: GroupResource, httpx_mock) -> None:
         httpx_mock.add_response(status_code=204)
         groups.add_members(GROUP_UUID, emails=["alice@example.com", "bob@example.com"])
         request = httpx_mock.get_request()
@@ -269,9 +267,7 @@ class TestAddMembers:
 class TestRemoveMember:
     """Remove a member from a group."""
 
-    def test_remove_member_sends_correct_request(
-        self, groups: GroupResource, httpx_mock
-    ) -> None:
+    def test_remove_member_sends_correct_request(self, groups: GroupResource, httpx_mock) -> None:
         httpx_mock.add_response(status_code=204)
         groups.remove_member(GROUP_UUID, email="alice@example.com")
         request = httpx_mock.get_request()
@@ -300,9 +296,7 @@ class TestCollections:
         assert len(result) == 1
         assert isinstance(result[0], CollectionModel)
 
-    def test_collections_sends_correct_path(
-        self, groups: GroupResource, httpx_mock
-    ) -> None:
+    def test_collections_sends_correct_path(self, groups: GroupResource, httpx_mock) -> None:
         httpx_mock.add_response(json=[_collection_json()])
         groups.collections(GROUP_UUID)
         request = httpx_mock.get_request()

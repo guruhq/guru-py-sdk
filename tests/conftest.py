@@ -15,11 +15,16 @@ from guru_sdk.http import HttpClient
 # =============================================================================
 
 _PROXY_VARS = [
-    "HTTP_PROXY", "http_proxy",
-    "HTTPS_PROXY", "https_proxy",
-    "ALL_PROXY", "all_proxy",
-    "FTP_PROXY", "ftp_proxy",
-    "GRPC_PROXY", "grpc_proxy",
+    "HTTP_PROXY",
+    "http_proxy",
+    "HTTPS_PROXY",
+    "https_proxy",
+    "ALL_PROXY",
+    "all_proxy",
+    "FTP_PROXY",
+    "ftp_proxy",
+    "GRPC_PROXY",
+    "grpc_proxy",
     "RSYNC_PROXY",
 ]
 

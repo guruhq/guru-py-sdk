@@ -192,7 +192,9 @@ class TestReplaceUrl:
         from guru_sdk.contrib.content import replace_url
 
         html = '<img src="https://old.com/img.png">'
-        result_html, modified = replace_url(html, "https://old.com/img.png", "https://new.com/img.png")
+        result_html, modified = replace_url(
+            html, "https://old.com/img.png", "https://new.com/img.png"
+        )
         assert modified is True
         assert "https://new.com/img.png" in result_html
         assert "https://old.com/img.png" not in result_html
@@ -306,9 +308,7 @@ class TestReplaceText:
         from guru_sdk.contrib.content import replace_text
 
         html = "<p>Guru and GURU and guru</p>"
-        result_html, modified = replace_text(
-            html, "guru", "Acme", case_sensitive=False
-        )
+        result_html, modified = replace_text(html, "guru", "Acme", case_sensitive=False)
         assert modified is True
         assert result_html.count("Acme") == 3
 
@@ -316,9 +316,7 @@ class TestReplaceText:
         """case_sensitive=False but no match → unchanged."""
         from guru_sdk.contrib.content import replace_text
 
-        result_html, modified = replace_text(
-            SIMPLE_HTML, "nope", "x", case_sensitive=False
-        )
+        result_html, modified = replace_text(SIMPLE_HTML, "nope", "x", case_sensitive=False)
         assert modified is False
         assert result_html == SIMPLE_HTML
 
@@ -327,9 +325,7 @@ class TestReplaceText:
         from guru_sdk.contrib.content import replace_text
 
         html = "<p>price: $1.99 (sale)</p>"
-        result_html, modified = replace_text(
-            html, "$1.99", "$2.99", case_sensitive=False
-        )
+        result_html, modified = replace_text(html, "$1.99", "$2.99", case_sensitive=False)
         assert modified is True
         assert "$2.99" in result_html
         assert "$1.99" not in result_html

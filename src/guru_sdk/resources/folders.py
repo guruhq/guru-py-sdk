@@ -58,9 +58,7 @@ class FolderResource(BaseResource):
         """
         if collection_id is not None:
             validate_input(collection_id, "collection_id")
-            return self._http.get_list(
-                "/folders", Folder, collection=collection_id
-            )
+            return self._http.get_list("/folders", Folder, collection=collection_id)
         return self._http.get_list("/folders", Folder)
 
     def create(
@@ -171,9 +169,7 @@ class FolderResource(BaseResource):
             folder_id: Folder UUID or title.
         """
         resolved = self._resolve_folder(folder_id)
-        return self._http.get_list(
-            f"/folders/{resolved}/permissions", UserGroupAccess
-        )
+        return self._http.get_list(f"/folders/{resolved}/permissions", UserGroupAccess)
 
     def effective_permissions(self, folder_id: str) -> EffectivePermissions:
         """Get effective permissions (resolved through the full hierarchy).
@@ -182,9 +178,7 @@ class FolderResource(BaseResource):
             folder_id: Folder UUID or title.
         """
         resolved = self._resolve_folder(folder_id)
-        return self._http.get(
-            f"/folders/{resolved}/effectivepermissions", EffectivePermissions
-        )
+        return self._http.get(f"/folders/{resolved}/effectivepermissions", EffectivePermissions)
 
     def add_permission(self, folder_id: str, group_id: str) -> None:
         """Share a folder with a group (folder-level permission override).
@@ -211,9 +205,7 @@ class FolderResource(BaseResource):
         """
         resolved = self._resolve_folder(folder_id)
         validate_input(permission_id, "permission_id")
-        self._http.delete(
-            f"/folders/{resolved}/permissions/{permission_id}"
-        )
+        self._http.delete(f"/folders/{resolved}/permissions/{permission_id}")
 
     # -------------------------------------------------------------------------
     # Cross-Collection
@@ -257,17 +249,11 @@ class FolderResource(BaseResource):
         # Name resolution: list folders and match by title
         folders = self._http.get_list("/folders", Folder)
         for folder in folders:
-            if (
-                folder.title is not None
-                and folder.title.lower() == folder_id.lower()
-            ):
+            if folder.title is not None and folder.title.lower() == folder_id.lower():
                 if folder.id is None:
-                    raise NotFoundError(
-                        f"Folder '{folder_id}' found but has no ID."
-                    )
+                    raise NotFoundError(f"Folder '{folder_id}' found but has no ID.")
                 return folder.id
 
         raise NotFoundError(
-            f"No folder found with title '{folder_id}'. "
-            "Pass a folder UUID for exact lookup."
+            f"No folder found with title '{folder_id}'. Pass a folder UUID for exact lookup."
         )

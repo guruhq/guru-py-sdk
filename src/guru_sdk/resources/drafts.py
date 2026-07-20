@@ -178,9 +178,7 @@ class DraftResource(BaseResource):
         validate_input(draft_id, "draft_id")
         for gid in group_ids:
             validate_input(gid, "group_id")
-        collaborators = [
-            {"type": "user-group", "userGroup": {"id": gid}} for gid in group_ids
-        ]
+        collaborators = [{"type": "user-group", "userGroup": {"id": gid}} for gid in group_ids]
         return self._http.post_list(
             f"/drafts/{draft_id}/collaborators",
             {"collaborators": collaborators},
