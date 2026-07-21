@@ -213,6 +213,45 @@ class TestPagination:
         folders = client.get_paginated("/folders", FakeFolder, max_pages=3)
         assert len(folders) == 3
 
+    def test_complete_true_when_pages_exhausted(self, httpx_mock):
+        # Single page with no Link header — the full result set was returned.
+        httpx_mock.add_response(json=[{"id": "1", "name": "F1"}])
+        client = HttpClient("https://api.getguru.com/api/v1", "user", "token")
+        folders = client.get_paginated("/folders", FakeFolder)
+        assert folders.complete is True
+
+    def test_complete_false_when_truncated_by_max_pages(self, httpx_mock):
+        # Every page has a Link header, but the cap stops the walk early — so
+        # more data was left unfetched and the result is not complete.
+        for _ in range(2):
+            httpx_mock.add_response(
+                json=[{"id": "x", "name": "X"}],
+                headers={"Link": '<https://api.getguru.com/api/v1/folders?page=99>; rel="next"'},
+            )
+        client = HttpClient("https://api.getguru.com/api/v1", "user", "token")
+        folders = client.get_paginated("/folders", FakeFolder, max_pages=2)
+        assert folders.complete is False
+
+    def test_complete_true_on_empty_204_response(self, httpx_mock):
+        # A 204 means no more data even though we followed a Link to get here.
+        httpx_mock.add_response(
+            json=[{"id": "1", "name": "F1"}],
+            headers={"Link": '<https://api.getguru.com/api/v1/folders?page=2>; rel="next"'},
+        )
+        httpx_mock.add_response(status_code=204)
+        client = HttpClient("https://api.getguru.com/api/v1", "user", "token")
+        folders = client.get_paginated("/folders", FakeFolder)
+        assert len(folders) == 1
+        assert folders.complete is True
+
+    def test_backward_compatible_with_plain_list(self, httpx_mock):
+        # PaginatedList must behave like a built-in list for existing callers.
+        httpx_mock.add_response(json=[{"id": "1", "name": "F1"}, {"id": "2", "name": "F2"}])
+        client = HttpClient("https://api.getguru.com/api/v1", "user", "token")
+        folders = client.get_paginated("/folders", FakeFolder)
+        assert isinstance(folders, list)
+        assert folders == [FakeFolder(id="1", name="F1"), FakeFolder(id="2", name="F2")]
+
 
 # =============================================================================
 # HttpClient.post_file() — multipart file upload

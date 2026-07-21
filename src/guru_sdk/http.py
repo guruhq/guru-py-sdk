@@ -13,7 +13,7 @@ with the same interface — no changes to existing code.
 from __future__ import annotations
 
 import re
-from typing import Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 
 import httpx
 from pydantic import TypeAdapter
@@ -27,6 +27,9 @@ from guru_sdk.errors import (
     RateLimitError,
 )
 from guru_sdk.models._base import GuruModel
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 # =============================================================================
 # Constants
@@ -42,6 +45,31 @@ _TRACKING_HEADERS = {
 }
 
 _T = TypeVar("_T", bound=GuruModel)
+
+# =============================================================================
+# Public API — PaginatedList
+# =============================================================================
+
+
+class PaginatedList(list[_T]):
+    """A list of paginated results that also reports whether the walk finished.
+
+    Behaves exactly like a built-in ``list`` — iteration, indexing, ``len()``,
+    equality against a plain list — so existing callers are unaffected. New
+    code can inspect :attr:`complete` to detect silent truncation: it is
+    ``False`` when the ``max_pages`` cap stopped pagination before the server
+    ran out of pages, meaning more data was left unfetched.
+
+    Note: operations that build a new list (``copy()``, ``+``, slicing) return
+    a plain ``list`` — :attr:`complete` describes a fetch, not the data.
+    """
+
+    complete: bool
+
+    def __init__(self, iterable: Iterable[_T] = (), *, complete: bool = True) -> None:
+        super().__init__(iterable)
+        self.complete = complete
+
 
 # =============================================================================
 # Public API — HttpClient
@@ -226,12 +254,16 @@ class HttpClient:
         *,
         max_pages: int = 10,
         **params: Any,
-    ) -> list[_T]:
+    ) -> PaginatedList[_T]:
         """GET all pages of a paginated endpoint.
 
         Follows Link: <url>; rel="next" headers up to *max_pages*.
         Initial query parameters are passed via **params (first page only —
         subsequent pages use the full URL from Link headers).
+
+        Returns a :class:`PaginatedList` — a ``list`` subclass whose
+        ``complete`` attribute is ``False`` if the ``max_pages`` cap stopped
+        the walk while more pages remained (silent truncation).
         """
         all_items: list[_T] = []
         # First request uses the relative path through the httpx client
@@ -251,6 +283,8 @@ class HttpClient:
             self._raise_for_status(response)
 
             if response.status_code == 204:
+                # No content — the endpoint is exhausted, not truncated.
+                next_url = None
                 break
 
             items = adapter.validate_python(response.json())
@@ -260,7 +294,8 @@ class HttpClient:
             # Parse Link header for next page
             next_url = _parse_link_header(response.headers.get("link"))
 
-        return all_items
+        # A leftover next_url means the max_pages cap stopped us early.
+        return PaginatedList(all_items, complete=next_url is None)
 
     # -------------------------------------------------------------------------
     # Cleanup

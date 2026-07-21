@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import mimetypes
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from urllib.parse import quote
 
 from guru_sdk._compat import is_uuid, validate_free_text, validate_input
@@ -22,11 +22,15 @@ from guru_sdk.models import (
     CardCollaborator,
     CardComment,
     CardCommentReply,
+    CardCommentResult,
     CardVerifier,
     Folder,
     Tag,
 )
 from guru_sdk.resources._base import BaseResource
+
+if TYPE_CHECKING:
+    from guru_sdk.http import PaginatedList
 
 # =============================================================================
 # Public API — CardResource
@@ -384,6 +388,44 @@ class CardResource(BaseResource):
         if status is not None:
             return self._http.get_list(f"/cards/{resolved}/comments", CardComment, status=status)
         return self._http.get_list(f"/cards/{resolved}/comments", CardComment)
+
+    def bulk_get_comments(
+        self,
+        *,
+        status: str | None = None,
+        created_after: str | None = None,
+        created_before: str | None = None,
+        max_pages: int = 10,
+    ) -> PaginatedList[CardCommentResult]:
+        """Bulk-retrieve card comment threads across all accessible cards.
+
+        Consumes the team-wide GET /api/v1/comments endpoint. Results are
+        access-scoped to the caller, newest-activity first, and paginated via
+        Link headers.
+
+        Args:
+            status: Filter top-level comments by status — "OPEN" or "RESOLVED".
+            created_after / created_before: ISO-8601 bounds on the thread's
+                most-recent activity (inclusive).
+            max_pages: Safety cap on pages walked (default 10).
+
+        Returns a :class:`PaginatedList`; check its ``complete`` attribute to
+        detect when ``max_pages`` truncated the result before all matching
+        comments were retrieved.
+        """
+        params: dict[str, Any] = {}
+        if status is not None:
+            validate_input(status, "status")
+            params["status"] = status
+        if created_after is not None:
+            validate_input(created_after, "created_after")
+            params["createdAfter"] = created_after
+        if created_before is not None:
+            validate_input(created_before, "created_before")
+            params["createdBefore"] = created_before
+        return self._http.get_paginated(
+            "/comments", CardCommentResult, max_pages=max_pages, **params
+        )
 
     def add_comment(self, card_id: str, content: str) -> CardComment:
         """Add a comment to a card.
