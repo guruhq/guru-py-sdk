@@ -57,7 +57,9 @@ class AuthenticationError(GuruApiError):
     """401 Unauthorized — invalid or missing credentials."""
 
     def __init__(self, body: Any = None) -> None:
-        super().__init__(401, body or "Invalid or missing credentials. Check GURU_USER and GURU_TOKEN.")
+        super().__init__(
+            401, body or "Invalid or missing credentials. Check GURU_USER and GURU_TOKEN."
+        )
 
 
 class ForbiddenError(GuruApiError):

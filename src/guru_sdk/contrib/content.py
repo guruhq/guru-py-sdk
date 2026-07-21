@@ -190,6 +190,10 @@ class _UrlExtractor(HTMLParser):
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         for attr_name, attr_value in attrs:
-            if attr_name in ("src", "href") and attr_value is not None and attr_value not in self._seen:
+            if (
+                attr_name in ("src", "href")
+                and attr_value is not None
+                and attr_value not in self._seen
+            ):
                 self._seen.add(attr_value)
                 self.urls.append(attr_value)

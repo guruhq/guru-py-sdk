@@ -125,9 +125,7 @@ def drafts(http_client: HttpClient) -> DraftResource:
 class TestList:
     """List drafts, optionally filtered by card ID."""
 
-    def test_list_all(
-        self, drafts: DraftResource, httpx_mock
-    ) -> None:
+    def test_list_all(self, drafts: DraftResource, httpx_mock) -> None:
         """List all drafts returns list of DraftCard objects."""
         httpx_mock.add_response(
             url="https://api.getguru.com/api/v1/drafts",
@@ -142,9 +140,7 @@ class TestList:
         assert result[0].title == "First Draft"
         assert result[1].title == "Second Draft"
 
-    def test_list_empty(
-        self, drafts: DraftResource, httpx_mock
-    ) -> None:
+    def test_list_empty(self, drafts: DraftResource, httpx_mock) -> None:
         """No drafts returns empty list."""
         httpx_mock.add_response(
             url="https://api.getguru.com/api/v1/drafts",
@@ -153,9 +149,7 @@ class TestList:
         result = drafts.list()
         assert result == []
 
-    def test_list_by_card_id(
-        self, drafts: DraftResource, httpx_mock
-    ) -> None:
+    def test_list_by_card_id(self, drafts: DraftResource, httpx_mock) -> None:
         """Filtering by card_id passes query param."""
         httpx_mock.add_response(
             url=f"https://api.getguru.com/api/v1/drafts?cardId={CARD_UUID}",
@@ -165,9 +159,7 @@ class TestList:
         assert len(result) == 1
         assert result[0].card_id == CARD_UUID
 
-    def test_draft_nested_fields(
-        self, drafts: DraftResource, httpx_mock
-    ) -> None:
+    def test_draft_nested_fields(self, drafts: DraftResource, httpx_mock) -> None:
         """DraftCard model correctly parses nested user and collection."""
         httpx_mock.add_response(
             url="https://api.getguru.com/api/v1/drafts",
@@ -189,9 +181,7 @@ class TestList:
 class TestGet:
     """Get a specific draft by ID."""
 
-    def test_get_by_id(
-        self, drafts: DraftResource, httpx_mock
-    ) -> None:
+    def test_get_by_id(self, drafts: DraftResource, httpx_mock) -> None:
         """Get a draft by UUID."""
         httpx_mock.add_response(
             url=f"https://api.getguru.com/api/v1/drafts/{DRAFT_UUID}",
@@ -221,9 +211,7 @@ class TestGet:
 class TestCreate:
     """Create a new draft card."""
 
-    def test_create_minimal(
-        self, drafts: DraftResource, httpx_mock
-    ) -> None:
+    def test_create_minimal(self, drafts: DraftResource, httpx_mock) -> None:
         """Create a draft with just a title."""
         httpx_mock.add_response(
             url="https://api.getguru.com/api/v1/drafts",
@@ -234,9 +222,7 @@ class TestCreate:
         assert isinstance(result, DraftCard)
         assert result.title == "Draft Card"
 
-    def test_create_sends_body(
-        self, drafts: DraftResource, httpx_mock
-    ) -> None:
+    def test_create_sends_body(self, drafts: DraftResource, httpx_mock) -> None:
         """Create sends title and content in the POST body."""
         httpx_mock.add_response(
             url="https://api.getguru.com/api/v1/drafts",
@@ -249,9 +235,7 @@ class TestCreate:
         assert body["title"] == "My Draft"
         assert body["content"] == "<p>Hello</p>"
 
-    def test_create_with_all_fields(
-        self, drafts: DraftResource, httpx_mock
-    ) -> None:
+    def test_create_with_all_fields(self, drafts: DraftResource, httpx_mock) -> None:
         """Create with all optional fields."""
         httpx_mock.add_response(
             url="https://api.getguru.com/api/v1/drafts",
@@ -271,9 +255,7 @@ class TestCreate:
         assert body["jsonContent"] == '{"type":"doc"}'
         assert body["cardId"] == CARD_UUID
 
-    def test_create_omits_none_fields(
-        self, drafts: DraftResource, httpx_mock
-    ) -> None:
+    def test_create_omits_none_fields(self, drafts: DraftResource, httpx_mock) -> None:
         """None/default fields are not sent in the body."""
         httpx_mock.add_response(
             url="https://api.getguru.com/api/v1/drafts",
@@ -299,9 +281,7 @@ class TestCreate:
 class TestDelete:
     """Delete a draft."""
 
-    def test_delete(
-        self, drafts: DraftResource, httpx_mock
-    ) -> None:
+    def test_delete(self, drafts: DraftResource, httpx_mock) -> None:
         """Delete a draft by ID."""
         httpx_mock.add_response(
             url=f"https://api.getguru.com/api/v1/drafts/{DRAFT_UUID}",

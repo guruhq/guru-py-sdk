@@ -124,13 +124,9 @@ class CollectionResource(BaseResource):
             collection_id: Collection UUID or name.
         """
         resolved = self._resolve_collection(collection_id)
-        return self._http.get_list(
-            f"/collections/{resolved}/groups", UserGroupAccess
-        )
+        return self._http.get_list(f"/collections/{resolved}/groups", UserGroupAccess)
 
-    def add_group(
-        self, collection_id: str, group_id: str, *, role: str
-    ) -> UserGroupAccess:
+    def add_group(self, collection_id: str, group_id: str, *, role: str) -> UserGroupAccess:
         """Add a group to a collection with a specific role.
 
         Args:
@@ -147,9 +143,7 @@ class CollectionResource(BaseResource):
             UserGroupAccess,
         )
 
-    def update_group(
-        self, collection_id: str, group_id: str, *, role: str
-    ) -> UserGroupAccess:
+    def update_group(self, collection_id: str, group_id: str, *, role: str) -> UserGroupAccess:
         """Update a group's role on a collection.
 
         Args:
@@ -194,16 +188,12 @@ class CollectionResource(BaseResource):
             NotFoundError: If no home folder exists for the collection.
         """
         resolved = self._resolve_collection(collection_id)
-        folders = self._http.get_list(
-            "/folders", Folder, collection=resolved
-        )
+        folders = self._http.get_list("/folders", Folder, collection=resolved)
         for folder in folders:
             if folder.home is True:
                 return folder
 
-        raise NotFoundError(
-            f"No home folder found for collection '{collection_id}'."
-        )
+        raise NotFoundError(f"No home folder found for collection '{collection_id}'.")
 
     # -------------------------------------------------------------------------
     # Private — Name Resolution
@@ -223,14 +213,9 @@ class CollectionResource(BaseResource):
         # Name resolution: list collections and match by name
         collections = self._http.get_list("/collections", CollectionModel)
         for coll in collections:
-            if (
-                coll.name is not None
-                and coll.name.lower() == collection_id.lower()
-            ):
+            if coll.name is not None and coll.name.lower() == collection_id.lower():
                 if coll.id is None:
-                    raise NotFoundError(
-                        f"Collection '{collection_id}' found but has no ID."
-                    )
+                    raise NotFoundError(f"Collection '{collection_id}' found but has no ID.")
                 return coll.id
 
         raise NotFoundError(

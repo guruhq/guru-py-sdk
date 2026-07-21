@@ -76,9 +76,7 @@ class AgentResource(BaseResource):
             if agent.name and agent.name.lower() == lower_name:
                 return agent
         available = ", ".join(a.name for a in all_agents if a.name)
-        raise NotFoundError(
-            f'No agent found with name "{id_or_name}". Available: {available}'
-        )
+        raise NotFoundError(f'No agent found with name "{id_or_name}". Available: {available}')
 
     # -------------------------------------------------------------------------
     # Write
@@ -256,9 +254,7 @@ class AgentResource(BaseResource):
             agent_id: Agent UUID.
         """
         validate_input(agent_id, "agent_id")
-        return self._http.get_list(
-            f"/assistants/{agent_id}/groups", KnowledgeAgentAccess
-        )
+        return self._http.get_list(f"/assistants/{agent_id}/groups", KnowledgeAgentAccess)
 
     def add_group(
         self,
@@ -281,9 +277,7 @@ class AgentResource(BaseResource):
         body: dict[str, Any] = {"group": {"id": group_id}}
         if role is not None:
             body["role"] = role
-        return self._http.post(
-            f"/assistants/{agent_id}/groups", body, KnowledgeAgentAccess
-        )
+        return self._http.post(f"/assistants/{agent_id}/groups", body, KnowledgeAgentAccess)
 
     def update_group(
         self,

@@ -257,8 +257,8 @@ class TestCleanHtml:
 
         html = '<div data-custom="x" onclick="evil()" style="color:red"><p>Hello</p></div>'
         result = clean_html(html)
-        assert 'data-custom' not in result
-        assert 'onclick' not in result
+        assert "data-custom" not in result
+        assert "onclick" not in result
         assert 'style="color:red"' in result
         assert "<p>Hello</p>" in result
 
@@ -281,7 +281,7 @@ class TestCleanHtml:
         assert 'alt="Photo"' in result
         assert 'height="100"' in result
         assert 'width="200"' in result
-        assert 'data-id' not in result
+        assert "data-id" not in result
 
     def test_keeps_ghq_data_attributes(self) -> None:
         from guru_sdk.contrib.bundle import clean_html
@@ -289,7 +289,7 @@ class TestCleanHtml:
         html = '<div data-ghq-card-content-type="markdown" data-random="x">Content</div>'
         result = clean_html(html)
         assert 'data-ghq-card-content-type="markdown"' in result
-        assert 'data-random' not in result
+        assert "data-random" not in result
 
     def test_filters_css_classes_to_ghq_only(self) -> None:
         from guru_sdk.contrib.bundle import clean_html
@@ -644,6 +644,7 @@ class TestBundleUpload:
         g = _make_guru_mock()
         # First call: collection not found (raises)
         from guru_sdk.errors import NotFoundError
+
         g.collections.get.side_effect = NotFoundError("not found")
         mock_new_collection = MagicMock()
         mock_new_collection.id = "new-coll-uuid"

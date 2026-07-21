@@ -42,9 +42,7 @@ class TagResource(BaseResource):
     def list_categories(self) -> list[TagCategory]:
         """List all tag categories with their tags."""
         team_id = self._get_team_id()
-        return self._http.get_list(
-            f"/teams/{team_id}/tagcategories", TagCategory
-        )
+        return self._http.get_list(f"/teams/{team_id}/tagcategories", TagCategory)
 
     def create_category(self, *, name: str) -> TagCategory:
         """Create a new tag category.
@@ -101,9 +99,7 @@ class TagResource(BaseResource):
         """
         resolved = self._resolve_tag(tag_id)
         team_id = self._get_team_id()
-        return self._http.get(
-            f"/teams/{team_id}/tagcategories/tags/{resolved}", Tag
-        )
+        return self._http.get(f"/teams/{team_id}/tagcategories/tags/{resolved}", Tag)
 
     def create_tag(self, *, category_id: str, value: str) -> Tag:
         """Create a new tag in a category.
@@ -179,17 +175,9 @@ class TagResource(BaseResource):
             if category.tags is None:
                 continue
             for tag in category.tags:
-                if (
-                    tag.value is not None
-                    and tag.value.lower() == tag_id.lower()
-                ):
+                if tag.value is not None and tag.value.lower() == tag_id.lower():
                     if tag.id is None:
-                        raise NotFoundError(
-                            f"Tag '{tag_id}' found but has no ID."
-                        )
+                        raise NotFoundError(f"Tag '{tag_id}' found but has no ID.")
                     return tag.id
 
-        raise NotFoundError(
-            f"No tag found with name '{tag_id}'. "
-            "Pass a tag UUID for exact lookup."
-        )
+        raise NotFoundError(f"No tag found with name '{tag_id}'. Pass a tag UUID for exact lookup.")

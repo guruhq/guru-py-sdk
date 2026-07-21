@@ -3,14 +3,14 @@
 # =============================================================================
 #
 # Two jobs:
-#   1. check  — runs on every PR and push to main (lint + typecheck + tests)
+#   1. check  — runs on every PR and push to main (lint + format-check + typecheck + tests)
 #   2. publish — runs only on version tags (v*) to publish to PyPI
 #
 # Required CircleCI environment variables:
 #   PYPI_TOKEN — project-scoped PyPI API token (starts with "pypi-")
 #
 # Python dependency management uses uv (fast, lockfile-based).
-# Quality gates mirror local development: `make check` = lint + typecheck + test.
+# Quality gates mirror local development: `make check` = lint + format-check + typecheck + test.
 # =============================================================================
 
 version: 2.1
@@ -54,6 +54,11 @@ jobs:
           command: |
             export PATH="$HOME/.local/bin:$PATH"
             uv run ruff check src tests
+      - run:
+          name: Format check (ruff)
+          command: |
+            export PATH="$HOME/.local/bin:$PATH"
+            uv run ruff format --check src tests
       - run:
           name: Typecheck (mypy)
           command: |

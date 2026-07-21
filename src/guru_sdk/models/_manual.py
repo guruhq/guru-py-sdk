@@ -58,18 +58,10 @@ class PageDraft(GuruModel):
         bool | None,
         Field(alias="onlyNavigable", description="Navigation-only page (no content)"),
     ] = None
-    date_created: Annotated[
-        AwareDatetime | None, Field(alias="dateCreated")
-    ] = None
-    last_modified: Annotated[
-        AwareDatetime | None, Field(alias="lastModified")
-    ] = None
-    last_modified_by: Annotated[
-        User | None, Field(alias="lastModifiedBy")
-    ] = None
-    created_by: Annotated[
-        User | None, Field(alias="createdBy")
-    ] = None
+    date_created: Annotated[AwareDatetime | None, Field(alias="dateCreated")] = None
+    last_modified: Annotated[AwareDatetime | None, Field(alias="lastModified")] = None
+    last_modified_by: Annotated[User | None, Field(alias="lastModifiedBy")] = None
+    created_by: Annotated[User | None, Field(alias="createdBy")] = None
     team: Team | None = None
 
 
@@ -140,6 +132,4 @@ class DraftCollaborator(GuruModel):
     type: str | None = None  # "user" or "user-group"
     user: User | None = None
     user_group: Annotated[UserGroup | None, Field(alias="userGroup")] = None
-    date_created: Annotated[
-        AwareDatetime | None, Field(alias="dateCreated")
-    ] = None
+    date_created: Annotated[AwareDatetime | None, Field(alias="dateCreated")] = None

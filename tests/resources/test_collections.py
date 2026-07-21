@@ -114,7 +114,9 @@ class TestGet:
         coll = collections.get("Engineering")
         assert coll.id == COLLECTION_UUID
 
-    def test_get_by_name_case_insensitive(self, collections: CollectionResource, httpx_mock) -> None:
+    def test_get_by_name_case_insensitive(
+        self, collections: CollectionResource, httpx_mock
+    ) -> None:
         httpx_mock.add_response(json=[_collection_json()])
         httpx_mock.add_response(json=_collection_json())
         coll = collections.get("engineering")
@@ -140,7 +142,10 @@ class TestList:
 
     def test_list_returns_collections(self, collections: CollectionResource, httpx_mock) -> None:
         httpx_mock.add_response(
-            json=[_collection_json(), _collection_json(collection_id=COLLECTION_UUID_2, name="Sales")]
+            json=[
+                _collection_json(),
+                _collection_json(collection_id=COLLECTION_UUID_2, name="Sales"),
+            ]
         )
         result = collections.list()
         assert len(result) == 2
@@ -212,7 +217,9 @@ class TestUpdate:
         coll = collections.update(COLLECTION_UUID, name="Updated")
         assert coll.name == "Updated"
 
-    def test_update_sends_correct_request(self, collections: CollectionResource, httpx_mock) -> None:
+    def test_update_sends_correct_request(
+        self, collections: CollectionResource, httpx_mock
+    ) -> None:
         httpx_mock.add_response(json=_collection_json())
         collections.update(COLLECTION_UUID, name="New Name", color="#FF0000")
         request = httpx_mock.get_request()
@@ -325,9 +332,7 @@ class TestUpdateGroup:
         collections.update_group(COLLECTION_UUID, GROUP_UUID, role="COLL_ADMIN")
         request = httpx_mock.get_request()
         assert request is not None
-        assert request.url.path == (
-            f"/api/v1/collections/{COLLECTION_UUID}/groups/{GROUP_UUID}"
-        )
+        assert request.url.path == (f"/api/v1/collections/{COLLECTION_UUID}/groups/{GROUP_UUID}")
         assert request.method == "PUT"
         body = json.loads(request.content)
         assert body["role"] == "COLL_ADMIN"
@@ -346,9 +351,7 @@ class TestRemoveGroup:
         collections.remove_group(COLLECTION_UUID, GROUP_UUID)
         request = httpx_mock.get_request()
         assert request is not None
-        assert request.url.path == (
-            f"/api/v1/collections/{COLLECTION_UUID}/groups/{GROUP_UUID}"
-        )
+        assert request.url.path == (f"/api/v1/collections/{COLLECTION_UUID}/groups/{GROUP_UUID}")
         assert request.method == "DELETE"
 
 

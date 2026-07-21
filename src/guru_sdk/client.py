@@ -84,16 +84,8 @@ class Guru:
             resolved_url = os.environ.get("GURU_BASE_URL") or DEFAULT_BASE_URL
 
         # Resolve credentials from arguments → env vars (with py-sdk v1 fallback)
-        resolved_user = (
-            username
-            or os.environ.get("GURU_USER")
-            or os.environ.get("PYGURU_USER")
-        )
-        resolved_token = (
-            api_token
-            or os.environ.get("GURU_TOKEN")
-            or os.environ.get("PYGURU_TOKEN")
-        )
+        resolved_user = username or os.environ.get("GURU_USER") or os.environ.get("PYGURU_USER")
+        resolved_token = api_token or os.environ.get("GURU_TOKEN") or os.environ.get("PYGURU_TOKEN")
 
         if not resolved_user or not resolved_token:
             raise AuthenticationError(

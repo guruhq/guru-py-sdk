@@ -42,19 +42,21 @@ CARD = "CARD"
 MAX_FOLDER_DEPTH = 3
 
 # Attributes that Guru's editor uses — strip everything else
-_ATTR_WHITELIST = frozenset({
-    "style",
-    "start",     # numbered lists
-    "href",      # links
-    "target",
-    "rel",
-    "title",
-    "src",       # images
-    "alt",
-    "height",
-    "width",
-    "class",     # guru elements
-})
+_ATTR_WHITELIST = frozenset(
+    {
+        "style",
+        "start",  # numbered lists
+        "href",  # links
+        "target",
+        "rel",
+        "title",
+        "src",  # images
+        "alt",
+        "height",
+        "width",
+        "class",  # guru elements
+    }
+)
 
 # data-ghq-* attributes are always kept (checked by prefix)
 _DATA_GHQ_PREFIX = "data-ghq-"
@@ -268,18 +270,12 @@ class BundleNode:
         if self.type == CARD:
             cards_dir = base_path / "cards"
             cards_dir.mkdir(parents=True, exist_ok=True)
-            (cards_dir / f"{safe_id}.yaml").write_text(
-                self.make_yaml(), encoding="utf-8"
-            )
-            (cards_dir / f"{safe_id}.html").write_text(
-                self.content.strip() or "", encoding="utf-8"
-            )
+            (cards_dir / f"{safe_id}.yaml").write_text(self.make_yaml(), encoding="utf-8")
+            (cards_dir / f"{safe_id}.html").write_text(self.content.strip() or "", encoding="utf-8")
         elif self.type == FOLDER:
             folders_dir = base_path / "folders"
             folders_dir.mkdir(parents=True, exist_ok=True)
-            (folders_dir / f"{safe_id}.yaml").write_text(
-                self.make_yaml(), encoding="utf-8"
-            )
+            (folders_dir / f"{safe_id}.yaml").write_text(self.make_yaml(), encoding="utf-8")
 
     # -------------------------------------------------------------------------
     # Private — Items List for Folder YAML
@@ -291,11 +287,7 @@ class BundleNode:
             return []
 
         # Empty folder check
-        if (
-            not self.children
-            and self.type == FOLDER
-            and self.bundle.skip_empty_folders
-        ):
+        if not self.children and self.type == FOLDER and self.bundle.skip_empty_folders:
             self.removed = True
             return []
 
@@ -313,12 +305,14 @@ class BundleNode:
                 if self.bundle.skip_empty_folders and not folder_items:
                     child_node.removed = True
                 else:
-                    items.append({
-                        "ID": child_node.id,
-                        "Type": "folder",
-                        "Title": child_node.title,
-                        "Items": folder_items,
-                    })
+                    items.append(
+                        {
+                            "ID": child_node.id,
+                            "Type": "folder",
+                            "Title": child_node.title,
+                            "Items": folder_items,
+                        }
+                    )
 
         return items
 
@@ -438,9 +432,7 @@ class Bundle:
             if title:
                 existing.title = title
             if content:
-                existing.content = (
-                    clean_html(content) if sanitize_html else content
-                )
+                existing.content = clean_html(content) if sanitize_html else content
             if node_type:
                 existing.type = node_type
             if tags:
@@ -625,11 +617,13 @@ class Bundle:
                 continue
             # Top-level folders (no parents) go in collection items
             if n.type == FOLDER and not n.parents:
-                items.append({
-                    "ID": n.id,
-                    "Type": "folder",
-                    "Title": n.title,
-                })
+                items.append(
+                    {
+                        "ID": n.id,
+                        "Type": "folder",
+                        "Title": n.title,
+                    }
+                )
             # Collect all unique tags from cards
             if n.type == CARD and n.tags:
                 for tag in n.tags:
@@ -776,9 +770,7 @@ class _HtmlSanitizer(HTMLParser):
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         filtered = _filter_attrs(attrs)
         if filtered:
-            attr_str = " ".join(
-                f'{k}="{v}"' if v is not None else k for k, v in filtered
-            )
+            attr_str = " ".join(f'{k}="{v}"' if v is not None else k for k, v in filtered)
             self._pieces.append(f"<{tag} {attr_str}>")
         else:
             self._pieces.append(f"<{tag}>")
