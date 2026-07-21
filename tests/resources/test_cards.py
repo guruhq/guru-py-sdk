@@ -1113,9 +1113,7 @@ class TestBulkGetComments:
         assert len(result) == 2
         assert {c.id for c in result} == {COMMENT_UUID, REPLY_UUID}
 
-    def test_reports_complete_when_all_pages_fetched(
-        self, cards: CardResource, httpx_mock
-    ) -> None:
+    def test_reports_complete_when_all_pages_fetched(self, cards: CardResource, httpx_mock) -> None:
         httpx_mock.add_response(json=[_card_comment_result_json()])
         result = cards.bulk_get_comments()
         assert result.complete is True
