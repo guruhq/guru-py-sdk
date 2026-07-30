@@ -1058,14 +1058,14 @@ class TestBulkGetComments:
         httpx_mock.add_response(json=[])
         cards.bulk_get_comments(
             status="OPEN",
-            created_after="2026-01-01",
-            created_before="2026-02-01",
+            active_after="2026-01-01",
+            active_before="2026-02-01",
         )
         request = httpx_mock.get_request()
         assert request is not None
         assert "status=OPEN" in str(request.url)
-        assert "createdAfter=2026-01-01" in str(request.url)
-        assert "createdBefore=2026-02-01" in str(request.url)
+        assert "activeAfter=2026-01-01" in str(request.url)
+        assert "activeBefore=2026-02-01" in str(request.url)
 
     def test_accepts_full_iso_8601_timestamps(self, cards: CardResource, httpx_mock) -> None:
         # Full ISO 8601 timestamps carry characters a bare date does not:
@@ -1073,22 +1073,22 @@ class TestBulkGetComments:
         # validation and survive URL encoding intact.
         httpx_mock.add_response(json=[])
         cards.bulk_get_comments(
-            created_after="2026-01-01T00:00:00.000+0000",
-            created_before="2026-02-01T23:59:59Z",
+            active_after="2026-01-01T00:00:00.000+0000",
+            active_before="2026-02-01T23:59:59Z",
         )
         request = httpx_mock.get_request()
         assert request is not None
-        assert request.url.params["createdAfter"] == "2026-01-01T00:00:00.000+0000"
-        assert request.url.params["createdBefore"] == "2026-02-01T23:59:59Z"
+        assert request.url.params["activeAfter"] == "2026-01-01T00:00:00.000+0000"
+        assert request.url.params["activeBefore"] == "2026-02-01T23:59:59Z"
         # The offset's `+` must be percent-encoded on the wire — sent
         # literally, the server would decode it as a space.
-        assert "createdAfter=2026-01-01T00%3A00%3A00.000%2B0000" in str(request.url)
+        assert "activeAfter=2026-01-01T00%3A00%3A00.000%2B0000" in str(request.url)
 
     def test_rejects_pre_encoded_iso_8601_timestamp(self, cards: CardResource) -> None:
         # An already-URL-encoded timestamp would be double-encoded on the
         # wire; validation catches it before any request is made.
         with pytest.raises(ValidationError):
-            cards.bulk_get_comments(created_after="2026-01-01T00%3A00%3A00%2B0000")
+            cards.bulk_get_comments(active_after="2026-01-01T00%3A00%3A00%2B0000")
 
     def test_no_filters_sends_no_query_params(self, cards: CardResource, httpx_mock) -> None:
         httpx_mock.add_response(json=[])

@@ -393,8 +393,8 @@ class CardResource(BaseResource):
         self,
         *,
         status: str | None = None,
-        created_after: str | None = None,
-        created_before: str | None = None,
+        active_after: str | None = None,
+        active_before: str | None = None,
         max_pages: int = 10,
     ) -> PaginatedList[CardCommentResult]:
         """Bulk-retrieve card comment threads across all accessible cards.
@@ -405,7 +405,7 @@ class CardResource(BaseResource):
 
         Args:
             status: Filter top-level comments by status — "OPEN" or "RESOLVED".
-            created_after / created_before: ISO-8601 bounds on the thread's
+            active_after / active_before: ISO-8601 bounds on the thread's
                 most-recent activity (inclusive).
             max_pages: Safety cap on pages walked (default 10).
 
@@ -417,12 +417,12 @@ class CardResource(BaseResource):
         if status is not None:
             validate_input(status, "status")
             params["status"] = status
-        if created_after is not None:
-            validate_input(created_after, "created_after")
-            params["createdAfter"] = created_after
-        if created_before is not None:
-            validate_input(created_before, "created_before")
-            params["createdBefore"] = created_before
+        if active_after is not None:
+            validate_input(active_after, "active_after")
+            params["activeAfter"] = active_after
+        if active_before is not None:
+            validate_input(active_before, "active_before")
+            params["activeBefore"] = active_before
         return self._http.get_paginated(
             "/comments", CardCommentResult, max_pages=max_pages, **params
         )
