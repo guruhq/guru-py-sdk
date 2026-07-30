@@ -54,14 +54,14 @@ class AiEvaluationResult(GuruModel):
     completion_date: Annotated[AwareDatetime | None, Field(alias="completionDate")] = None
 
 
-class UserType(Enum):
-    user = "USER"
-    knowledge_agent = "KNOWLEDGE_AGENT"
-
-
 class Status(Enum):
     active = "ACTIVE"
     pending = "PENDING"
+
+
+class UserType(Enum):
+    user = "USER"
+    knowledge_agent = "KNOWLEDGE_AGENT"
 
 
 class LatestFeedback(Enum):
@@ -208,22 +208,22 @@ class Permission(Enum):
 
 
 class BulkOperationResponseItem(GuruModel):
-    item_id: Annotated[str | None, Field(alias="itemId")] = None
     response_message: Annotated[str | None, Field(alias="responseMessage")] = None
     url: str | None = None
     status_code: Annotated[int | None, Field(alias="statusCode")] = None
-
-
-class VerificationType(Enum):
-    absolute = "ABSOLUTE"
-    relative = "RELATIVE"
-    manual = "MANUAL"
+    item_id: Annotated[str | None, Field(alias="itemId")] = None
 
 
 class ShareStatus(Enum):
     private = "PRIVATE"
     team = "TEAM"
     public = "PUBLIC"
+
+
+class VerificationType(Enum):
+    absolute = "ABSOLUTE"
+    relative = "RELATIVE"
+    manual = "MANUAL"
 
 
 class VerificationState(Enum):
@@ -258,7 +258,6 @@ class CardCollaborator(GuruModel):
         str | None,
         Field(description="The ID (email address or group ID) of the collaborator"),
     ] = None
-    removed: bool | None = None
     date_created: Annotated[
         AwareDatetime | None,
         Field(
@@ -269,6 +268,7 @@ class CardCollaborator(GuruModel):
             ],
         ),
     ] = None
+    removed: bool | None = None
     type: Type
 
 
@@ -278,10 +278,10 @@ class Status3(Enum):
 
 
 class CardInfo(GuruModel):
+    boards: list[dict[str, Any]] | None = None
+    analytics: dict[str, int] | None = None
     members_with_card_view: Annotated[int | None, Field(alias="membersWithCardView")] = None
     members_without_card_view: Annotated[int | None, Field(alias="membersWithoutCardView")] = None
-    analytics: dict[str, int] | None = None
-    boards: list[dict[str, Any]] | None = None
 
 
 class CardReference(GuruModel):
@@ -425,6 +425,12 @@ class CollectionFacet(GuruModel):
     color: str | None = None
 
 
+class DefaultVerificationType(Enum):
+    absolute = "ABSOLUTE"
+    relative = "RELATIVE"
+    manual = "MANUAL"
+
+
 class SyncType(Enum):
     zendesk = "ZENDESK"
     zendesk_import = "ZENDESK_IMPORT"
@@ -437,12 +443,6 @@ class SyncType(Enum):
     dropbox = "DROPBOX"
     salesforce = "SALESFORCE"
     guru = "GURU"
-
-
-class DefaultVerificationType(Enum):
-    absolute = "ABSOLUTE"
-    relative = "RELATIVE"
-    manual = "MANUAL"
 
 
 class CollectionType(Enum):
@@ -501,10 +501,6 @@ class DocumentType(Enum):
     mcp = "MCP"
 
 
-class Op5(Enum):
-    in_ = "IN"
-
-
 class DraftCommentReplySource(GuruModel):
     draft_id: Annotated[UUID | None, Field(alias="draftId")] = None
     draft_comment_id: Annotated[UUID | None, Field(alias="draftCommentId")] = None
@@ -528,6 +524,8 @@ class Event(GuruModel):
         ),
     ] = None
     type: str | None = None
+    event_type: Annotated[str | None, Field(alias="eventType", description="Event type")] = None
+    user: Annotated[str | None, Field(description="Email of user")] = None
     event_date: Annotated[
         AwareDatetime | None,
         Field(
@@ -535,8 +533,6 @@ class Event(GuruModel):
             description="Timestamp of event. Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000",
         ),
     ] = None
-    event_type: Annotated[str | None, Field(alias="eventType", description="Event type")] = None
-    user: Annotated[str | None, Field(description="Email of user")] = None
 
 
 class Type4(Enum):
@@ -580,7 +576,6 @@ class Type4(Enum):
     source_custom_field = "sourceCustomField"
     verification_modification_type = "verification-modification-type"
     object_type_id = "object-type-id"
-    document_entity_ids = "document-entity-ids"
 
 
 class Expression(GuruModel):
@@ -608,9 +603,9 @@ class ExtraDetailsModel(GuruModel):
 
 
 class FeaturedCard(GuruModel):
-    card_id: Annotated[str | None, Field(alias="cardId")] = None
     image: str | None = None
     gradient: str | None = None
+    card_id: Annotated[str | None, Field(alias="cardId")] = None
 
 
 class Type7(Enum):
@@ -619,26 +614,26 @@ class Type7(Enum):
     video = "VIDEO"
 
 
-class Op6(Enum):
+class Op5(Enum):
     exists = "EXISTS"
     notexists = "NOTEXISTS"
 
 
 class FileAttachmentExpression(Expression):
-    op: Op6 | None = None
+    op: Op5 | None = None
 
 
-class Op7(Enum):
+class Op6(Enum):
     eq = "EQ"
     ne = "NE"
 
 
 class FileTypeExpression(Expression):
     value: str | None = None
-    op: Op7 | None = None
+    op: Op6 | None = None
 
 
-class Op8(Enum):
+class Op7(Enum):
     contains = "CONTAINS"
     notcontains = "NOTCONTAINS"
     containsimmediate = "CONTAINSIMMEDIATE"
@@ -646,8 +641,8 @@ class Op8(Enum):
 
 
 class FolderIdExpression(Expression):
+    op: Op7 | None = None
     ids: list[str] | None = None
-    op: Op8 | None = None
 
 
 class Type8(Enum):
@@ -671,13 +666,13 @@ class GdFolder(GuruModel):
     name: str | None = None
 
 
-class Op9(Enum):
+class Op8(Enum):
     eq = "EQ"
 
 
 class GroupCollaboratorExpression(Expression):
     id: str | None = None
-    op: Op9 | None = None
+    op: Op8 | None = None
 
 
 class Role1(Enum):
@@ -687,36 +682,36 @@ class Role1(Enum):
     coll_admin = "COLL_ADMIN"
 
 
-class Op10(Enum):
+class Op9(Enum):
     eq = "EQ"
     ne = "NE"
 
 
 class GroupVerifierExpression(Expression):
-    op: Op10 | None = None
     group_id: Annotated[str | None, Field(alias="groupId")] = None
+    op: Op9 | None = None
 
 
-class Op11(Enum):
+class Op10(Enum):
     and_ = "AND"
     or_ = "OR"
 
 
 class GroupingExpression(Expression):
-    op: Op11 | None = None
+    op: Op10 | None = None
     nested_expressions: Annotated[list[Expression] | None, Field(alias="nestedExpressions")] = None
 
 
 class ImageCropSpec(GuruModel):
-    x: int | None = None
     y: int | None = None
-    width: int | None = None
     height: int | None = None
+    width: int | None = None
+    x: int | None = None
 
 
 class InternalProfileSlackDetail(GuruModel):
-    slack_team_name: Annotated[str | None, Field(alias="slackTeamName")] = None
     slack_team_url: Annotated[str | None, Field(alias="slackTeamUrl")] = None
+    slack_team_name: Annotated[str | None, Field(alias="slackTeamName")] = None
 
 
 class JsonNode(GuruModel):
@@ -810,15 +805,19 @@ class KnowledgeAgentSkill(GuruModel):
 
 
 class KnowledgeAgentSkillAccessRequest(GuruModel):
-    group_id: Annotated[str | None, Field(alias="groupId")] = None
+    group_id: Annotated[
+        str | None,
+        Field(
+            alias="groupId",
+            description="The ID of the group to grant skill access to. In place of a group ID, you may provide a user's email address to target an individual user.",
+        ),
+    ] = None
 
 
-class KnowledgeAgentSkillFile(GuruModel):
-    id: UUID | None = None
-    full_path: Annotated[str | None, Field(alias="fullPath", max_length=1024, min_length=0)] = None
-    content: str | None = None
-    date_created: Annotated[AwareDatetime | None, Field(alias="dateCreated")] = None
-    date_modified: Annotated[AwareDatetime | None, Field(alias="dateModified")] = None
+class ReferenceType(Enum):
+    inline = "INLINE"
+    card = "CARD"
+    source = "SOURCE"
 
 
 class Platform(Enum):
@@ -828,24 +827,24 @@ class Platform(Enum):
 
 
 class KnowledgeCenteredSupportInfo(GuruModel):
+    platform: Platform | None = None
     card_id: Annotated[str | None, Field(alias="cardId")] = None
     conversation_id: Annotated[str | None, Field(alias="conversationId")] = None
-    platform: Platform | None = None
 
 
-class Op12(Enum):
+class Op11(Enum):
     eq = "EQ"
     ne = "NE"
 
 
 class LastModifiedByExpression(Expression):
-    op: Op12 | None = None
     email: str | None = None
+    op: Op11 | None = None
 
 
 class LastVerifiedByExpression(Expression):
-    op: Op12 | None = None
     email: str | None = None
+    op: Op11 | None = None
 
 
 class LinkedAccountIssue(GuruModel):
@@ -1020,9 +1019,9 @@ class DataType(Enum):
 class ObjectField(GuruModel):
     name: str | None = None
     id: str | None = None
-    external_id: Annotated[str | None, Field(alias="externalId")] = None
-    content_selector: Annotated[str | None, Field(alias="contentSelector")] = None
     data_type: Annotated[DataType | None, Field(alias="dataType")] = None
+    content_selector: Annotated[str | None, Field(alias="contentSelector")] = None
+    external_id: Annotated[str | None, Field(alias="externalId")] = None
 
 
 class Type10(Enum):
@@ -1045,13 +1044,13 @@ class SourceDataType(Enum):
     structured = "STRUCTURED"
 
 
-class Op14(Enum):
+class Op13(Enum):
     eq = "EQ"
 
 
 class ObjectTypeIdExpression(Expression):
     id: str | None = None
-    op: Op14 | None = None
+    op: Op13 | None = None
 
 
 class ExternalUrlTemplateType(Enum):
@@ -1074,19 +1073,19 @@ class OrderByOrderType(Enum):
     desc = "DESC"
 
 
-class Op15(Enum):
+class Op14(Enum):
     eq = "EQ"
     ne = "NE"
 
 
 class OriginalOwnerExpression(Expression):
-    op: Op15 | None = None
     email: str | None = None
+    op: Op14 | None = None
 
 
 class OwnerExpression(Expression):
-    op: Op15 | None = None
     email: str | None = None
+    op: Op14 | None = None
 
 
 class Status6(Enum):
@@ -1094,13 +1093,13 @@ class Status6(Enum):
     pending = "PENDING"
 
 
-class Op17(Enum):
+class Op16(Enum):
     exists = "EXISTS"
     notexists = "NOTEXISTS"
 
 
 class PinExpression(Expression):
-    op: Op17 | None = None
+    op: Op16 | None = None
 
 
 class PinMetadata(GuruModel):
@@ -1132,13 +1131,13 @@ class PromptTestParams(GuruModel):
     answer_prompt: Annotated[str | None, Field(alias="answerPrompt")] = None
 
 
-class Op18(Enum):
+class Op17(Enum):
     ispublic = "ISPUBLIC"
     isnotpublic = "ISNOTPUBLIC"
 
 
 class PublicCardExpression(Expression):
-    op: Op18 | None = None
+    op: Op17 | None = None
 
 
 class RunMode(Enum):
@@ -1174,6 +1173,10 @@ class QualityAgentSimulationResponse(GuruModel):
         str | None,
         Field(alias="runId", description="The run ID for the simulated quality agent run."),
     ] = None
+
+
+class QualityConfigModeEntry(GuruModel):
+    enabled: bool | None = None
 
 
 class QualityRule(GuruModel):
@@ -1246,7 +1249,7 @@ class Field2(Enum):
     first_card_viewed_event = "FIRST_CARD_VIEWED_EVENT"
 
 
-class Op19(Enum):
+class Op18(Enum):
     gt = "GT"
     gte = "GTE"
     lt = "LT"
@@ -1257,7 +1260,7 @@ class RelativeDateExpression(Expression):
     days_from_now: Annotated[int | None, Field(alias="daysFromNow")] = None
     days_ago: Annotated[int | None, Field(alias="daysAgo")] = None
     field: Field2 | None = None
-    op: Op19 | None = None
+    op: Op18 | None = None
 
 
 class RemoteSourceObjectSync(GuruModel):
@@ -1313,7 +1316,7 @@ class ServerSentEvent(GuruModel):
     pass
 
 
-class Op20(Enum):
+class Op19(Enum):
     eq = "EQ"
     ne = "NE"
 
@@ -1325,7 +1328,7 @@ class ShareType(Enum):
 
 
 class ShareTypeExpression(Expression):
-    op: Op20 | None = None
+    op: Op19 | None = None
     share_type: Annotated[ShareType | None, Field(alias="shareType")] = None
 
 
@@ -1394,13 +1397,6 @@ class Sort(GuruModel):
     dir: Dir | None = None
 
 
-class SyncStatus(Enum):
-    syncing = "SYNCING"
-    synced = "SYNCED"
-    failed = "FAILED"
-    invalid = "INVALID"
-
-
 class StatusReason(Enum):
     invalid_authentication = "INVALID_AUTHENTICATION"
     unauthorized = "UNAUTHORIZED"
@@ -1419,6 +1415,13 @@ class StatusReason(Enum):
     homeboard_import_failed = "HOMEBOARD_IMPORT_FAILED"
     job_timeout = "JOB_TIMEOUT"
     unknown_error = "UNKNOWN_ERROR"
+
+
+class SyncStatus(Enum):
+    syncing = "SYNCING"
+    synced = "SYNCED"
+    failed = "FAILED"
+    invalid = "INVALID"
 
 
 class Type13(Enum):
@@ -1440,7 +1443,7 @@ class SourceConfig(GuruModel):
     type: Type13
 
 
-class Op21(Enum):
+class Op20(Enum):
     equals = "EQUALS"
     not_equals = "NOT_EQUALS"
     less_than = "LESS_THAN"
@@ -1456,7 +1459,7 @@ class Op21(Enum):
 
 
 class SourceCustomFieldExpression(Expression):
-    op: Op21 | None = None
+    op: Op20 | None = None
     field_id: Annotated[str | None, Field(alias="fieldId")] = None
     field_value: Annotated[str | None, Field(alias="fieldValue")] = None
 
@@ -1569,6 +1572,13 @@ class Tag(GuruModel):
             examples=["IDs are formatted like this: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"],
         ),
     ] = None
+    category_name: Annotated[
+        str | None,
+        Field(
+            alias="categoryName",
+            description="If the tag belongs to a category, this is the name for the category",
+        ),
+    ] = None
     number_of_cards: Annotated[
         int | None,
         Field(
@@ -1584,39 +1594,27 @@ class Tag(GuruModel):
             examples=["IDs are formatted like this: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"],
         ),
     ] = None
-    category_name: Annotated[
-        str | None,
-        Field(
-            alias="categoryName",
-            description="If the tag belongs to a category, this is the name for the category",
-        ),
-    ] = None
 
 
-class Op22(Enum):
+class Op21(Enum):
     exists = "EXISTS"
     notexists = "NOTEXISTS"
 
 
 class TagCategoryExistsExpression(Expression):
+    op: Op21 | None = None
     ids: list[str] | None = None
-    op: Op22 | None = None
 
 
 class TagExistsExpression(Expression):
+    op: Op21 | None = None
     ids: list[str] | None = None
-    op: Op22 | None = None
 
 
 class TagFacet(GuruModel):
     id: str | None = None
     name: str | None = None
     count: int | None = None
-
-
-class DefaultUserType(Enum):
-    free_core = "FREE_CORE"
-    core = "CORE"
 
 
 class Status7(Enum):
@@ -1627,15 +1625,20 @@ class Status7(Enum):
     locked_pay = "LOCKED_PAY"
 
 
+class DefaultUserType(Enum):
+    free_core = "FREE_CORE"
+    core = "CORE"
+
+
 class TeamCardCount(Stats):
     count: int | None = None
 
 
 class TeamDomain(GuruModel):
-    verification_code: Annotated[str | None, Field(alias="verificationCode")] = None
     domain: str | None = None
     verified: bool | None = None
     capture: bool | None = None
+    verification_code: Annotated[str | None, Field(alias="verificationCode")] = None
 
 
 class TeamEdition(GuruModel):
@@ -1643,9 +1646,9 @@ class TeamEdition(GuruModel):
     name: str | None = None
     key: str | None = None
     id: str | None = None
-    usage: dict[str, int] | None = None
     features: dict[str, str] | None = None
     code: str | None = None
+    usage: dict[str, int] | None = None
 
 
 class Type15(Enum):
@@ -1702,7 +1705,7 @@ class HighestRole(Enum):
     coll_admin = "COLL_ADMIN"
 
 
-class Op24(Enum):
+class Op23(Enum):
     is_ = "IS"
     contains = "CONTAINS"
     notcontains = "NOTCONTAINS"
@@ -1712,30 +1715,21 @@ class Op24(Enum):
 
 class TitleExpression(Expression):
     value: str | None = None
-    op: Op24 | None = None
-
-
-class TokenUsage(GuruModel):
-    prompt_tokens: Annotated[int | None, Field(alias="promptTokens")] = None
-    completion_tokens: Annotated[int | None, Field(alias="completionTokens")] = None
-    total_tokens: Annotated[int | None, Field(alias="totalTokens")] = None
-    model: str | None = None
-    activity_name: Annotated[str | None, Field(alias="activityName")] = None
-    raw_token_usage_data: Annotated[dict[str, Any] | None, Field(alias="rawTokenUsageData")] = None
+    op: Op23 | None = None
 
 
 class TopPerformersExpression(Expression):
     pass
 
 
-class Op25(Enum):
+class Op24(Enum):
     eq = "EQ"
     ne = "NE"
 
 
 class TrustStateExpression(Expression):
+    op: Op24 | None = None
     verification_state: Annotated[VerificationState | None, Field(alias="verificationState")] = None
-    op: Op25 | None = None
 
 
 class UnverifiableCardExpression(Expression):
@@ -1751,13 +1745,13 @@ class Status9(Enum):
     pending = "PENDING"
 
 
-class Op26(Enum):
+class Op25(Enum):
     eq = "EQ"
 
 
 class UserCollaboratorExpression(Expression):
     id: str | None = None
-    op: Op26 | None = None
+    op: Op25 | None = None
 
 
 class Type16(Enum):
@@ -1804,6 +1798,10 @@ class UserMcpServer(GuruModel):
 
 
 class UserProfile(GuruModel):
+    role: Annotated[
+        str | None,
+        Field(description="The functional role a Guru user performs on their team"),
+    ] = None
     role_level: Annotated[
         str | None,
         Field(
@@ -1818,23 +1816,19 @@ class UserProfile(GuruModel):
             description="Describes different ways the user intends to use Guru",
         ),
     ] = None
-    role: Annotated[
-        str | None,
-        Field(description="The functional role a Guru user performs on their team"),
-    ] = None
 
 
-class Op27(Enum):
+class Op26(Enum):
     eq = "EQ"
     ne = "NE"
 
 
 class UserVerifierExpression(Expression):
-    op: Op27 | None = None
     email: str | None = None
+    op: Op26 | None = None
 
 
-class Op28(Enum):
+class Op27(Enum):
     eq = "EQ"
 
 
@@ -1844,7 +1838,7 @@ class VerificationModificationType(Enum):
 
 
 class VerificationModificationTypeExpression(Expression):
-    op: Op28 | None = None
+    op: Op27 | None = None
     verification_modification_type: Annotated[
         VerificationModificationType | None, Field(alias="verificationModificationType")
     ] = None
@@ -1879,10 +1873,10 @@ class Type17(Enum):
 class Widget(GuruModel):
     id: str | None = None
     type: Type17
-    date_last_updated: Annotated[AwareDatetime | None, Field(alias="dateLastUpdated")] = None
-    last_updated_by: Annotated[str | None, Field(alias="lastUpdatedBy")] = None
     visible: bool | None = None
     date_created: Annotated[AwareDatetime | None, Field(alias="dateCreated")] = None
+    date_last_updated: Annotated[AwareDatetime | None, Field(alias="dateLastUpdated")] = None
+    last_updated_by: Annotated[str | None, Field(alias="lastUpdatedBy")] = None
 
 
 class AbsoluteDateExpression(Expression):
@@ -1909,15 +1903,6 @@ class AnnouncementUser(GuruModel):
         None
     )
     id: Annotated[str | None, Field(description="The identifier of this User")] = None
-    first_name: Annotated[str, Field(alias="firstName", description="The user's first name")]
-    last_name: Annotated[str, Field(alias="lastName", description="The user's last name")]
-    profile_pic_url: Annotated[
-        str | None,
-        Field(alias="profilePicUrl", description="The profile picture url for the user"),
-    ] = None
-    joined_date: Annotated[AwareDatetime | None, Field(alias="joinedDate")] = None
-    extended_info: Annotated[UserExtendedInfo | None, Field(alias="extendedInfo")] = None
-    user_type: Annotated[UserType | None, Field(alias="userType")] = None
     status: Annotated[
         Status | None,
         Field(
@@ -1929,6 +1914,15 @@ class AnnouncementUser(GuruModel):
         UserProfile | None,
         Field(alias="userProfile", description="Additional information about a user"),
     ] = None
+    last_name: Annotated[str, Field(alias="lastName", description="The user's last name")]
+    first_name: Annotated[str, Field(alias="firstName", description="The user's first name")]
+    profile_pic_url: Annotated[
+        str | None,
+        Field(alias="profilePicUrl", description="The profile picture url for the user"),
+    ] = None
+    joined_date: Annotated[AwareDatetime | None, Field(alias="joinedDate")] = None
+    extended_info: Annotated[UserExtendedInfo | None, Field(alias="extendedInfo")] = None
+    user_type: Annotated[UserType | None, Field(alias="userType")] = None
 
 
 class AnnouncementsWidget(Widget):
@@ -1941,9 +1935,9 @@ class AnswerAssignment(GuruModel):
 
 
 class AnswerMetadata(ChatMessageMetadata):
-    answer_id: Annotated[str | None, Field(alias="answerId")] = None
     feedback: Feedback | None = None
     assignee: CardVerifier | None = None
+    answer_id: Annotated[str | None, Field(alias="answerId")] = None
 
 
 class AnswerQuerySpec(GuruModel):
@@ -1990,8 +1984,8 @@ class CollectionTrustScore(Stats):
 
 
 class CommentFromExpression(Expression):
-    op: Op3 | None = None
     email: str | None = None
+    op: Op3 | None = None
 
 
 class ContentWidget(Widget):
@@ -2019,11 +2013,6 @@ class DataMaskConfig(GuruModel):
     match_replacement: Annotated[str | None, Field(alias="matchReplacement")] = None
 
 
-class DocumentEntityIdExpression(Expression):
-    ids: list[str] | None = None
-    op: Op5 | None = None
-
-
 class FeaturedCardsWidget(Widget):
     cards: list[str] | None = None
 
@@ -2035,11 +2024,11 @@ class FeaturedCardsWidgetV2(Widget):
 class FeaturedImageCandidateEntry(GuruModel):
     id: str | None = None
     type: Type7 | None = None
+    url: str | None = None
+    height: int | None = None
+    width: int | None = None
     crop_spec: Annotated[ImageCropSpec | None, Field(alias="cropSpec")] = None
     signed_url: Annotated[str | None, Field(alias="signedUrl")] = None
-    url: str | None = None
-    width: int | None = None
-    height: int | None = None
 
 
 class FileUploadSourceConfig(SourceConfig):
@@ -2160,7 +2149,11 @@ class ObjectFacet(GuruModel):
 
 class Person(GuruModel):
     display_name: Annotated[str | None, Field(alias="displayName")] = None
+    start_date: Annotated[str | None, Field(alias="startDate")] = None
+    user_id: Annotated[str | None, Field(alias="userId")] = None
+    manager: Person | None = None
     deleted: bool | None = None
+    direct_reports: Annotated[list[Person] | None, Field(alias="directReports")] = None
     pronouns: str | None = None
     job_title: Annotated[str | None, Field(alias="jobTitle")] = None
     work_team_name: Annotated[str | None, Field(alias="workTeamName")] = None
@@ -2175,23 +2168,10 @@ class Person(GuruModel):
         list[InternalProfileSlackDetail] | None, Field(alias="slackProfileDetails")
     ] = None
     ms_teams_profile_url: Annotated[str | None, Field(alias="msTeamsProfileUrl")] = None
-    manager: Person | None = None
     synced_fields: Annotated[list[str] | None, Field(alias="syncedFields")] = None
     total_num_direct_reports: Annotated[int | None, Field(alias="totalNumDirectReports")] = None
     synced: bool | None = None
-    direct_reports: Annotated[list[Person] | None, Field(alias="directReports")] = None
-    start_date: Annotated[str | None, Field(alias="startDate")] = None
-    user_id: Annotated[str | None, Field(alias="userId")] = None
     id: Annotated[str | None, Field(description="The identifier of this User")] = None
-    first_name: Annotated[str, Field(alias="firstName", description="The user's first name")]
-    last_name: Annotated[str, Field(alias="lastName", description="The user's last name")]
-    profile_pic_url: Annotated[
-        str | None,
-        Field(alias="profilePicUrl", description="The profile picture url for the user"),
-    ] = None
-    joined_date: Annotated[AwareDatetime | None, Field(alias="joinedDate")] = None
-    extended_info: Annotated[UserExtendedInfo | None, Field(alias="extendedInfo")] = None
-    user_type: Annotated[UserType | None, Field(alias="userType")] = None
     status: Annotated[
         Status6 | None,
         Field(
@@ -2203,6 +2183,15 @@ class Person(GuruModel):
         UserProfile | None,
         Field(alias="userProfile", description="Additional information about a user"),
     ] = None
+    last_name: Annotated[str, Field(alias="lastName", description="The user's last name")]
+    first_name: Annotated[str, Field(alias="firstName", description="The user's first name")]
+    profile_pic_url: Annotated[
+        str | None,
+        Field(alias="profilePicUrl", description="The profile picture url for the user"),
+    ] = None
+    joined_date: Annotated[AwareDatetime | None, Field(alias="joinedDate")] = None
+    extended_info: Annotated[UserExtendedInfo | None, Field(alias="extendedInfo")] = None
+    user_type: Annotated[UserType | None, Field(alias="userType")] = None
     custom: dict[str, dict[str, Any]] | None = None
 
 
@@ -2211,31 +2200,22 @@ class PromptTestConfig(GuruModel):
     prompt_test_params: Annotated[PromptTestParams | None, Field(alias="promptTestParams")] = None
 
 
-class QualityAgentRunDetailUpdate(GuruModel):
-    confidence_score: Annotated[float | None, Field(alias="confidenceScore")] = None
-    action_notes: Annotated[str | None, Field(alias="actionNotes")] = None
-    action: Action1 | None = None
-    usages: list[TokenUsage] | None = None
-    rule_id: Annotated[str | None, Field(alias="ruleId")] = None
-
-
-class QualityConfigEntry(GuruModel):
-    verification_rules: Annotated[list[QualityRule] | None, Field(alias="verificationRules")] = None
-    enabled: bool | None = None
+class QualityConfig(GuruModel):
+    config: dict[str, QualityConfigModeEntry] | None = None
 
 
 class QuerySpec(GuruModel):
     query: Expression | None = None
+    start_index: Annotated[int | None, Field(alias="startIndex")] = None
     collection_ids: Annotated[list[str] | None, Field(alias="collectionIds")] = None
-    max_results: Annotated[int | None, Field(alias="maxResults")] = None
     sorts: list[Sort] | None = None
-    show_archived: Annotated[bool | None, Field(alias="showArchived")] = None
+    query_type: Annotated[QueryType | None, Field(alias="queryType")] = None
     search_terms: Annotated[str | None, Field(alias="searchTerms")] = None
+    max_results: Annotated[int | None, Field(alias="maxResults")] = None
+    show_archived: Annotated[bool | None, Field(alias="showArchived")] = None
     collection_uids: Annotated[list[int] | None, Field(alias="collectionUids")] = None
     source_ids: Annotated[list[str] | None, Field(alias="sourceIds")] = None
     phrase: str | None = None
-    start_index: Annotated[int | None, Field(alias="startIndex")] = None
-    query_type: Annotated[QueryType | None, Field(alias="queryType")] = None
 
 
 class RecommendedForYouWidget(Widget):
@@ -2269,22 +2249,24 @@ class SampleSourceConfig(SourceConfig):
 
 
 class SearchQuerySpec(GuruModel):
+    include_content: Annotated[bool | None, Field(alias="includeContent")] = None
+    chunk_docs: Annotated[bool | None, Field(alias="chunkDocs")] = None
+    limit_to_all_member_access: Annotated[bool | None, Field(alias="limitToAllMemberAccess")] = None
+    source_types: Annotated[list[str] | None, Field(alias="sourceTypes")] = None
     include_facets: Annotated[bool | None, Field(alias="includeFacets")] = None
     include_snippets: Annotated[bool | None, Field(alias="includeSnippets")] = None
-    include_content: Annotated[bool | None, Field(alias="includeContent")] = None
-    source_types: Annotated[list[str] | None, Field(alias="sourceTypes")] = None
     agent_id: Annotated[str | None, Field(alias="agentId")] = None
     query: Expression | None = None
+    start_index: Annotated[int | None, Field(alias="startIndex")] = None
     collection_ids: Annotated[list[str] | None, Field(alias="collectionIds")] = None
-    max_results: Annotated[int | None, Field(alias="maxResults")] = None
     sorts: list[Sort] | None = None
-    show_archived: Annotated[bool | None, Field(alias="showArchived")] = None
+    query_type: Annotated[QueryType | None, Field(alias="queryType")] = None
     search_terms: Annotated[str | None, Field(alias="searchTerms")] = None
+    max_results: Annotated[int | None, Field(alias="maxResults")] = None
+    show_archived: Annotated[bool | None, Field(alias="showArchived")] = None
     collection_uids: Annotated[list[int] | None, Field(alias="collectionUids")] = None
     source_ids: Annotated[list[str] | None, Field(alias="sourceIds")] = None
     phrase: str | None = None
-    start_index: Annotated[int | None, Field(alias="startIndex")] = None
-    query_type: Annotated[QueryType | None, Field(alias="queryType")] = None
 
 
 class SlackSourceConfig(SourceConfig):
@@ -2301,17 +2283,17 @@ class SourceDefinition(GuruModel):
     name: str | None = None
     id: str | None = None
     type: str | None = None
-    icon_url: Annotated[str | None, Field(alias="iconUrl")] = None
+    description: str | None = None
+    config: SourceDefinitionConfig | None = None
     category: str | None = None
+    icon_url: Annotated[str | None, Field(alias="iconUrl")] = None
     config_type: Annotated[ConfigType | None, Field(alias="configType")] = None
     availability: Availability | None = None
-    request_access: Annotated[bool | None, Field(alias="requestAccess")] = None
-    manual_sync_allowed: Annotated[bool | None, Field(alias="manualSyncAllowed")] = None
     supports_dynamic_display_properties: Annotated[
         bool | None, Field(alias="supportsDynamicDisplayProperties")
     ] = None
-    config: SourceDefinitionConfig | None = None
-    description: str | None = None
+    request_access: Annotated[bool | None, Field(alias="requestAccess")] = None
+    manual_sync_allowed: Annotated[bool | None, Field(alias="manualSyncAllowed")] = None
 
 
 class SourceFacet(GuruModel):
@@ -2325,15 +2307,6 @@ class SourceFacet(GuruModel):
 
 class User(GuruModel):
     id: Annotated[str | None, Field(description="The identifier of this User")] = None
-    first_name: Annotated[str, Field(alias="firstName", description="The user's first name")]
-    last_name: Annotated[str, Field(alias="lastName", description="The user's last name")]
-    profile_pic_url: Annotated[
-        str | None,
-        Field(alias="profilePicUrl", description="The profile picture url for the user"),
-    ] = None
-    joined_date: Annotated[AwareDatetime | None, Field(alias="joinedDate")] = None
-    extended_info: Annotated[UserExtendedInfo | None, Field(alias="extendedInfo")] = None
-    user_type: Annotated[UserType | None, Field(alias="userType")] = None
     status: Annotated[
         Status9 | None,
         Field(
@@ -2345,6 +2318,15 @@ class User(GuruModel):
         UserProfile | None,
         Field(alias="userProfile", description="Additional information about a user"),
     ] = None
+    last_name: Annotated[str, Field(alias="lastName", description="The user's last name")]
+    first_name: Annotated[str, Field(alias="firstName", description="The user's first name")]
+    profile_pic_url: Annotated[
+        str | None,
+        Field(alias="profilePicUrl", description="The profile picture url for the user"),
+    ] = None
+    joined_date: Annotated[AwareDatetime | None, Field(alias="joinedDate")] = None
+    extended_info: Annotated[UserExtendedInfo | None, Field(alias="extendedInfo")] = None
+    user_type: Annotated[UserType | None, Field(alias="userType")] = None
 
 
 class UserCollaborator(CardCollaborator):
@@ -2358,7 +2340,6 @@ class UserFollower(GuruModel):
 
 class UserGroupMember(GuruModel):
     id: Annotated[str | None, Field(description="ID of the group member")] = None
-    managed_by_scim: Annotated[bool | None, Field(alias="managedByScim")] = None
     user: Annotated[User, Field(description="The group member")]
     date_created: Annotated[
         AwareDatetime | None,
@@ -2367,6 +2348,7 @@ class UserGroupMember(GuruModel):
             description="Date the group member was added to the group. Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000",
         ),
     ] = None
+    managed_by_scim: Annotated[bool | None, Field(alias="managedByScim")] = None
 
 
 class UserVerifier(CardVerifier):
@@ -2387,7 +2369,6 @@ class CardCommentReply(GuruModel):
     deleted: Annotated[
         bool | None, Field(description="Indicates if the comment has been deleted")
     ] = None
-    reactions: list[ReactionDetail] | None = None
     date_created: Annotated[
         AwareDatetime | None,
         Field(
@@ -2395,6 +2376,7 @@ class CardCommentReply(GuruModel):
             description="Date the comment was created. Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000",
         ),
     ] = None
+    reactions: list[ReactionDetail] | None = None
 
 
 class CardCommentResult(GuruModel):
@@ -2403,10 +2385,7 @@ class CardCommentResult(GuruModel):
         Field(description="A reference to the card this comment belongs to"),
     ] = None
     id: Annotated[str | None, Field(description="ID of the comment")] = None
-    total_replies: Annotated[
-        int | None,
-        Field(alias="totalReplies", description="Number of total replies on the comment"),
-    ] = None
+    status: Annotated[Status3 | None, Field(description="Status of the comment")] = None
     replies: Annotated[
         list[CardCommentReply] | None,
         Field(
@@ -2420,7 +2399,10 @@ class CardCommentResult(GuruModel):
             description="Extra details such as whether the comment corresponds to an announcement",
         ),
     ] = None
-    status: Annotated[Status3 | None, Field(description="Status of the comment")] = None
+    total_replies: Annotated[
+        int | None,
+        Field(alias="totalReplies", description="Number of total replies on the comment"),
+    ] = None
     content: Annotated[str, Field(description="Comment content (max length: 2500 characters)")]
     owner: Annotated[User | None, Field(description="The owner of the comment")] = None
     last_modified: Annotated[
@@ -2433,7 +2415,6 @@ class CardCommentResult(GuruModel):
     deleted: Annotated[
         bool | None, Field(description="Indicates if the comment has been deleted")
     ] = None
-    reactions: list[ReactionDetail] | None = None
     date_created: Annotated[
         AwareDatetime | None,
         Field(
@@ -2441,15 +2422,16 @@ class CardCommentResult(GuruModel):
             description="Date the comment was created. Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000",
         ),
     ] = None
+    reactions: list[ReactionDetail] | None = None
 
 
 class CardVerifiers(GuruModel):
+    verifiers: list[CardVerifier] | None = None
     verification_state: Annotated[VerificationState | None, Field(alias="verificationState")] = None
     verification_reason: Annotated[VerificationReason | None, Field(alias="verificationReason")] = (
         None
     )
     verification_initiator: Annotated[User | None, Field(alias="verificationInitiator")] = None
-    verifiers: list[CardVerifier] | None = None
 
 
 class Document(GuruModel):
@@ -2457,10 +2439,13 @@ class Document(GuruModel):
     content: str | None = None
     last_modified: Annotated[AwareDatetime | None, Field(alias="lastModified")] = None
     version: int | None = None
-    last_verified: Annotated[AwareDatetime | None, Field(alias="lastVerified")] = None
+    url: str | None = None
+    title: str | None = None
     deleted: bool | None = None
-    verification_state: Annotated[VerificationState | None, Field(alias="verificationState")] = None
+    date_created: Annotated[AwareDatetime | None, Field(alias="dateCreated")] = None
+    last_verified: Annotated[AwareDatetime | None, Field(alias="lastVerified")] = None
     last_verified_by: Annotated[User | None, Field(alias="lastVerifiedBy")] = None
+    verification_state: Annotated[VerificationState | None, Field(alias="verificationState")] = None
     inaccessible_to_asker: Annotated[bool | None, Field(alias="inaccessibleToAsker")] = None
     inaccessible: bool | None = None
     latest_version: Annotated[int | None, Field(alias="latestVersion")] = None
@@ -2476,9 +2461,6 @@ class Document(GuruModel):
     last_verification_confidence_score: Annotated[
         float | None, Field(alias="lastVerificationConfidenceScore")
     ] = None
-    url: str | None = None
-    title: str | None = None
-    date_created: Annotated[AwareDatetime | None, Field(alias="dateCreated")] = None
     document_type: Annotated[DocumentType, Field(alias="documentType")]
 
 
@@ -2503,16 +2485,16 @@ class KnowledgeAgentGuardrail(GuruModel):
     created_by: Annotated[User | None, Field(alias="createdBy")] = None
 
 
-class KnowledgeAgentSetup(GuruModel):
-    system_prompt: Annotated[str | None, Field(alias="systemPrompt")] = None
-    skill_files: Annotated[list[KnowledgeAgentSkillFile] | None, Field(alias="skillFiles")] = None
-    general_model: Annotated[KnowledgeAgentModelConfig | None, Field(alias="generalModel")] = None
-    thinking_model: Annotated[KnowledgeAgentModelConfig | None, Field(alias="thinkingModel")] = None
-    jailbreak_guard_enabled: Annotated[bool | None, Field(alias="jailbreakGuardEnabled")] = None
-    tracking_enabled: Annotated[bool | None, Field(alias="trackingEnabled")] = None
-    input_guardrails: Annotated[
-        list[KnowledgeAgentGuardrail] | None, Field(alias="inputGuardrails")
-    ] = None
+class KnowledgeAgentSkillFile(GuruModel):
+    id: UUID | None = None
+    full_path: Annotated[str | None, Field(alias="fullPath", max_length=1024, min_length=0)] = None
+    content: str | None = None
+    date_created: Annotated[AwareDatetime | None, Field(alias="dateCreated")] = None
+    date_modified: Annotated[AwareDatetime | None, Field(alias="dateModified")] = None
+    reference_type: Annotated[ReferenceType | None, Field(alias="referenceType")] = None
+    document_id: Annotated[UUID | None, Field(alias="documentId")] = None
+    document: Document | None = None
+    deleted: bool | None = None
 
 
 class KnowledgeAgentSkillFileInlineVersion(GuruModel):
@@ -2535,8 +2517,8 @@ class KnowledgeAgentSkillVersion(GuruModel):
 class McpDocument(Document):
     tool_name: Annotated[str | None, Field(alias="toolName")] = None
     tool_call_id: Annotated[str | None, Field(alias="toolCallId")] = None
-    mcp_display_name: Annotated[str | None, Field(alias="mcpDisplayName")] = None
     mcp_icon_url: Annotated[str | None, Field(alias="mcpIconUrl")] = None
+    mcp_display_name: Annotated[str | None, Field(alias="mcpDisplayName")] = None
 
 
 class QualityAgentRunDetail(GuruModel):
@@ -2549,10 +2531,6 @@ class QualityAgentRunDetail(GuruModel):
     document: Document | None = None
     rule_id: Annotated[str | None, Field(alias="ruleId")] = None
     rule_name: Annotated[str | None, Field(alias="ruleName")] = None
-
-
-class QualityConfig(GuruModel):
-    config: dict[str, QualityConfigEntry] | None = None
 
 
 class ScheduleArchivalResponse(GuruModel):
@@ -2628,10 +2606,16 @@ class CardAttachment(GuruModel):
     extension: Annotated[
         str | None, Field(description="The attached file's extension", examples=["csv"])
     ] = None
+    filename: Annotated[
+        str | None,
+        Field(description="The file name and extension", examples=["file-name.png"]),
+    ] = None
     link: Annotated[
         str | None,
         Field(description="Link to where the uploaded file is hosted in Guru's servers"),
     ] = None
+    mimetype: str | None = None
+    document: Document | None = None
     thumbnail_link: Annotated[
         str | None,
         Field(
@@ -2640,27 +2624,18 @@ class CardAttachment(GuruModel):
         ),
     ] = None
     previewable: bool | None = None
-    mimetype: str | None = None
-    document: Document | None = None
-    filename: Annotated[
-        str | None,
-        Field(description="The file name and extension", examples=["file-name.png"]),
-    ] = None
 
 
 class CardAttachmentDocument(Document):
     size: int | None = None
     extension: str | None = None
-    previewable: bool | None = None
     mimetype: str | None = None
+    previewable: bool | None = None
 
 
 class CardComment(GuruModel):
     id: Annotated[str | None, Field(description="ID of the comment")] = None
-    total_replies: Annotated[
-        int | None,
-        Field(alias="totalReplies", description="Number of total replies on the comment"),
-    ] = None
+    status: Annotated[Status3 | None, Field(description="Status of the comment")] = None
     replies: Annotated[
         list[CardCommentReply] | None,
         Field(
@@ -2674,7 +2649,10 @@ class CardComment(GuruModel):
             description="Extra details such as whether the comment corresponds to an announcement",
         ),
     ] = None
-    status: Annotated[Status3 | None, Field(description="Status of the comment")] = None
+    total_replies: Annotated[
+        int | None,
+        Field(alias="totalReplies", description="Number of total replies on the comment"),
+    ] = None
     content: Annotated[str, Field(description="Comment content (max length: 2500 characters)")]
     owner: Annotated[User | None, Field(description="The owner of the comment")] = None
     last_modified: Annotated[
@@ -2687,7 +2665,6 @@ class CardComment(GuruModel):
     deleted: Annotated[
         bool | None, Field(description="Indicates if the comment has been deleted")
     ] = None
-    reactions: list[ReactionDetail] | None = None
     date_created: Annotated[
         AwareDatetime | None,
         Field(
@@ -2695,6 +2672,7 @@ class CardComment(GuruModel):
             description="Date the comment was created. Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000",
         ),
     ] = None
+    reactions: list[ReactionDetail] | None = None
 
 
 class ChatMessage(GuruModel):
@@ -2720,6 +2698,18 @@ class DocumentSearchResponse(GuruModel):
     documents: list[Document] | None = None
 
 
+class KnowledgeAgentSetup(GuruModel):
+    system_prompt: Annotated[str | None, Field(alias="systemPrompt")] = None
+    skill_files: Annotated[list[KnowledgeAgentSkillFile] | None, Field(alias="skillFiles")] = None
+    general_model: Annotated[KnowledgeAgentModelConfig | None, Field(alias="generalModel")] = None
+    thinking_model: Annotated[KnowledgeAgentModelConfig | None, Field(alias="thinkingModel")] = None
+    jailbreak_guard_enabled: Annotated[bool | None, Field(alias="jailbreakGuardEnabled")] = None
+    tracking_enabled: Annotated[bool | None, Field(alias="trackingEnabled")] = None
+    input_guardrails: Annotated[
+        list[KnowledgeAgentGuardrail] | None, Field(alias="inputGuardrails")
+    ] = None
+
+
 class NLQSearchResponse(GuruModel):
     query_spec: Annotated[SearchQuerySpec | None, Field(alias="querySpec")] = None
     total: int | None = None
@@ -2737,12 +2727,12 @@ class AiEvaluation(GuruModel):
 
 
 class AnnouncementInsightSummary(GuruModel):
+    announcement: KnowledgeAlert | None = None
     read_count: Annotated[int | None, Field(alias="readCount")] = None
     unread_count: Annotated[int | None, Field(alias="unreadCount")] = None
     current_user_read_date: Annotated[AwareDatetime | None, Field(alias="currentUserReadDate")] = (
         None
     )
-    announcement: KnowledgeAlert | None = None
     read_users: Annotated[list[AnnouncementUser] | None, Field(alias="readUsers")] = None
     current_user_announcement_user: Annotated[
         bool | None, Field(alias="currentUserAnnouncementUser")
@@ -2791,8 +2781,8 @@ class Application(GuruModel):
     name: str | None = None
     id: str | None = None
     source: Source | None = None
-    relationships: list[Relationship] | None = None
     object_types: Annotated[list[ObjectType] | None, Field(alias="objectTypes")] = None
+    relationships: list[Relationship] | None = None
 
 
 class AutomationPlan(GuruModel):
@@ -2801,16 +2791,12 @@ class AutomationPlan(GuruModel):
         str | None, Field(description="The unique identifier for the automation plan")
     ] = None
     content: Annotated[str | None, Field(description="The automation plan content/prompt")] = None
+    status: Annotated[
+        Status2 | None, Field(description="The current status of the automation plan")
+    ] = None
     created_by: Annotated[
         User | None,
         Field(alias="createdBy", description="The user who created the automation plan"),
-    ] = None
-    knowledge_agent: Annotated[
-        KnowledgeAgent | None,
-        Field(
-            alias="knowledgeAgent",
-            description="The knowledge agent that will execute the automation plan",
-        ),
     ] = None
     created_date: Annotated[
         AwareDatetime | None,
@@ -2837,6 +2823,13 @@ class AutomationPlan(GuruModel):
             description="The cron schedule for when to run the automation plan",
         ),
     ] = None
+    knowledge_agent: Annotated[
+        KnowledgeAgent | None,
+        Field(
+            alias="knowledgeAgent",
+            description="The knowledge agent that will execute the automation plan",
+        ),
+    ] = None
     last_run_date: Annotated[
         AwareDatetime | None,
         Field(alias="lastRunDate", description="The date the automation plan was last run"),
@@ -2847,9 +2840,6 @@ class AutomationPlan(GuruModel):
             alias="lastRun",
             description="The last chat thread created by this automation plan",
         ),
-    ] = None
-    status: Annotated[
-        Status2 | None, Field(description="The current status of the automation plan")
     ] = None
 
 
@@ -2872,14 +2862,11 @@ class BasePage(GuruModel):
             ],
         ),
     ] = None
-    last_modified_by: Annotated[
-        User | None,
-        Field(alias="lastModifiedBy", description="The last user who modified the object"),
+    editable: Annotated[
+        bool | None,
+        Field(description="Indicates if this is editable by the current user"),
     ] = None
-    json_content: Annotated[
-        str | None,
-        Field(alias="jsonContent", description="The json content of the page"),
-    ] = None
+    title: Annotated[str | None, Field(description="The title of the page")] = None
     draft: Annotated[bool | None, Field(description="Indicates if this is a draft")] = None
     hero_image: Annotated[
         str | None, Field(alias="heroImage", description="The hero image link")
@@ -2913,11 +2900,10 @@ class BasePage(GuruModel):
             description="The ID of the default Knowledge Agent for this page",
         ),
     ] = None
-    editable: Annotated[
-        bool | None,
-        Field(description="Indicates if this is editable by the current user"),
+    json_content: Annotated[
+        str | None,
+        Field(alias="jsonContent", description="The json content of the page"),
     ] = None
-    title: Annotated[str | None, Field(description="The title of the page")] = None
     team: Annotated[Team | None, Field(description="The team that the object is on")] = None
     date_created: Annotated[
         AwareDatetime | None,
@@ -2928,6 +2914,10 @@ class BasePage(GuruModel):
                 "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000"
             ],
         ),
+    ] = None
+    last_modified_by: Annotated[
+        User | None,
+        Field(alias="lastModifiedBy", description="The last user who modified the object"),
     ] = None
 
 
@@ -2967,6 +2957,89 @@ class Card(GuruModel):
             examples=[1],
         ),
     ] = None
+    tags: Annotated[
+        list[Tag] | None,
+        Field(description="Returns Tag objects associated with this card"),
+    ] = None
+    collection: Annotated[
+        CollectionModel | None, Field(description="The Collection the Card belongs to")
+    ] = None
+    date_created: Annotated[
+        AwareDatetime | None,
+        Field(
+            alias="dateCreated",
+            description="Date the Card was created",
+            examples=[
+                "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000"
+            ],
+        ),
+    ] = None
+    last_verified: Annotated[
+        AwareDatetime | None,
+        Field(
+            alias="lastVerified",
+            description="Date the Card was last verified",
+            examples=[
+                "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000"
+            ],
+        ),
+    ] = None
+    last_verified_by: Annotated[
+        User | None,
+        Field(alias="lastVerifiedBy", description="The User to last verify the Card"),
+    ] = None
+    preferred_phrase: Annotated[
+        str,
+        Field(
+            alias="preferredPhrase",
+            description="The title of the Card",
+            examples=["My New Card"],
+        ),
+    ]
+    favorited_date: Annotated[
+        AwareDatetime | None,
+        Field(
+            alias="favoritedDate",
+            description="Date when this card has been favorited by the current user",
+        ),
+    ] = None
+    slug: Annotated[
+        str | None,
+        Field(
+            description="The slug is the URL address to the card",
+            examples=["https://app.getguru.com/cards/:slug_goes_here"],
+        ),
+    ] = None
+    boards: Annotated[
+        list[dict[str, Any]] | None,
+        Field(description="Returns Board objects that this card appears on"),
+    ] = None
+    share_status: Annotated[
+        ShareStatus | None,
+        Field(
+            alias="shareStatus",
+            description="The share status of the Card.  TEAM for team shared cards and PRIVATE for privately shared cards",
+            examples=["TEAM"],
+        ),
+    ] = None
+    suppress_verification: Annotated[
+        bool | None,
+        Field(
+            alias="suppressVerification",
+            description="Flag for enabling card verification on save",
+        ),
+    ] = None
+    verification_interval: Annotated[
+        int | None,
+        Field(
+            alias="verificationInterval",
+            description="Time interval (in days), indicating the frequency that this card needs re-verification. Passing in null will default to 30 days.",
+        ),
+    ] = None
+    verifiers: Annotated[
+        list[CardVerifier] | None,
+        Field(description="Users/Groups that are responsible for verifying this card"),
+    ] = None
     verification_type: Annotated[
         VerificationType | None,
         Field(
@@ -2978,24 +3051,6 @@ class Card(GuruModel):
         list[CardCollaborator] | None,
         Field(
             description="Users/Groups that this card is explicitly shared to. Collaborators of a card are the only ones who have access if the Card's shareStatus is PRIVATE."
-        ),
-    ] = None
-    share_status: Annotated[
-        ShareStatus | None,
-        Field(
-            alias="shareStatus",
-            description="The share status of the Card.  TEAM for team shared cards and PRIVATE for privately shared cards",
-            examples=["TEAM"],
-        ),
-    ] = None
-    last_verified: Annotated[
-        AwareDatetime | None,
-        Field(
-            alias="lastVerified",
-            description="Date the Card was last verified",
-            examples=[
-                "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000"
-            ],
         ),
     ] = None
     verification_state: Annotated[
@@ -3016,10 +3071,6 @@ class Card(GuruModel):
         User | None,
         Field(alias="lastModifiedBy", description="The User to last modify the Card"),
     ] = None
-    last_verified_by: Annotated[
-        User | None,
-        Field(alias="lastVerifiedBy", description="The User to last verify the Card"),
-    ] = None
     last_verification_modified_by_type: Annotated[
         LastVerificationModifiedByType | None,
         Field(alias="lastVerificationModifiedByType"),
@@ -3030,13 +3081,6 @@ class Card(GuruModel):
     ] = None
     last_verification_confidence_score: Annotated[
         float | None, Field(alias="lastVerificationConfidenceScore")
-    ] = None
-    slug: Annotated[
-        str | None,
-        Field(
-            description="The slug is the URL address to the card",
-            examples=["https://app.getguru.com/cards/:slug_goes_here"],
-        ),
     ] = None
     public_link_allowed: Annotated[bool | None, Field(alias="publicLinkAllowed")] = None
     archived: Annotated[
@@ -3073,13 +3117,6 @@ class Card(GuruModel):
         bool | None,
         Field(description="Whether this card has been favorited by the current user"),
     ] = None
-    favorited_date: Annotated[
-        AwareDatetime | None,
-        Field(
-            alias="favoritedDate",
-            description="Date when this card has been favorited by the current user",
-        ),
-    ] = None
     attachments: Annotated[
         list[CardAttachment] | None, Field(description="Attachments to the card")
     ] = None
@@ -3098,22 +3135,11 @@ class Card(GuruModel):
         Field(alias="commentCount", description="Number of comments on the card"),
     ] = None
     card_info: Annotated[CardInfo | None, Field(alias="cardInfo")] = None
-    boards: Annotated[
-        list[dict[str, Any]] | None,
-        Field(description="Returns Board objects that this card appears on"),
-    ] = None
     sync_info: Annotated[
         CardSyncInfo | None,
         Field(
             alias="syncInfo",
             description="Returns an object about Sync information, if this card is from a synced Collection. Information includes: externalUrl, lastSyncDate, lastUpdateDate, and syncType.",
-        ),
-    ] = None
-    suppress_verification: Annotated[
-        bool | None,
-        Field(
-            alias="suppressVerification",
-            description="Flag for enabling card verification on save",
         ),
     ] = None
     verification_initiation_date: Annotated[
@@ -3158,42 +3184,6 @@ class Card(GuruModel):
     ] = None
     quality_check_allowed: Annotated[bool | None, Field(alias="qualityCheckAllowed")] = None
     card_type: Annotated[str | None, Field(alias="cardType")] = None
-    tags: Annotated[
-        list[Tag] | None,
-        Field(description="Returns Tag objects associated with this card"),
-    ] = None
-    collection: Annotated[
-        CollectionModel | None, Field(description="The Collection the Card belongs to")
-    ] = None
-    preferred_phrase: Annotated[
-        str,
-        Field(
-            alias="preferredPhrase",
-            description="The title of the Card",
-            examples=["My New Card"],
-        ),
-    ]
-    date_created: Annotated[
-        AwareDatetime | None,
-        Field(
-            alias="dateCreated",
-            description="Date the Card was created",
-            examples=[
-                "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000"
-            ],
-        ),
-    ] = None
-    verification_interval: Annotated[
-        int | None,
-        Field(
-            alias="verificationInterval",
-            description="Time interval (in days), indicating the frequency that this card needs re-verification. Passing in null will default to 30 days.",
-        ),
-    ] = None
-    verifiers: Annotated[
-        list[CardVerifier] | None,
-        Field(description="Users/Groups that are responsible for verifying this card"),
-    ] = None
 
 
 class CardDocument(Document):
@@ -3229,27 +3219,6 @@ class CardDocument(Document):
             examples=[1],
         ),
     ] = None
-    last_verified: Annotated[
-        AwareDatetime | None,
-        Field(
-            alias="lastVerified",
-            description="Date the Card was last verified",
-            examples=[
-                "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000"
-            ],
-        ),
-    ] = None
-    verification_state: Annotated[
-        VerificationState | None,
-        Field(
-            alias="verificationState",
-            description="Whether the card is TRUSTED, STALE, or NEEDS_VERIFICATION",
-        ),
-    ] = None
-    last_verified_by: Annotated[
-        User | None,
-        Field(alias="lastVerifiedBy", description="The User to last verify the Card"),
-    ] = None
     date_created: Annotated[
         AwareDatetime | None,
         Field(
@@ -3260,10 +3229,82 @@ class CardDocument(Document):
             ],
         ),
     ] = None
+    last_verified: Annotated[
+        AwareDatetime | None,
+        Field(
+            alias="lastVerified",
+            description="Date the Card was last verified",
+            examples=[
+                "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000"
+            ],
+        ),
+    ] = None
+    last_verified_by: Annotated[
+        User | None,
+        Field(alias="lastVerifiedBy", description="The User to last verify the Card"),
+    ] = None
+    verification_state: Annotated[
+        VerificationState | None,
+        Field(
+            alias="verificationState",
+            description="Whether the card is TRUSTED, STALE, or NEEDS_VERIFICATION",
+        ),
+    ] = None
     permissions: list[Permission] | None = None
     owner: Annotated[User | None, Field(description="The User object of the owner of the card")] = (
         None
     )
+    tags: Annotated[
+        list[Tag] | None,
+        Field(description="Returns Tag objects associated with this card"),
+    ] = None
+    collection: Annotated[
+        CollectionModel | None, Field(description="The Collection the Card belongs to")
+    ] = None
+    favorited_date: Annotated[
+        AwareDatetime | None,
+        Field(
+            alias="favoritedDate",
+            description="Date when this card has been favorited by the current user",
+        ),
+    ] = None
+    slug: Annotated[
+        str | None,
+        Field(
+            description="The slug is the URL address to the card",
+            examples=["https://app.getguru.com/cards/:slug_goes_here"],
+        ),
+    ] = None
+    boards: Annotated[
+        list[dict[str, Any]] | None,
+        Field(description="Returns Board objects that this card appears on"),
+    ] = None
+    share_status: Annotated[
+        ShareStatus | None,
+        Field(
+            alias="shareStatus",
+            description="The share status of the Card.  TEAM for team shared cards and PRIVATE for privately shared cards",
+            examples=["TEAM"],
+        ),
+    ] = None
+    suppress_verification: Annotated[
+        bool | None,
+        Field(
+            alias="suppressVerification",
+            description="Flag for enabling card verification on save",
+        ),
+    ] = None
+    verification_interval: Annotated[
+        int | None,
+        Field(
+            alias="verificationInterval",
+            description="Time interval (in days), indicating the frequency that this card needs re-verification. Passing in null will default to 30 days.",
+        ),
+    ] = None
+    verifiers: Annotated[
+        list[CardVerifier] | None,
+        Field(description="Users/Groups that are responsible for verifying this card"),
+    ] = None
     verification_type: Annotated[
         VerificationType | None,
         Field(
@@ -3277,14 +3318,6 @@ class CardDocument(Document):
             description="Users/Groups that this card is explicitly shared to. Collaborators of a card are the only ones who have access if the Card's shareStatus is PRIVATE."
         ),
     ] = None
-    share_status: Annotated[
-        ShareStatus | None,
-        Field(
-            alias="shareStatus",
-            description="The share status of the Card.  TEAM for team shared cards and PRIVATE for privately shared cards",
-            examples=["TEAM"],
-        ),
-    ] = None
     verification_reason: Annotated[
         VerificationReason | None,
         Field(
@@ -3295,13 +3328,6 @@ class CardDocument(Document):
     last_modified_by: Annotated[
         User | None,
         Field(alias="lastModifiedBy", description="The User to last modify the Card"),
-    ] = None
-    slug: Annotated[
-        str | None,
-        Field(
-            description="The slug is the URL address to the card",
-            examples=["https://app.getguru.com/cards/:slug_goes_here"],
-        ),
     ] = None
     public_link_allowed: Annotated[bool | None, Field(alias="publicLinkAllowed")] = None
     archived: Annotated[
@@ -3338,13 +3364,6 @@ class CardDocument(Document):
         bool | None,
         Field(description="Whether this card has been favorited by the current user"),
     ] = None
-    favorited_date: Annotated[
-        AwareDatetime | None,
-        Field(
-            alias="favoritedDate",
-            description="Date when this card has been favorited by the current user",
-        ),
-    ] = None
     attachments: Annotated[
         list[CardAttachment] | None, Field(description="Attachments to the card")
     ] = None
@@ -3363,22 +3382,11 @@ class CardDocument(Document):
         Field(alias="commentCount", description="Number of comments on the card"),
     ] = None
     card_info: Annotated[CardInfo | None, Field(alias="cardInfo")] = None
-    boards: Annotated[
-        list[dict[str, Any]] | None,
-        Field(description="Returns Board objects that this card appears on"),
-    ] = None
     sync_info: Annotated[
         CardSyncInfo | None,
         Field(
             alias="syncInfo",
             description="Returns an object about Sync information, if this card is from a synced Collection. Information includes: externalUrl, lastSyncDate, lastUpdateDate, and syncType.",
-        ),
-    ] = None
-    suppress_verification: Annotated[
-        bool | None,
-        Field(
-            alias="suppressVerification",
-            description="Flag for enabling card verification on save",
         ),
     ] = None
     verification_initiation_date: Annotated[
@@ -3423,44 +3431,26 @@ class CardDocument(Document):
     ] = None
     quality_check_allowed: Annotated[bool | None, Field(alias="qualityCheckAllowed")] = None
     card_type: Annotated[str | None, Field(alias="cardType")] = None
-    tags: Annotated[
-        list[Tag] | None,
-        Field(description="Returns Tag objects associated with this card"),
-    ] = None
-    collection: Annotated[
-        CollectionModel | None, Field(description="The Collection the Card belongs to")
-    ] = None
-    verification_interval: Annotated[
-        int | None,
-        Field(
-            alias="verificationInterval",
-            description="Time interval (in days), indicating the frequency that this card needs re-verification. Passing in null will default to 30 days.",
-        ),
-    ] = None
-    verifiers: Annotated[
-        list[CardVerifier] | None,
-        Field(description="Users/Groups that are responsible for verifying this card"),
-    ] = None
 
 
 class CardTemplate(GuruModel):
     id: str | None = None
     content: str | None = None
     last_modified: Annotated[AwareDatetime | None, Field(alias="lastModified")] = None
-    share_status: Annotated[ShareStatus | None, Field(alias="shareStatus")] = None
-    created_by: Annotated[User | None, Field(alias="createdBy")] = None
-    last_modified_by: Annotated[User | None, Field(alias="lastModifiedBy")] = None
-    json_content: Annotated[str | None, Field(alias="jsonContent")] = None
-    card_title: Annotated[str | None, Field(alias="cardTitle")] = None
-    boards: list[Folder] | None = None
-    content_schema_version: Annotated[str | None, Field(alias="contentSchemaVersion")] = None
-    template_title: Annotated[str | None, Field(alias="templateTitle")] = None
-    card_verifier: Annotated[CardVerifier | None, Field(alias="cardVerifier")] = None
     description: str | None = None
     tags: list[Tag] | None = None
+    created_by: Annotated[User | None, Field(alias="createdBy")] = None
+    template_title: Annotated[str | None, Field(alias="templateTitle")] = None
+    card_verifier: Annotated[CardVerifier | None, Field(alias="cardVerifier")] = None
+    json_content: Annotated[str | None, Field(alias="jsonContent")] = None
     collection: CollectionModel | None = None
     date_created: Annotated[AwareDatetime | None, Field(alias="dateCreated")] = None
+    boards: list[Folder] | None = None
+    share_status: Annotated[ShareStatus | None, Field(alias="shareStatus")] = None
     verification_interval: Annotated[int | None, Field(alias="verificationInterval")] = None
+    last_modified_by: Annotated[User | None, Field(alias="lastModifiedBy")] = None
+    card_title: Annotated[str | None, Field(alias="cardTitle")] = None
+    content_schema_version: Annotated[str | None, Field(alias="contentSchemaVersion")] = None
 
 
 class ChatAskResponse(GuruModel):
@@ -3505,13 +3495,19 @@ class CollectionModel(GuruModel):
             examples=["#f44336"],
         ),
     ] = None
-    cards: Annotated[int | None, Field(description="Number of cards in this Collection")] = None
-    deleted: Annotated[
-        bool | None,
-        Field(description="Flag for whether this Collection has been deleted"),
+    description: Annotated[str | None, Field(description="Collection Description")] = None
+    tags: Annotated[
+        int | None,
+        Field(description="Returns all Tag objects associated with this collection"),
     ] = None
-    default_verifier: Annotated[str | None, Field(alias="defaultVerifier")] = None
-    public_cards_enabled: Annotated[bool | None, Field(alias="publicCardsEnabled")] = None
+    token: str | None = None
+    collection_stats: Annotated[
+        dict[str, Any] | None,
+        Field(
+            alias="collectionStats",
+            description="Returns an objects of stats for this collection that includes Collection Trust Score, and Card Count.",
+        ),
+    ] = None
     last_synced_date: Annotated[
         AwareDatetime | None,
         Field(
@@ -3520,29 +3516,6 @@ class CollectionModel(GuruModel):
             examples=[
                 "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000"
             ],
-        ),
-    ] = None
-    sync_type: Annotated[
-        SyncType | None,
-        Field(
-            alias="syncType",
-            description="If this Collection has been synced, this will return the type. Types include: Zendesk, Confluence, Google Drive, and Manual.",
-        ),
-    ] = None
-    emoji: str | None = None
-    slug: Annotated[
-        str | None,
-        Field(
-            description="The slug is the URL to get to this Collection",
-            examples=["https://app.getguru.com/collections/:slug_goes_here"],
-        ),
-    ] = None
-    boards: Annotated[int | None, Field(description="Number of boards in this Collection")] = None
-    collection_stats: Annotated[
-        dict[str, Any] | None,
-        Field(
-            alias="collectionStats",
-            description="Returns an objects of stats for this collection that includes Collection Trust Score, and Card Count.",
         ),
     ] = None
     top_level_sync_location: Annotated[
@@ -3561,13 +3534,19 @@ class CollectionModel(GuruModel):
     default_verification_type: Annotated[
         DefaultVerificationType | None, Field(alias="defaultVerificationType")
     ] = None
-    description: Annotated[str | None, Field(description="Collection Description")] = None
-    tags: Annotated[
-        int | None,
-        Field(description="Returns all Tag objects associated with this collection"),
+    deleted: Annotated[
+        bool | None,
+        Field(description="Flag for whether this Collection has been deleted"),
     ] = None
-    token: str | None = None
     team: Team | None = None
+    default_verifier: Annotated[str | None, Field(alias="defaultVerifier")] = None
+    sync_type: Annotated[
+        SyncType | None,
+        Field(
+            alias="syncType",
+            description="If this Collection has been synced, this will return the type. Types include: Zendesk, Confluence, Google Drive, and Manual.",
+        ),
+    ] = None
     date_created: Annotated[
         AwareDatetime | None,
         Field(
@@ -3578,6 +3557,14 @@ class CollectionModel(GuruModel):
             ],
         ),
     ] = None
+    slug: Annotated[
+        str | None,
+        Field(
+            description="The slug is the URL to get to this Collection",
+            examples=["https://app.getguru.com/collections/:slug_goes_here"],
+        ),
+    ] = None
+    public_cards_enabled: Annotated[bool | None, Field(alias="publicCardsEnabled")] = None
     collection_type: Annotated[
         CollectionType | None,
         Field(
@@ -3593,7 +3580,10 @@ class CollectionModel(GuruModel):
             description="The type can be FRAMEWORK, ONBOARDING, USER or EXTERNAL.",
         ),
     ] = None
+    boards: Annotated[int | None, Field(description="Number of boards in this Collection")] = None
     verification_interval: Annotated[int | None, Field(alias="verificationInterval")] = None
+    cards: Annotated[int | None, Field(description="Number of cards in this Collection")] = None
+    emoji: str | None = None
 
 
 class ConnectionGroup(GuruModel):
@@ -3619,21 +3609,21 @@ class DraftCard(GuruModel):
     content: str | None = None
     last_modified: Annotated[AwareDatetime | None, Field(alias="lastModified")] = None
     version: int | None = None
-    card_id: Annotated[str | None, Field(alias="cardId")] = None
+    user: User | None = None
     created_by: Annotated[User | None, Field(alias="createdBy")] = None
-    last_modified_by: Annotated[User | None, Field(alias="lastModifiedBy")] = None
-    json_content: Annotated[str | None, Field(alias="jsonContent")] = None
+    title: str | None = None
     created_date: Annotated[AwareDatetime | None, Field(alias="createdDate")] = None
-    content_schema_version: Annotated[str | None, Field(alias="contentSchemaVersion")] = None
-    card_template_id: Annotated[str | None, Field(alias="cardTemplateId")] = None
-    card_version: Annotated[int | None, Field(alias="cardVersion")] = None
     scheduled_publish_date: Annotated[AwareDatetime | None, Field(alias="scheduledPublishDate")] = (
         None
     )
     is_collaborator: Annotated[bool | None, Field(alias="isCollaborator")] = None
-    user: User | None = None
-    title: str | None = None
+    json_content: Annotated[str | None, Field(alias="jsonContent")] = None
     collection: CollectionModel | None = None
+    card_version: Annotated[int | None, Field(alias="cardVersion")] = None
+    card_id: Annotated[str | None, Field(alias="cardId")] = None
+    last_modified_by: Annotated[User | None, Field(alias="lastModifiedBy")] = None
+    content_schema_version: Annotated[str | None, Field(alias="contentSchemaVersion")] = None
+    card_template_id: Annotated[str | None, Field(alias="cardTemplateId")] = None
 
 
 class EffectivePermissions(GuruModel):
@@ -3668,6 +3658,11 @@ class FavoriteList(GuruModel):
             ],
         ),
     ] = None
+    items: Annotated[
+        list[FavoriteListCard] | None,
+        Field(description="The cards that are on the favorite list"),
+    ] = None
+    title: Annotated[str | None, Field(description="The title of the favorite list")] = None
     default_list: Annotated[
         bool | None,
         Field(
@@ -3675,11 +3670,6 @@ class FavoriteList(GuruModel):
             description="When this favorite list is a user's default list",
         ),
     ] = None
-    items: Annotated[
-        list[FavoriteListCard] | None,
-        Field(description="The cards that are on the favorite list"),
-    ] = None
-    title: Annotated[str | None, Field(description="The title of the favorite list")] = None
 
 
 class FavoriteListCard(GuruModel):
@@ -3720,6 +3710,89 @@ class FavoriteListCard(GuruModel):
             examples=[1],
         ),
     ] = None
+    tags: Annotated[
+        list[Tag] | None,
+        Field(description="Returns Tag objects associated with this card"),
+    ] = None
+    collection: Annotated[
+        CollectionModel | None, Field(description="The Collection the Card belongs to")
+    ] = None
+    date_created: Annotated[
+        AwareDatetime | None,
+        Field(
+            alias="dateCreated",
+            description="Date the Card was created",
+            examples=[
+                "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000"
+            ],
+        ),
+    ] = None
+    last_verified: Annotated[
+        AwareDatetime | None,
+        Field(
+            alias="lastVerified",
+            description="Date the Card was last verified",
+            examples=[
+                "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000"
+            ],
+        ),
+    ] = None
+    last_verified_by: Annotated[
+        User | None,
+        Field(alias="lastVerifiedBy", description="The User to last verify the Card"),
+    ] = None
+    preferred_phrase: Annotated[
+        str,
+        Field(
+            alias="preferredPhrase",
+            description="The title of the Card",
+            examples=["My New Card"],
+        ),
+    ]
+    favorited_date: Annotated[
+        AwareDatetime | None,
+        Field(
+            alias="favoritedDate",
+            description="Date when this card has been favorited by the current user",
+        ),
+    ] = None
+    slug: Annotated[
+        str | None,
+        Field(
+            description="The slug is the URL address to the card",
+            examples=["https://app.getguru.com/cards/:slug_goes_here"],
+        ),
+    ] = None
+    boards: Annotated[
+        list[dict[str, Any]] | None,
+        Field(description="Returns Board objects that this card appears on"),
+    ] = None
+    share_status: Annotated[
+        ShareStatus | None,
+        Field(
+            alias="shareStatus",
+            description="The share status of the Card.  TEAM for team shared cards and PRIVATE for privately shared cards",
+            examples=["TEAM"],
+        ),
+    ] = None
+    suppress_verification: Annotated[
+        bool | None,
+        Field(
+            alias="suppressVerification",
+            description="Flag for enabling card verification on save",
+        ),
+    ] = None
+    verification_interval: Annotated[
+        int | None,
+        Field(
+            alias="verificationInterval",
+            description="Time interval (in days), indicating the frequency that this card needs re-verification. Passing in null will default to 30 days.",
+        ),
+    ] = None
+    verifiers: Annotated[
+        list[CardVerifier] | None,
+        Field(description="Users/Groups that are responsible for verifying this card"),
+    ] = None
     verification_type: Annotated[
         VerificationType | None,
         Field(
@@ -3731,24 +3804,6 @@ class FavoriteListCard(GuruModel):
         list[CardCollaborator] | None,
         Field(
             description="Users/Groups that this card is explicitly shared to. Collaborators of a card are the only ones who have access if the Card's shareStatus is PRIVATE."
-        ),
-    ] = None
-    share_status: Annotated[
-        ShareStatus | None,
-        Field(
-            alias="shareStatus",
-            description="The share status of the Card.  TEAM for team shared cards and PRIVATE for privately shared cards",
-            examples=["TEAM"],
-        ),
-    ] = None
-    last_verified: Annotated[
-        AwareDatetime | None,
-        Field(
-            alias="lastVerified",
-            description="Date the Card was last verified",
-            examples=[
-                "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000"
-            ],
         ),
     ] = None
     verification_state: Annotated[
@@ -3769,10 +3824,6 @@ class FavoriteListCard(GuruModel):
         User | None,
         Field(alias="lastModifiedBy", description="The User to last modify the Card"),
     ] = None
-    last_verified_by: Annotated[
-        User | None,
-        Field(alias="lastVerifiedBy", description="The User to last verify the Card"),
-    ] = None
     last_verification_modified_by_type: Annotated[
         LastVerificationModifiedByType | None,
         Field(alias="lastVerificationModifiedByType"),
@@ -3783,13 +3834,6 @@ class FavoriteListCard(GuruModel):
     ] = None
     last_verification_confidence_score: Annotated[
         float | None, Field(alias="lastVerificationConfidenceScore")
-    ] = None
-    slug: Annotated[
-        str | None,
-        Field(
-            description="The slug is the URL address to the card",
-            examples=["https://app.getguru.com/cards/:slug_goes_here"],
-        ),
     ] = None
     public_link_allowed: Annotated[bool | None, Field(alias="publicLinkAllowed")] = None
     archived: Annotated[
@@ -3826,13 +3870,6 @@ class FavoriteListCard(GuruModel):
         bool | None,
         Field(description="Whether this card has been favorited by the current user"),
     ] = None
-    favorited_date: Annotated[
-        AwareDatetime | None,
-        Field(
-            alias="favoritedDate",
-            description="Date when this card has been favorited by the current user",
-        ),
-    ] = None
     attachments: Annotated[
         list[CardAttachment] | None, Field(description="Attachments to the card")
     ] = None
@@ -3851,22 +3888,11 @@ class FavoriteListCard(GuruModel):
         Field(alias="commentCount", description="Number of comments on the card"),
     ] = None
     card_info: Annotated[CardInfo | None, Field(alias="cardInfo")] = None
-    boards: Annotated[
-        list[dict[str, Any]] | None,
-        Field(description="Returns Board objects that this card appears on"),
-    ] = None
     sync_info: Annotated[
         CardSyncInfo | None,
         Field(
             alias="syncInfo",
             description="Returns an object about Sync information, if this card is from a synced Collection. Information includes: externalUrl, lastSyncDate, lastUpdateDate, and syncType.",
-        ),
-    ] = None
-    suppress_verification: Annotated[
-        bool | None,
-        Field(
-            alias="suppressVerification",
-            description="Flag for enabling card verification on save",
         ),
     ] = None
     verification_initiation_date: Annotated[
@@ -3911,42 +3937,6 @@ class FavoriteListCard(GuruModel):
     ] = None
     quality_check_allowed: Annotated[bool | None, Field(alias="qualityCheckAllowed")] = None
     card_type: Annotated[str | None, Field(alias="cardType")] = None
-    tags: Annotated[
-        list[Tag] | None,
-        Field(description="Returns Tag objects associated with this card"),
-    ] = None
-    collection: Annotated[
-        CollectionModel | None, Field(description="The Collection the Card belongs to")
-    ] = None
-    preferred_phrase: Annotated[
-        str,
-        Field(
-            alias="preferredPhrase",
-            description="The title of the Card",
-            examples=["My New Card"],
-        ),
-    ]
-    date_created: Annotated[
-        AwareDatetime | None,
-        Field(
-            alias="dateCreated",
-            description="Date the Card was created",
-            examples=[
-                "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000"
-            ],
-        ),
-    ] = None
-    verification_interval: Annotated[
-        int | None,
-        Field(
-            alias="verificationInterval",
-            description="Time interval (in days), indicating the frequency that this card needs re-verification. Passing in null will default to 30 days.",
-        ),
-    ] = None
-    verifiers: Annotated[
-        list[CardVerifier] | None,
-        Field(description="Users/Groups that are responsible for verifying this card"),
-    ] = None
 
 
 class Folder(GuruModel):
@@ -3971,11 +3961,19 @@ class Folder(GuruModel):
             ],
         ),
     ] = None
-    last_modified_by: Annotated[
-        User | None,
+    description: Annotated[
+        str | None, Field(description="An optional short description of the directory")
+    ] = None
+    title: Annotated[str | None, Field(description="The title of the directory")] = None
+    collection: Annotated[
+        CollectionModel | None,
+        Field(description="Returns the Collection object that the directory belongs to"),
+    ] = None
+    favorited_date: Annotated[
+        AwareDatetime | None,
         Field(
-            alias="lastModifiedBy",
-            description="Returns a User object for the User who last modified the directory",
+            alias="favoritedDate",
+            description="When this directory has been favorited by the current user",
         ),
     ] = None
     slug: Annotated[
@@ -3983,6 +3981,13 @@ class Folder(GuruModel):
         Field(
             description="The slug is the URL address to the directory",
             examples=["https://app.getguru.com/boards/:slug_goes_here"],
+        ),
+    ] = None
+    last_modified_by: Annotated[
+        User | None,
+        Field(
+            alias="lastModifiedBy",
+            description="Returns a User object for the User who last modified the directory",
         ),
     ] = None
     groups_shared_with: Annotated[
@@ -3996,24 +4001,9 @@ class Folder(GuruModel):
         bool | None,
         Field(description="Whether this board has been favorited by the current user"),
     ] = None
-    favorited_date: Annotated[
-        AwareDatetime | None,
-        Field(
-            alias="favoritedDate",
-            description="When this directory has been favorited by the current user",
-        ),
-    ] = None
     number_of_facts: Annotated[
         int | None,
         Field(alias="numberOfFacts", description="The number of cards in the directory"),
-    ] = None
-    description: Annotated[
-        str | None, Field(description="An optional short description of the directory")
-    ] = None
-    title: Annotated[str | None, Field(description="The title of the directory")] = None
-    collection: Annotated[
-        CollectionModel | None,
-        Field(description="Returns the Collection object that the directory belongs to"),
     ] = None
 
 
@@ -4053,6 +4043,89 @@ class FolderCard(FolderItem):
             examples=[1],
         ),
     ] = None
+    tags: Annotated[
+        list[Tag] | None,
+        Field(description="Returns Tag objects associated with this card"),
+    ] = None
+    collection: Annotated[
+        CollectionModel | None, Field(description="The Collection the Card belongs to")
+    ] = None
+    date_created: Annotated[
+        AwareDatetime | None,
+        Field(
+            alias="dateCreated",
+            description="Date the Card was created",
+            examples=[
+                "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000"
+            ],
+        ),
+    ] = None
+    last_verified: Annotated[
+        AwareDatetime | None,
+        Field(
+            alias="lastVerified",
+            description="Date the Card was last verified",
+            examples=[
+                "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000"
+            ],
+        ),
+    ] = None
+    last_verified_by: Annotated[
+        User | None,
+        Field(alias="lastVerifiedBy", description="The User to last verify the Card"),
+    ] = None
+    preferred_phrase: Annotated[
+        str,
+        Field(
+            alias="preferredPhrase",
+            description="The title of the Card",
+            examples=["My New Card"],
+        ),
+    ]
+    favorited_date: Annotated[
+        AwareDatetime | None,
+        Field(
+            alias="favoritedDate",
+            description="Date when this card has been favorited by the current user",
+        ),
+    ] = None
+    slug: Annotated[
+        str | None,
+        Field(
+            description="The slug is the URL address to the card",
+            examples=["https://app.getguru.com/cards/:slug_goes_here"],
+        ),
+    ] = None
+    boards: Annotated[
+        list[dict[str, Any]] | None,
+        Field(description="Returns Board objects that this card appears on"),
+    ] = None
+    share_status: Annotated[
+        ShareStatus | None,
+        Field(
+            alias="shareStatus",
+            description="The share status of the Card.  TEAM for team shared cards and PRIVATE for privately shared cards",
+            examples=["TEAM"],
+        ),
+    ] = None
+    suppress_verification: Annotated[
+        bool | None,
+        Field(
+            alias="suppressVerification",
+            description="Flag for enabling card verification on save",
+        ),
+    ] = None
+    verification_interval: Annotated[
+        int | None,
+        Field(
+            alias="verificationInterval",
+            description="Time interval (in days), indicating the frequency that this card needs re-verification. Passing in null will default to 30 days.",
+        ),
+    ] = None
+    verifiers: Annotated[
+        list[CardVerifier] | None,
+        Field(description="Users/Groups that are responsible for verifying this card"),
+    ] = None
     verification_type: Annotated[
         VerificationType | None,
         Field(
@@ -4064,24 +4137,6 @@ class FolderCard(FolderItem):
         list[CardCollaborator] | None,
         Field(
             description="Users/Groups that this card is explicitly shared to. Collaborators of a card are the only ones who have access if the Card's shareStatus is PRIVATE."
-        ),
-    ] = None
-    share_status: Annotated[
-        ShareStatus | None,
-        Field(
-            alias="shareStatus",
-            description="The share status of the Card.  TEAM for team shared cards and PRIVATE for privately shared cards",
-            examples=["TEAM"],
-        ),
-    ] = None
-    last_verified: Annotated[
-        AwareDatetime | None,
-        Field(
-            alias="lastVerified",
-            description="Date the Card was last verified",
-            examples=[
-                "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000"
-            ],
         ),
     ] = None
     verification_state: Annotated[
@@ -4102,10 +4157,6 @@ class FolderCard(FolderItem):
         User | None,
         Field(alias="lastModifiedBy", description="The User to last modify the Card"),
     ] = None
-    last_verified_by: Annotated[
-        User | None,
-        Field(alias="lastVerifiedBy", description="The User to last verify the Card"),
-    ] = None
     last_verification_modified_by_type: Annotated[
         LastVerificationModifiedByType | None,
         Field(alias="lastVerificationModifiedByType"),
@@ -4116,13 +4167,6 @@ class FolderCard(FolderItem):
     ] = None
     last_verification_confidence_score: Annotated[
         float | None, Field(alias="lastVerificationConfidenceScore")
-    ] = None
-    slug: Annotated[
-        str | None,
-        Field(
-            description="The slug is the URL address to the card",
-            examples=["https://app.getguru.com/cards/:slug_goes_here"],
-        ),
     ] = None
     public_link_allowed: Annotated[bool | None, Field(alias="publicLinkAllowed")] = None
     archived: Annotated[
@@ -4159,13 +4203,6 @@ class FolderCard(FolderItem):
         bool | None,
         Field(description="Whether this card has been favorited by the current user"),
     ] = None
-    favorited_date: Annotated[
-        AwareDatetime | None,
-        Field(
-            alias="favoritedDate",
-            description="Date when this card has been favorited by the current user",
-        ),
-    ] = None
     attachments: Annotated[
         list[CardAttachment] | None, Field(description="Attachments to the card")
     ] = None
@@ -4184,22 +4221,11 @@ class FolderCard(FolderItem):
         Field(alias="commentCount", description="Number of comments on the card"),
     ] = None
     card_info: Annotated[CardInfo | None, Field(alias="cardInfo")] = None
-    boards: Annotated[
-        list[dict[str, Any]] | None,
-        Field(description="Returns Board objects that this card appears on"),
-    ] = None
     sync_info: Annotated[
         CardSyncInfo | None,
         Field(
             alias="syncInfo",
             description="Returns an object about Sync information, if this card is from a synced Collection. Information includes: externalUrl, lastSyncDate, lastUpdateDate, and syncType.",
-        ),
-    ] = None
-    suppress_verification: Annotated[
-        bool | None,
-        Field(
-            alias="suppressVerification",
-            description="Flag for enabling card verification on save",
         ),
     ] = None
     verification_initiation_date: Annotated[
@@ -4244,48 +4270,12 @@ class FolderCard(FolderItem):
     ] = None
     quality_check_allowed: Annotated[bool | None, Field(alias="qualityCheckAllowed")] = None
     card_type: Annotated[str | None, Field(alias="cardType")] = None
-    tags: Annotated[
-        list[Tag] | None,
-        Field(description="Returns Tag objects associated with this card"),
-    ] = None
-    collection: Annotated[
-        CollectionModel | None, Field(description="The Collection the Card belongs to")
-    ] = None
-    preferred_phrase: Annotated[
-        str,
-        Field(
-            alias="preferredPhrase",
-            description="The title of the Card",
-            examples=["My New Card"],
-        ),
-    ]
-    date_created: Annotated[
-        AwareDatetime | None,
-        Field(
-            alias="dateCreated",
-            description="Date the Card was created",
-            examples=[
-                "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000"
-            ],
-        ),
-    ] = None
-    verification_interval: Annotated[
-        int | None,
-        Field(
-            alias="verificationInterval",
-            description="Time interval (in days), indicating the frequency that this card needs re-verification. Passing in null will default to 30 days.",
-        ),
-    ] = None
-    verifiers: Annotated[
-        list[CardVerifier] | None,
-        Field(description="Users/Groups that are responsible for verifying this card"),
-    ] = None
 
 
 class GroupCollectionAccess(GuruModel):
+    role: Role1 | None = None
     object_role: Annotated[RoleModel | None, Field(alias="objectRole")] = None
     number_of_authors: Annotated[int | None, Field(alias="numberOfAuthors")] = None
-    role: Role1 | None = None
     collection: CollectionModel | None = None
 
 
@@ -4326,6 +4316,9 @@ class KnowledgeAgent(GuruModel):
     ] = None
     limit_ms_teams_responses_to_all_members_content: Annotated[
         bool | None, Field(alias="limitMSTeamsResponsesToAllMembersContent")
+    ] = None
+    slack_auto_respond_thread_followups: Annotated[
+        bool | None, Field(alias="slackAutoRespondThreadFollowups")
     ] = None
     legacy_mode: Annotated[bool | None, Field(alias="legacyMode")] = None
     allow_in_search_bar: Annotated[bool | None, Field(alias="allowInSearchBar")] = None
@@ -4369,7 +4362,6 @@ class KnowledgeAgentQualityConfig(GuruModel):
     verification_filter_mode: Annotated[
         VerificationFilterMode | None, Field(alias="verificationFilterMode")
     ] = None
-    default_config: Annotated[QualityConfig | None, Field(alias="defaultConfig")] = None
     quality_source_scope: Annotated[
         QualitySourceScope | None, Field(alias="qualitySourceScope")
     ] = None
@@ -4377,7 +4369,6 @@ class KnowledgeAgentQualityConfig(GuruModel):
         list[CollectionModel] | None, Field(alias="qualityCollections")
     ] = None
     quality_sources: Annotated[list[Source] | None, Field(alias="qualitySources")] = None
-    new_api: Annotated[bool | None, Field(alias="newApi")] = None
 
 
 class KnowledgeAgentSkillAccess(GuruModel):
@@ -4394,6 +4385,9 @@ class KnowledgeAgentUrl(GuruModel):
 
 class KnowledgeAlert(GuruModel):
     id: str | None = None
+    groups: list[UserGroup] | None = None
+    date_created: Annotated[AwareDatetime | None, Field(alias="dateCreated")] = None
+    creator: User | None = None
     card_id: Annotated[str | None, Field(alias="cardId")] = None
     note: str | None = None
     last_manual_reminder_date: Annotated[
@@ -4404,12 +4398,10 @@ class KnowledgeAlert(GuruModel):
     ] = None
     scheduled_send_date: Annotated[AwareDatetime | None, Field(alias="scheduledSendDate")] = None
     suppress_notifications: Annotated[bool | None, Field(alias="suppressNotifications")] = None
-    creator: User | None = None
-    groups: list[UserGroup] | None = None
-    date_created: Annotated[AwareDatetime | None, Field(alias="dateCreated")] = None
 
 
 class KnowledgeAlertDelegated(GuruModel):
+    groups: list[UserGroup] | None = None
     card: Card | None = None
     note: str | None = None
     scheduled_send_date: Annotated[AwareDatetime | None, Field(alias="scheduledSendDate")] = None
@@ -4417,15 +4409,18 @@ class KnowledgeAlertDelegated(GuruModel):
     sent_by: Annotated[User | None, Field(alias="sentBy")] = None
     read_count: Annotated[int | None, Field(alias="readCount")] = None
     unread_count: Annotated[int | None, Field(alias="unreadCount")] = None
-    date_sent: Annotated[AwareDatetime | None, Field(alias="dateSent")] = None
-    collection_hex_color: Annotated[str | None, Field(alias="collectionHexColor")] = None
     alert_id: Annotated[str | None, Field(alias="alertId")] = None
     card_title: Annotated[str | None, Field(alias="cardTitle")] = None
-    groups: list[UserGroup] | None = None
+    date_sent: Annotated[AwareDatetime | None, Field(alias="dateSent")] = None
+    collection_hex_color: Annotated[str | None, Field(alias="collectionHexColor")] = None
 
 
 class KnowledgeAlertNotification(GuruModel):
+    groups: list[UserGroup] | None = None
+    creator: User | None = None
     card: Card | None = None
+    alert_id: Annotated[str | None, Field(alias="alertId")] = None
+    card_title: Annotated[str | None, Field(alias="cardTitle")] = None
     date_sent: Annotated[AwareDatetime | None, Field(alias="dateSent")] = None
     alert_note: Annotated[str | None, Field(alias="alertNote")] = None
     viewed: bool | None = None
@@ -4434,27 +4429,20 @@ class KnowledgeAlertNotification(GuruModel):
         None
     )
     read: bool | None = None
-    alert_id: Annotated[str | None, Field(alias="alertId")] = None
-    card_title: Annotated[str | None, Field(alias="cardTitle")] = None
-    creator: User | None = None
-    groups: list[UserGroup] | None = None
 
 
 class KnowledgeCenteredSupportResponse(GuruModel):
     date: AwareDatetime | None = None
-    conversation_id: Annotated[str | None, Field(alias="conversationId")] = None
-    card: Card | None = None
     user: User | None = None
     platform: Platform | None = None
+    conversation_id: Annotated[str | None, Field(alias="conversationId")] = None
+    card: Card | None = None
 
 
 class MentionNotification(GuruModel):
     id: str | None = None
     comment: CardComment | None = None
-    card: Card | None = None
-    date_sent: Annotated[AwareDatetime | None, Field(alias="dateSent")] = None
-    viewed: bool | None = None
-    creator: User | None = None
+    title: str | None = None
     mention: str | None = None
     user_task_id: Annotated[str | None, Field(alias="userTaskId")] = None
     comment_reply_id: Annotated[str | None, Field(alias="commentReplyId")] = None
@@ -4465,7 +4453,10 @@ class MentionNotification(GuruModel):
     draft_comment_reply_source: Annotated[
         DraftCommentReplySource | None, Field(alias="draftCommentReplySource")
     ] = None
-    title: str | None = None
+    creator: User | None = None
+    card: Card | None = None
+    date_sent: Annotated[AwareDatetime | None, Field(alias="dateSent")] = None
+    viewed: bool | None = None
 
 
 class NavigationPinModel(GuruModel):
@@ -4521,6 +4512,89 @@ class NewCard(GuruModel):
             examples=[1],
         ),
     ] = None
+    tags: Annotated[
+        list[Tag] | None,
+        Field(description="Returns Tag objects associated with this card"),
+    ] = None
+    collection: Annotated[
+        CollectionModel | None, Field(description="The Collection the Card belongs to")
+    ] = None
+    date_created: Annotated[
+        AwareDatetime | None,
+        Field(
+            alias="dateCreated",
+            description="Date the Card was created",
+            examples=[
+                "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000"
+            ],
+        ),
+    ] = None
+    last_verified: Annotated[
+        AwareDatetime | None,
+        Field(
+            alias="lastVerified",
+            description="Date the Card was last verified",
+            examples=[
+                "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000"
+            ],
+        ),
+    ] = None
+    last_verified_by: Annotated[
+        User | None,
+        Field(alias="lastVerifiedBy", description="The User to last verify the Card"),
+    ] = None
+    preferred_phrase: Annotated[
+        str,
+        Field(
+            alias="preferredPhrase",
+            description="The title of the Card",
+            examples=["My New Card"],
+        ),
+    ]
+    favorited_date: Annotated[
+        AwareDatetime | None,
+        Field(
+            alias="favoritedDate",
+            description="Date when this card has been favorited by the current user",
+        ),
+    ] = None
+    slug: Annotated[
+        str | None,
+        Field(
+            description="The slug is the URL address to the card",
+            examples=["https://app.getguru.com/cards/:slug_goes_here"],
+        ),
+    ] = None
+    boards: Annotated[
+        list[dict[str, Any]] | None,
+        Field(description="Returns Board objects that this card appears on"),
+    ] = None
+    share_status: Annotated[
+        ShareStatus | None,
+        Field(
+            alias="shareStatus",
+            description="The share status of the Card.  TEAM for team shared cards and PRIVATE for privately shared cards",
+            examples=["TEAM"],
+        ),
+    ] = None
+    suppress_verification: Annotated[
+        bool | None,
+        Field(
+            alias="suppressVerification",
+            description="Flag for enabling card verification on save",
+        ),
+    ] = None
+    verification_interval: Annotated[
+        int | None,
+        Field(
+            alias="verificationInterval",
+            description="Time interval (in days), indicating the frequency that this card needs re-verification. Passing in null will default to 30 days.",
+        ),
+    ] = None
+    verifiers: Annotated[
+        list[CardVerifier] | None,
+        Field(description="Users/Groups that are responsible for verifying this card"),
+    ] = None
     verification_type: Annotated[
         VerificationType | None,
         Field(
@@ -4532,24 +4606,6 @@ class NewCard(GuruModel):
         list[CardCollaborator] | None,
         Field(
             description="Users/Groups that this card is explicitly shared to. Collaborators of a card are the only ones who have access if the Card's shareStatus is PRIVATE."
-        ),
-    ] = None
-    share_status: Annotated[
-        ShareStatus | None,
-        Field(
-            alias="shareStatus",
-            description="The share status of the Card.  TEAM for team shared cards and PRIVATE for privately shared cards",
-            examples=["TEAM"],
-        ),
-    ] = None
-    last_verified: Annotated[
-        AwareDatetime | None,
-        Field(
-            alias="lastVerified",
-            description="Date the Card was last verified",
-            examples=[
-                "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000"
-            ],
         ),
     ] = None
     verification_state: Annotated[
@@ -4570,10 +4626,6 @@ class NewCard(GuruModel):
         User | None,
         Field(alias="lastModifiedBy", description="The User to last modify the Card"),
     ] = None
-    last_verified_by: Annotated[
-        User | None,
-        Field(alias="lastVerifiedBy", description="The User to last verify the Card"),
-    ] = None
     last_verification_modified_by_type: Annotated[
         LastVerificationModifiedByType | None,
         Field(alias="lastVerificationModifiedByType"),
@@ -4584,13 +4636,6 @@ class NewCard(GuruModel):
     ] = None
     last_verification_confidence_score: Annotated[
         float | None, Field(alias="lastVerificationConfidenceScore")
-    ] = None
-    slug: Annotated[
-        str | None,
-        Field(
-            description="The slug is the URL address to the card",
-            examples=["https://app.getguru.com/cards/:slug_goes_here"],
-        ),
     ] = None
     public_link_allowed: Annotated[bool | None, Field(alias="publicLinkAllowed")] = None
     archived: Annotated[
@@ -4627,13 +4672,6 @@ class NewCard(GuruModel):
         bool | None,
         Field(description="Whether this card has been favorited by the current user"),
     ] = None
-    favorited_date: Annotated[
-        AwareDatetime | None,
-        Field(
-            alias="favoritedDate",
-            description="Date when this card has been favorited by the current user",
-        ),
-    ] = None
     attachments: Annotated[
         list[CardAttachment] | None, Field(description="Attachments to the card")
     ] = None
@@ -4652,22 +4690,11 @@ class NewCard(GuruModel):
         Field(alias="commentCount", description="Number of comments on the card"),
     ] = None
     card_info: Annotated[CardInfo | None, Field(alias="cardInfo")] = None
-    boards: Annotated[
-        list[dict[str, Any]] | None,
-        Field(description="Returns Board objects that this card appears on"),
-    ] = None
     sync_info: Annotated[
         CardSyncInfo | None,
         Field(
             alias="syncInfo",
             description="Returns an object about Sync information, if this card is from a synced Collection. Information includes: externalUrl, lastSyncDate, lastUpdateDate, and syncType.",
-        ),
-    ] = None
-    suppress_verification: Annotated[
-        bool | None,
-        Field(
-            alias="suppressVerification",
-            description="Flag for enabling card verification on save",
         ),
     ] = None
     verification_initiation_date: Annotated[
@@ -4712,42 +4739,6 @@ class NewCard(GuruModel):
     ] = None
     quality_check_allowed: Annotated[bool | None, Field(alias="qualityCheckAllowed")] = None
     card_type: Annotated[str | None, Field(alias="cardType")] = None
-    tags: Annotated[
-        list[Tag] | None,
-        Field(description="Returns Tag objects associated with this card"),
-    ] = None
-    collection: Annotated[
-        CollectionModel | None, Field(description="The Collection the Card belongs to")
-    ] = None
-    preferred_phrase: Annotated[
-        str,
-        Field(
-            alias="preferredPhrase",
-            description="The title of the Card",
-            examples=["My New Card"],
-        ),
-    ]
-    date_created: Annotated[
-        AwareDatetime | None,
-        Field(
-            alias="dateCreated",
-            description="Date the Card was created",
-            examples=[
-                "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000"
-            ],
-        ),
-    ] = None
-    verification_interval: Annotated[
-        int | None,
-        Field(
-            alias="verificationInterval",
-            description="Time interval (in days), indicating the frequency that this card needs re-verification. Passing in null will default to 30 days.",
-        ),
-    ] = None
-    verifiers: Annotated[
-        list[CardVerifier] | None,
-        Field(description="Users/Groups that are responsible for verifying this card"),
-    ] = None
 
 
 class NewFolder(GuruModel):
@@ -4780,11 +4771,19 @@ class NewFolder(GuruModel):
             ],
         ),
     ] = None
-    last_modified_by: Annotated[
-        User | None,
+    description: Annotated[
+        str | None, Field(description="An optional short description of the directory")
+    ] = None
+    title: Annotated[str | None, Field(description="The title of the directory")] = None
+    collection: Annotated[
+        CollectionModel | None,
+        Field(description="Returns the Collection object that the directory belongs to"),
+    ] = None
+    favorited_date: Annotated[
+        AwareDatetime | None,
         Field(
-            alias="lastModifiedBy",
-            description="Returns a User object for the User who last modified the directory",
+            alias="favoritedDate",
+            description="When this directory has been favorited by the current user",
         ),
     ] = None
     slug: Annotated[
@@ -4792,6 +4791,13 @@ class NewFolder(GuruModel):
         Field(
             description="The slug is the URL address to the directory",
             examples=["https://app.getguru.com/boards/:slug_goes_here"],
+        ),
+    ] = None
+    last_modified_by: Annotated[
+        User | None,
+        Field(
+            alias="lastModifiedBy",
+            description="Returns a User object for the User who last modified the directory",
         ),
     ] = None
     groups_shared_with: Annotated[
@@ -4805,24 +4811,9 @@ class NewFolder(GuruModel):
         bool | None,
         Field(description="Whether this board has been favorited by the current user"),
     ] = None
-    favorited_date: Annotated[
-        AwareDatetime | None,
-        Field(
-            alias="favoritedDate",
-            description="When this directory has been favorited by the current user",
-        ),
-    ] = None
     number_of_facts: Annotated[
         int | None,
         Field(alias="numberOfFacts", description="The number of cards in the directory"),
-    ] = None
-    description: Annotated[
-        str | None, Field(description="An optional short description of the directory")
-    ] = None
-    title: Annotated[str | None, Field(description="The title of the directory")] = None
-    collection: Annotated[
-        CollectionModel | None,
-        Field(description="Returns the Collection object that the directory belongs to"),
     ] = None
 
 
@@ -4830,20 +4821,19 @@ class ObjectMetadata(GuruModel):
     id: str | None = None
     version: int | None = None
     object_type: Annotated[ObjectType | None, Field(alias="objectType")] = None
-    external_id: Annotated[str | None, Field(alias="externalId")] = None
+    created_date: Annotated[AwareDatetime | None, Field(alias="createdDate")] = None
     external_checksum: Annotated[str | None, Field(alias="externalChecksum")] = None
     modified_date: Annotated[AwareDatetime | None, Field(alias="modifiedDate")] = None
     modified_by: Annotated[User | None, Field(alias="modifiedBy")] = None
     sync_number: Annotated[int | None, Field(alias="syncNumber")] = None
+    external_id: Annotated[str | None, Field(alias="externalId")] = None
 
 
 class ObjectType(GuruModel):
     name: str | None = None
     fields: list[ObjectField] | None = None
     id: str | None = None
-    templates: ObjectTypeTemplates | None = None
     analytics_enabled: Annotated[bool | None, Field(alias="analyticsEnabled")] = None
-    external_id: Annotated[str | None, Field(alias="externalId")] = None
     facets: list[ObjectFacet] | None = None
     tag_configs: Annotated[list[ObjectTagConfig] | None, Field(alias="tagConfigs")] = None
     mask_configs: Annotated[list[DataMaskConfig] | None, Field(alias="maskConfigs")] = None
@@ -4851,10 +4841,11 @@ class ObjectType(GuruModel):
     data_type: Annotated[DataType | None, Field(alias="dataType")] = None
     source_data_type: Annotated[SourceDataType | None, Field(alias="sourceDataType")] = None
     current_sync_number: Annotated[int | None, Field(alias="currentSyncNumber")] = None
+    templates: ObjectTypeTemplates | None = None
+    external_id: Annotated[str | None, Field(alias="externalId")] = None
 
 
 class ObjectTypeTemplates(GuruModel):
-    card_template: Annotated[CardTemplate | None, Field(alias="cardTemplate")] = None
     object_type_id: Annotated[str | None, Field(alias="objectTypeId")] = None
     external_url_template: Annotated[str | None, Field(alias="externalUrlTemplate")] = None
     search_template: Annotated[str | None, Field(alias="searchTemplate")] = None
@@ -4870,6 +4861,7 @@ class ObjectTypeTemplates(GuruModel):
         OrderByTemplateType | None, Field(alias="orderByTemplateType")
     ] = None
     order_by_order_type: Annotated[OrderByOrderType | None, Field(alias="orderByOrderType")] = None
+    card_template: Annotated[CardTemplate | None, Field(alias="cardTemplate")] = None
 
 
 class Organization(GuruModel):
@@ -4901,14 +4893,11 @@ class Page(GuruModel):
             ],
         ),
     ] = None
-    last_modified_by: Annotated[
-        User | None,
-        Field(alias="lastModifiedBy", description="The last user who modified the object"),
+    editable: Annotated[
+        bool | None,
+        Field(description="Indicates if this is editable by the current user"),
     ] = None
-    json_content: Annotated[
-        str | None,
-        Field(alias="jsonContent", description="The json content of the page"),
-    ] = None
+    title: Annotated[str | None, Field(description="The title of the page")] = None
     hero_image: Annotated[
         str | None, Field(alias="heroImage", description="The hero image link")
     ] = None
@@ -4941,11 +4930,10 @@ class Page(GuruModel):
             description="The ID of the default Knowledge Agent for this page",
         ),
     ] = None
-    editable: Annotated[
-        bool | None,
-        Field(description="Indicates if this is editable by the current user"),
+    json_content: Annotated[
+        str | None,
+        Field(alias="jsonContent", description="The json content of the page"),
     ] = None
-    title: Annotated[str | None, Field(description="The title of the page")] = None
     team: Annotated[Team | None, Field(description="The team that the object is on")] = None
     date_created: Annotated[
         AwareDatetime | None,
@@ -4956,6 +4944,10 @@ class Page(GuruModel):
                 "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000"
             ],
         ),
+    ] = None
+    last_modified_by: Annotated[
+        User | None,
+        Field(alias="lastModifiedBy", description="The last user who modified the object"),
     ] = None
 
 
@@ -4983,13 +4975,19 @@ class PinnedCollectionModel(GuruModel):
             examples=["#f44336"],
         ),
     ] = None
-    cards: Annotated[int | None, Field(description="Number of cards in this Collection")] = None
-    deleted: Annotated[
-        bool | None,
-        Field(description="Flag for whether this Collection has been deleted"),
+    description: Annotated[str | None, Field(description="Collection Description")] = None
+    tags: Annotated[
+        int | None,
+        Field(description="Returns all Tag objects associated with this collection"),
     ] = None
-    default_verifier: Annotated[str | None, Field(alias="defaultVerifier")] = None
-    public_cards_enabled: Annotated[bool | None, Field(alias="publicCardsEnabled")] = None
+    token: str | None = None
+    collection_stats: Annotated[
+        dict[str, Any] | None,
+        Field(
+            alias="collectionStats",
+            description="Returns an objects of stats for this collection that includes Collection Trust Score, and Card Count.",
+        ),
+    ] = None
     last_synced_date: Annotated[
         AwareDatetime | None,
         Field(
@@ -4998,29 +4996,6 @@ class PinnedCollectionModel(GuruModel):
             examples=[
                 "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000"
             ],
-        ),
-    ] = None
-    sync_type: Annotated[
-        SyncType | None,
-        Field(
-            alias="syncType",
-            description="If this Collection has been synced, this will return the type. Types include: Zendesk, Confluence, Google Drive, and Manual.",
-        ),
-    ] = None
-    emoji: str | None = None
-    slug: Annotated[
-        str | None,
-        Field(
-            description="The slug is the URL to get to this Collection",
-            examples=["https://app.getguru.com/collections/:slug_goes_here"],
-        ),
-    ] = None
-    boards: Annotated[int | None, Field(description="Number of boards in this Collection")] = None
-    collection_stats: Annotated[
-        dict[str, Any] | None,
-        Field(
-            alias="collectionStats",
-            description="Returns an objects of stats for this collection that includes Collection Trust Score, and Card Count.",
         ),
     ] = None
     top_level_sync_location: Annotated[
@@ -5039,13 +5014,19 @@ class PinnedCollectionModel(GuruModel):
     default_verification_type: Annotated[
         DefaultVerificationType | None, Field(alias="defaultVerificationType")
     ] = None
-    description: Annotated[str | None, Field(description="Collection Description")] = None
-    tags: Annotated[
-        int | None,
-        Field(description="Returns all Tag objects associated with this collection"),
+    deleted: Annotated[
+        bool | None,
+        Field(description="Flag for whether this Collection has been deleted"),
     ] = None
-    token: str | None = None
     team: Team | None = None
+    default_verifier: Annotated[str | None, Field(alias="defaultVerifier")] = None
+    sync_type: Annotated[
+        SyncType | None,
+        Field(
+            alias="syncType",
+            description="If this Collection has been synced, this will return the type. Types include: Zendesk, Confluence, Google Drive, and Manual.",
+        ),
+    ] = None
     date_created: Annotated[
         AwareDatetime | None,
         Field(
@@ -5056,6 +5037,14 @@ class PinnedCollectionModel(GuruModel):
             ],
         ),
     ] = None
+    slug: Annotated[
+        str | None,
+        Field(
+            description="The slug is the URL to get to this Collection",
+            examples=["https://app.getguru.com/collections/:slug_goes_here"],
+        ),
+    ] = None
+    public_cards_enabled: Annotated[bool | None, Field(alias="publicCardsEnabled")] = None
     collection_type: Annotated[
         CollectionType | None,
         Field(
@@ -5071,7 +5060,10 @@ class PinnedCollectionModel(GuruModel):
             description="The type can be FRAMEWORK, ONBOARDING, USER or EXTERNAL.",
         ),
     ] = None
+    boards: Annotated[int | None, Field(description="Number of boards in this Collection")] = None
     verification_interval: Annotated[int | None, Field(alias="verificationInterval")] = None
+    cards: Annotated[int | None, Field(description="Number of cards in this Collection")] = None
+    emoji: str | None = None
 
 
 class QualityAgentRun(GuruModel):
@@ -5182,16 +5174,17 @@ class Source(GuruModel):
     permissions: list[Permission] | None = None
     id: str | None = None
     definition: SourceDefinition | None = None
+    description: str | None = None
+    config: SourceConfig | None = None
     created_by: Annotated[User | None, Field(alias="createdBy")] = None
-    sync_status: Annotated[SyncStatus | None, Field(alias="syncStatus")] = None
-    last_synced_date: Annotated[AwareDatetime | None, Field(alias="lastSyncedDate")] = None
-    source_object_types: Annotated[list[ObjectType] | None, Field(alias="sourceObjectTypes")] = None
-    application_id: Annotated[str | None, Field(alias="applicationId")] = None
     icon_url: Annotated[str | None, Field(alias="iconUrl")] = None
+    last_synced_date: Annotated[AwareDatetime | None, Field(alias="lastSyncedDate")] = None
     status_reason: Annotated[StatusReason | None, Field(alias="statusReason")] = None
     last_sync_attempt: Annotated[AwareDatetime | None, Field(alias="lastSyncAttempt")] = None
+    sync_status: Annotated[SyncStatus | None, Field(alias="syncStatus")] = None
     connection_id: Annotated[str | None, Field(alias="connectionId")] = None
     authorized_by: Annotated[str | None, Field(alias="authorizedBy")] = None
+    source_object_types: Annotated[list[ObjectType] | None, Field(alias="sourceObjectTypes")] = None
     connection_name: Annotated[str | None, Field(alias="connectionName")] = None
     object_syncs: Annotated[list[SourceObjectSync] | None, Field(alias="objectSyncs")] = None
     use_source_native_permissions: Annotated[
@@ -5206,9 +5199,8 @@ class Source(GuruModel):
     remote_object_syncs: Annotated[
         list[RemoteSourceObjectSync] | None, Field(alias="remoteObjectSyncs")
     ] = None
-    config: SourceConfig | None = None
-    description: str | None = None
     team: Team | None = None
+    application_id: Annotated[str | None, Field(alias="applicationId")] = None
 
 
 class SourceApplicationSpecification(GuruModel):
@@ -5225,11 +5217,10 @@ class SourceDocument(Document):
 
 class SourceObjectSync(GuruModel):
     object_type: Annotated[ObjectType | None, Field(alias="objectType")] = None
-    sync_status: Annotated[SyncStatus | None, Field(alias="syncStatus")] = None
     last_synced_date: Annotated[AwareDatetime | None, Field(alias="lastSyncedDate")] = None
     status_reason: Annotated[StatusReason | None, Field(alias="statusReason")] = None
     last_sync_attempt: Annotated[AwareDatetime | None, Field(alias="lastSyncAttempt")] = None
-    tag_config: Annotated[ObjectTagConfig | None, Field(alias="tagConfig")] = None
+    sync_status: Annotated[SyncStatus | None, Field(alias="syncStatus")] = None
     last_sync_completed: Annotated[AwareDatetime | None, Field(alias="lastSyncCompleted")] = None
     object_count: Annotated[int | None, Field(alias="objectCount")] = None
     failed_object_count: Annotated[int | None, Field(alias="failedObjectCount")] = None
@@ -5237,6 +5228,7 @@ class SourceObjectSync(GuruModel):
     indexed_percentage: Annotated[int | None, Field(alias="indexedPercentage")] = None
     last_sync_status: Annotated[LastSyncStatus | None, Field(alias="lastSyncStatus")] = None
     last_status_reason: Annotated[LastStatusReason | None, Field(alias="lastStatusReason")] = None
+    tag_config: Annotated[ObjectTagConfig | None, Field(alias="tagConfig")] = None
 
 
 class SubFolder(FolderItem):
@@ -5261,11 +5253,19 @@ class SubFolder(FolderItem):
             ],
         ),
     ] = None
-    last_modified_by: Annotated[
-        User | None,
+    description: Annotated[
+        str | None, Field(description="An optional short description of the directory")
+    ] = None
+    title: Annotated[str | None, Field(description="The title of the directory")] = None
+    collection: Annotated[
+        CollectionModel | None,
+        Field(description="Returns the Collection object that the directory belongs to"),
+    ] = None
+    favorited_date: Annotated[
+        AwareDatetime | None,
         Field(
-            alias="lastModifiedBy",
-            description="Returns a User object for the User who last modified the directory",
+            alias="favoritedDate",
+            description="When this directory has been favorited by the current user",
         ),
     ] = None
     slug: Annotated[
@@ -5273,6 +5273,13 @@ class SubFolder(FolderItem):
         Field(
             description="The slug is the URL address to the directory",
             examples=["https://app.getguru.com/boards/:slug_goes_here"],
+        ),
+    ] = None
+    last_modified_by: Annotated[
+        User | None,
+        Field(
+            alias="lastModifiedBy",
+            description="Returns a User object for the User who last modified the directory",
         ),
     ] = None
     groups_shared_with: Annotated[
@@ -5286,33 +5293,18 @@ class SubFolder(FolderItem):
         bool | None,
         Field(description="Whether this board has been favorited by the current user"),
     ] = None
-    favorited_date: Annotated[
-        AwareDatetime | None,
-        Field(
-            alias="favoritedDate",
-            description="When this directory has been favorited by the current user",
-        ),
-    ] = None
     number_of_facts: Annotated[
         int | None,
         Field(alias="numberOfFacts", description="The number of cards in the directory"),
-    ] = None
-    description: Annotated[
-        str | None, Field(description="An optional short description of the directory")
-    ] = None
-    title: Annotated[str | None, Field(description="The title of the directory")] = None
-    collection: Annotated[
-        CollectionModel | None,
-        Field(description="Returns the Collection object that the directory belongs to"),
     ] = None
 
 
 class TagCategory(GuruModel):
     name: str | None = None
     id: str | None = None
+    tags: list[Tag] | None = None
     created_by: Annotated[User | None, Field(alias="createdBy")] = None
     default_category: Annotated[bool | None, Field(alias="defaultCategory")] = None
-    tags: list[Tag] | None = None
     collection: CollectionModel | None = None
     date_created: Annotated[AwareDatetime | None, Field(alias="dateCreated")] = None
 
@@ -5320,19 +5312,11 @@ class TagCategory(GuruModel):
 class Team(GuruModel):
     name: Annotated[str | None, Field(description="Team Name")] = None
     id: Annotated[str | None, Field(description="ID of the fact")] = None
-    deleted: Annotated[bool | None, Field(description="Indicates if the fact has been deleted")] = (
-        None
-    )
-    trial_expiration_date: Annotated[AwareDatetime | None, Field(alias="trialExpirationDate")] = (
-        None
-    )
-    edition: TeamEdition | None = None
-    profile_pic_url: Annotated[str | None, Field(alias="profilePicUrl")] = None
-    company_name: Annotated[
-        str | None, Field(alias="companyName", description="Team Company Name")
-    ] = None
-    current_user_is_member: Annotated[bool | None, Field(alias="currentUserIsMember")] = None
     domain: Annotated[str | None, Field(description="Domain")] = None
+    description: str | None = None
+    status: Status7 | None = None
+    organization: Organization | None = None
+    current_user_is_member: Annotated[bool | None, Field(alias="currentUserIsMember")] = None
     billable_users: Annotated[int | None, Field(alias="billableUsers")] = None
     total_users: Annotated[int | None, Field(alias="totalUsers")] = None
     team_domains: Annotated[list[TeamDomain] | None, Field(alias="teamDomains")] = None
@@ -5340,6 +5324,9 @@ class Team(GuruModel):
     clear_profile_pic: Annotated[bool | None, Field(alias="clearProfilePic")] = None
     default_group: Annotated[UserGroup | None, Field(alias="defaultGroup")] = None
     default_user_type: Annotated[DefaultUserType | None, Field(alias="defaultUserType")] = None
+    trial_expiration_date: Annotated[AwareDatetime | None, Field(alias="trialExpirationDate")] = (
+        None
+    )
     file_sharing_disabled: Annotated[bool | None, Field(alias="fileSharingDisabled")] = None
     collection_created: Annotated[bool | None, Field(alias="collectionCreated")] = None
     team_creation_token: Annotated[str | None, Field(alias="teamCreationToken")] = None
@@ -5350,9 +5337,9 @@ class Team(GuruModel):
         int | None, Field(alias="numberOfOrgSharedCollections")
     ] = None
     all_members_group_id: Annotated[str | None, Field(alias="allMembersGroupId")] = None
-    description: str | None = None
-    status: Status7 | None = None
-    organization: Organization | None = None
+    deleted: Annotated[bool | None, Field(description="Indicates if the fact has been deleted")] = (
+        None
+    )
     date_created: Annotated[
         AwareDatetime | None,
         Field(
@@ -5362,20 +5349,25 @@ class Team(GuruModel):
     ] = None
     user_role: Annotated[str | None, Field(alias="userRole")] = None
     use_case: Annotated[str | None, Field(alias="useCase")] = None
+    edition: TeamEdition | None = None
+    profile_pic_url: Annotated[str | None, Field(alias="profilePicUrl")] = None
+    company_name: Annotated[
+        str | None, Field(alias="companyName", description="Team Company Name")
+    ] = None
 
 
 class TeamUser(GuruModel):
     id: Annotated[str | None, Field(description="ID of the team member")] = None
+    user: Annotated[User, Field(description="The team member")]
+    groups: list[UserGroup] | None = None
+    token: str | None = None
+    date_created: Annotated[AwareDatetime | None, Field(alias="dateCreated")] = None
+    user_attributes: Annotated[dict[str, str] | None, Field(alias="userAttributes")] = None
     highest_role: Annotated[HighestRole | None, Field(alias="highestRole")] = None
     number_of_cards_as_verifier: Annotated[int | None, Field(alias="numberOfCardsAsVerifier")] = (
         None
     )
     managed_by_scim: Annotated[bool | None, Field(alias="managedByScim")] = None
-    user_attributes: Annotated[dict[str, str] | None, Field(alias="userAttributes")] = None
-    user: Annotated[User, Field(description="The team member")]
-    groups: list[UserGroup] | None = None
-    token: str | None = None
-    date_created: Annotated[AwareDatetime | None, Field(alias="dateCreated")] = None
 
 
 class TeamUserGroupEntity(TeamEntity):
@@ -5386,6 +5378,15 @@ class UserGroup(GuruModel):
     name: Annotated[str | None, Field(description="Group Name")] = None
     id: Annotated[str | None, Field(description="ID of the group")] = None
     members: list[UserGroupMember] | None = None
+    role: Role3 | None = None
+    team: Team | None = None
+    date_created: Annotated[
+        AwareDatetime | None,
+        Field(
+            alias="dateCreated",
+            description="Date the group was created. Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000",
+        ),
+    ] = None
     expert_id_rank: Annotated[int | None, Field(alias="expertIdRank")] = None
     number_of_cards_as_verifier: Annotated[int | None, Field(alias="numberOfCardsAsVerifier")] = (
         None
@@ -5396,23 +5397,20 @@ class UserGroup(GuruModel):
     modifiable: bool | None = None
     user_modifiable: Annotated[bool | None, Field(alias="userModifiable")] = None
     single_user: Annotated[bool | None, Field(alias="singleUser")] = None
-    role: Role3 | None = None
-    team: Team | None = None
-    date_created: Annotated[
-        AwareDatetime | None,
-        Field(
-            alias="dateCreated",
-            description="Date the group was created. Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000",
-        ),
-    ] = None
 
 
 class UserGroupAccess(GuruModel):
-    object_role: Annotated[RoleModel | None, Field(alias="objectRole")] = None
-    group_id: Annotated[str | None, Field(alias="groupId")] = None
+    group_id: Annotated[
+        str | None,
+        Field(
+            alias="groupId",
+            description="The ID of the group to grant access to. In place of a group ID, you may provide a user's email address to target an individual user.",
+        ),
+    ] = None
     role: Role4 | None = None
     group: UserGroup | None = None
     group_name: Annotated[str | None, Field(alias="groupName")] = None
+    object_role: Annotated[RoleModel | None, Field(alias="objectRole")] = None
 
 
 class UserGroupCollaborator(CardCollaborator):

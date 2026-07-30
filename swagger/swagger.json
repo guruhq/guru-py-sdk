@@ -548,7 +548,7 @@
       },
       "post" : {
         "tags" : [ "Announcements" ],
-        "summary" : "Create an announcement",
+        "summary" : "Create an announcement. In place of a group ID, you may provide a user's email address to target an individual user.",
         "description" : "",
         "operationId" : "post:/v1/announcements/createAnnouncement",
         "consumes" : [ "application/json" ],
@@ -4115,7 +4115,7 @@
       },
       "post" : {
         "tags" : [ "Collections" ],
-        "summary" : "Give a group access to a collection",
+        "summary" : "Give a group access to a collection. In place of a group ID, you may provide a user's email address to target an individual user.",
         "description" : "",
         "operationId" : "post:/v1/collections/createCollectionAccess",
         "consumes" : [ "application/json" ],
@@ -4339,26 +4339,26 @@
     "/api/v1/comments" : {
       "get" : {
         "tags" : [ "Comments" ],
-        "summary" : "Get comments across all cards visible to the current user",
+        "summary" : "Get comment threads across all cards visible to the current user, most recently active first. Each result is a top-level comment plus all of its replies.",
         "description" : "",
         "operationId" : "get:/v1/comments/getComments",
         "produces" : [ "application/json" ],
         "parameters" : [ {
           "name" : "status",
           "in" : "query",
-          "description" : "Filter by comment status (OPEN or RESOLVED)",
+          "description" : "Filter by the top-level comment's status (OPEN or RESOLVED); replies have no status of their own",
           "required" : false,
           "type" : "string"
         }, {
-          "name" : "createdAfter",
+          "name" : "activeAfter",
           "in" : "query",
-          "description" : "Filter comments created on or after this ISO-8601 date",
+          "description" : "Filter to threads whose last activity (the later of the comment's creation date and its newest reply's creation date) is on or after this ISO-8601 date",
           "required" : false,
           "type" : "string"
         }, {
-          "name" : "createdBefore",
+          "name" : "activeBefore",
           "in" : "query",
-          "description" : "Filter comments created on or before this ISO-8601 date",
+          "description" : "Filter to threads whose last activity (the later of the comment's creation date and its newest reply's creation date) is on or before this ISO-8601 date",
           "required" : false,
           "type" : "string"
         }, {
@@ -4382,7 +4382,7 @@
             }
           },
           "400" : {
-            "description" : "Invalid date format for createdAfter/createdBefore, or unable to decode paging token."
+            "description" : "Invalid date format for activeAfter/activeBefore, or unable to decode paging token."
           },
           "403" : {
             "description" : "The card comments feature is not enabled for this team."
@@ -5837,6 +5837,8 @@
       },
       "post" : {
         "tags" : [ "Knowledgeagents" ],
+        "summary" : "Give a group access to a Knowledge Agent. In place of a group ID, you may provide a user's email address to target an individual user.",
+        "description" : "",
         "operationId" : "post:/v1/knowledgeagents/createAssistantAccess",
         "consumes" : [ "application/json" ],
         "produces" : [ "application/json" ],
@@ -6803,7 +6805,7 @@
       },
       "post" : {
         "tags" : [ "Knowledgeagents" ],
-        "summary" : "Create a quality rule for a Knowledge Agent",
+        "summary" : "Create a quality rule for a Knowledge Agent by mode",
         "description" : "",
         "operationId" : "post:/v1/knowledgeagents/createQualityRule",
         "consumes" : [ "application/json" ],
@@ -7427,7 +7429,7 @@
       },
       "post" : {
         "tags" : [ "Knowledgeagents" ],
-        "summary" : "Add a group to a skill's access list",
+        "summary" : "Add a group to a skill's access list. In place of a group ID, you may provide a user's email address to target an individual user.",
         "description" : "",
         "operationId" : "post:/v1/knowledgeagents/addSkillAccess",
         "consumes" : [ "application/json" ],
@@ -9374,70 +9376,6 @@
           }
         },
         "x-roles" : [ "read:quality" ]
-      },
-      "put" : {
-        "tags" : [ "Quality" ],
-        "summary" : "Update quality agent run detail for a specific document",
-        "description" : "",
-        "operationId" : "put:/v1/quality/updateRunDetailsForDocument",
-        "consumes" : [ "application/json" ],
-        "produces" : [ "application/json" ],
-        "parameters" : [ {
-          "name" : "runId",
-          "in" : "path",
-          "description" : "Run ID",
-          "required" : true,
-          "type" : "string"
-        }, {
-          "name" : "mode",
-          "in" : "path",
-          "description" : "Mode",
-          "required" : true,
-          "type" : "string",
-          "enum" : [ "VERIFY", "UNVERIFY", "ARCHIVE" ]
-        }, {
-          "name" : "type",
-          "in" : "path",
-          "description" : "Document type",
-          "required" : true,
-          "type" : "string",
-          "enum" : [ "GURU", "SOURCE", "GURU_ATTACHMENT", "WEB", "MCP" ]
-        }, {
-          "name" : "id",
-          "in" : "path",
-          "description" : "Document ID",
-          "required" : true,
-          "type" : "string"
-        }, {
-          "in" : "body",
-          "name" : "body",
-          "description" : "Quality agent run detail update",
-          "required" : true,
-          "schema" : {
-            "$ref" : "#/definitions/QualityAgentRunDetailUpdate"
-          }
-        } ],
-        "security" : [ {
-          "basicAuth" : [ ]
-        } ],
-        "responses" : {
-          "400" : {
-            "description" : "Invalid/Incomplete Request"
-          },
-          "401" : {
-            "description" : "Request was unauthorized"
-          },
-          "403" : {
-            "description" : "Forbidden access to the resource"
-          },
-          "404" : {
-            "description" : "Resource could not be found"
-          },
-          "default" : {
-            "description" : "successful operation"
-          }
-        },
-        "x-roles" : [ "write:quality" ]
       }
     },
     "/api/v1/quality/runs/{runId}/revert" : {
@@ -12174,6 +12112,9 @@
     "AnnouncementInsightSummary" : {
       "type" : "object",
       "properties" : {
+        "announcement" : {
+          "$ref" : "#/definitions/KnowledgeAlert"
+        },
         "readCount" : {
           "type" : "integer",
           "format" : "int64"
@@ -12185,9 +12126,6 @@
         "currentUserReadDate" : {
           "type" : "string",
           "format" : "date-time"
-        },
-        "announcement" : {
-          "$ref" : "#/definitions/KnowledgeAlert"
         },
         "readUsers" : {
           "type" : "array",
@@ -12224,13 +12162,26 @@
           "type" : "string",
           "description" : "The identifier of this User"
         },
-        "firstName" : {
+        "status" : {
           "type" : "string",
-          "description" : "The user's first name"
+          "description" : "The status of a User can be ACTIVE or PENDING. The User must verify their email address to be considered ACTIVE.",
+          "enum" : [ "ACTIVE", "PENDING" ]
+        },
+        "email" : {
+          "type" : "string",
+          "description" : "The user's email address"
+        },
+        "userProfile" : {
+          "description" : "Additional information about a user",
+          "$ref" : "#/definitions/UserProfile"
         },
         "lastName" : {
           "type" : "string",
           "description" : "The user's last name"
+        },
+        "firstName" : {
+          "type" : "string",
+          "description" : "The user's first name"
         },
         "profilePicUrl" : {
           "type" : "string",
@@ -12246,19 +12197,6 @@
         "userType" : {
           "type" : "string",
           "enum" : [ "USER", "KNOWLEDGE_AGENT" ]
-        },
-        "status" : {
-          "type" : "string",
-          "description" : "The status of a User can be ACTIVE or PENDING. The User must verify their email address to be considered ACTIVE.",
-          "enum" : [ "ACTIVE", "PENDING" ]
-        },
-        "email" : {
-          "type" : "string",
-          "description" : "The user's email address"
-        },
-        "userProfile" : {
-          "description" : "Additional information about a user",
-          "$ref" : "#/definitions/UserProfile"
         }
       }
     },
@@ -12420,15 +12358,15 @@
       }, {
         "type" : "object",
         "properties" : {
-          "answerId" : {
-            "type" : "string"
-          },
           "feedback" : {
             "type" : "string",
             "enum" : [ "THUMBS_UP", "THUMBS_DOWN", "THUMBS_UP_UNSELECTED", "THUMBS_DOWN_UNSELECTED" ]
           },
           "assignee" : {
             "$ref" : "#/definitions/CardVerifier"
+          },
+          "answerId" : {
+            "type" : "string"
           }
         },
         "x-discriminator-values" : [ "ANSWER" ]
@@ -12474,16 +12412,16 @@
         "source" : {
           "$ref" : "#/definitions/Source"
         },
-        "relationships" : {
-          "type" : "array",
-          "items" : {
-            "$ref" : "#/definitions/Relationship"
-          }
-        },
         "objectTypes" : {
           "type" : "array",
           "items" : {
             "$ref" : "#/definitions/ObjectType"
+          }
+        },
+        "relationships" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/Relationship"
           }
         }
       }
@@ -12545,13 +12483,14 @@
           "type" : "string",
           "description" : "The automation plan content/prompt"
         },
+        "status" : {
+          "type" : "string",
+          "description" : "The current status of the automation plan",
+          "enum" : [ "ALL", "ACTIVE", "PAUSED", "ARCHIVED" ]
+        },
         "createdBy" : {
           "description" : "The user who created the automation plan",
           "$ref" : "#/definitions/User"
-        },
-        "knowledgeAgent" : {
-          "description" : "The knowledge agent that will execute the automation plan",
-          "$ref" : "#/definitions/KnowledgeAgent"
         },
         "createdDate" : {
           "type" : "string",
@@ -12572,6 +12511,10 @@
           "type" : "string",
           "description" : "The cron schedule for when to run the automation plan"
         },
+        "knowledgeAgent" : {
+          "description" : "The knowledge agent that will execute the automation plan",
+          "$ref" : "#/definitions/KnowledgeAgent"
+        },
         "lastRunDate" : {
           "type" : "string",
           "format" : "date-time",
@@ -12581,11 +12524,6 @@
         "lastRun" : {
           "description" : "The last chat thread created by this automation plan",
           "$ref" : "#/definitions/ChatThread"
-        },
-        "status" : {
-          "type" : "string",
-          "description" : "The current status of the automation plan",
-          "enum" : [ "ALL", "ACTIVE", "PAUSED", "ARCHIVED" ]
         }
       }
     },
@@ -12612,13 +12550,14 @@
           "description" : "The date that the object was last modified",
           "readOnly" : true
         },
-        "lastModifiedBy" : {
-          "description" : "The last user who modified the object",
-          "$ref" : "#/definitions/User"
+        "editable" : {
+          "type" : "boolean",
+          "description" : "Indicates if this is editable by the current user",
+          "readOnly" : true
         },
-        "jsonContent" : {
+        "title" : {
           "type" : "string",
-          "description" : "The json content of the page"
+          "description" : "The title of the page"
         },
         "draft" : {
           "type" : "boolean",
@@ -12655,14 +12594,9 @@
           "type" : "string",
           "description" : "The ID of the default Knowledge Agent for this page"
         },
-        "editable" : {
-          "type" : "boolean",
-          "description" : "Indicates if this is editable by the current user",
-          "readOnly" : true
-        },
-        "title" : {
+        "jsonContent" : {
           "type" : "string",
-          "description" : "The title of the page"
+          "description" : "The json content of the page"
         },
         "team" : {
           "description" : "The team that the object is on",
@@ -12675,6 +12609,10 @@
           "example" : "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000",
           "description" : "The date that the object was created",
           "readOnly" : true
+        },
+        "lastModifiedBy" : {
+          "description" : "The last user who modified the object",
+          "$ref" : "#/definitions/User"
         }
       }
     },
@@ -12702,16 +12640,35 @@
           "description" : "The date that the directory was last modified",
           "readOnly" : true
         },
-        "lastModifiedBy" : {
-          "description" : "Returns a User object for the User who last modified the directory",
+        "description" : {
+          "type" : "string",
+          "description" : "An optional short description of the directory"
+        },
+        "title" : {
+          "type" : "string",
+          "description" : "The title of the directory"
+        },
+        "collection" : {
+          "description" : "Returns the Collection object that the directory belongs to",
           "readOnly" : true,
-          "$ref" : "#/definitions/User"
+          "$ref" : "#/definitions/CollectionModel"
+        },
+        "favoritedDate" : {
+          "type" : "string",
+          "format" : "date-time",
+          "description" : "When this directory has been favorited by the current user",
+          "readOnly" : true
         },
         "slug" : {
           "type" : "string",
           "example" : "https://app.getguru.com/boards/:slug_goes_here",
           "description" : "The slug is the URL address to the directory",
           "readOnly" : true
+        },
+        "lastModifiedBy" : {
+          "description" : "Returns a User object for the User who last modified the directory",
+          "readOnly" : true,
+          "$ref" : "#/definitions/User"
         },
         "groupsSharedWith" : {
           "type" : "array",
@@ -12726,30 +12683,11 @@
           "description" : "Whether this board has been favorited by the current user",
           "readOnly" : true
         },
-        "favoritedDate" : {
-          "type" : "string",
-          "format" : "date-time",
-          "description" : "When this directory has been favorited by the current user",
-          "readOnly" : true
-        },
         "numberOfFacts" : {
           "type" : "integer",
           "format" : "int32",
           "description" : "The number of cards in the directory",
           "readOnly" : true
-        },
-        "description" : {
-          "type" : "string",
-          "description" : "An optional short description of the directory"
-        },
-        "title" : {
-          "type" : "string",
-          "description" : "The title of the directory"
-        },
-        "collection" : {
-          "description" : "Returns the Collection object that the directory belongs to",
-          "readOnly" : true,
-          "$ref" : "#/definitions/CollectionModel"
         }
       }
     },
@@ -12759,15 +12697,15 @@
       }, {
         "type" : "object",
         "properties" : {
+          "op" : {
+            "type" : "string",
+            "enum" : [ "CONTAINS", "NOTCONTAINS", "CONTAINSIMMEDIATE", "NOTCONTAINSIMMEDIATE" ]
+          },
           "ids" : {
             "type" : "array",
             "items" : {
               "type" : "string"
             }
-          },
-          "op" : {
-            "type" : "string",
-            "enum" : [ "CONTAINS", "NOTCONTAINS", "CONTAINSIMMEDIATE", "NOTCONTAINSIMMEDIATE" ]
           }
         },
         "x-discriminator-values" : [ "board-ids" ]
@@ -12804,10 +12742,10 @@
           "type" : "string",
           "format" : "uuid"
         },
-        "boardTitle" : {
+        "boardSlug" : {
           "type" : "string"
         },
-        "boardSlug" : {
+        "boardTitle" : {
           "type" : "string"
         }
       }
@@ -12836,10 +12774,6 @@
     "BulkOperationResponseItem" : {
       "type" : "object",
       "properties" : {
-        "itemId" : {
-          "type" : "string",
-          "readOnly" : true
-        },
         "responseMessage" : {
           "type" : "string",
           "readOnly" : true
@@ -12851,6 +12785,10 @@
         "statusCode" : {
           "type" : "integer",
           "format" : "int32",
+          "readOnly" : true
+        },
+        "itemId" : {
+          "type" : "string",
           "readOnly" : true
         }
       }
@@ -12895,6 +12833,84 @@
           "description" : "Current version of the Card. As the card gets updated and revised, the version number will increase.",
           "readOnly" : true
         },
+        "tags" : {
+          "type" : "array",
+          "description" : "Returns Tag objects associated with this card",
+          "uniqueItems" : true,
+          "items" : {
+            "$ref" : "#/definitions/Tag"
+          }
+        },
+        "collection" : {
+          "description" : "The Collection the Card belongs to",
+          "readOnly" : true,
+          "$ref" : "#/definitions/CollectionModel"
+        },
+        "dateCreated" : {
+          "type" : "string",
+          "format" : "date-time",
+          "example" : "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000",
+          "description" : "Date the Card was created",
+          "readOnly" : true
+        },
+        "lastVerified" : {
+          "type" : "string",
+          "format" : "date-time",
+          "example" : "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000",
+          "description" : "Date the Card was last verified"
+        },
+        "lastVerifiedBy" : {
+          "description" : "The User to last verify the Card",
+          "readOnly" : true,
+          "$ref" : "#/definitions/User"
+        },
+        "preferredPhrase" : {
+          "type" : "string",
+          "example" : "My New Card",
+          "description" : "The title of the Card"
+        },
+        "favoritedDate" : {
+          "type" : "string",
+          "format" : "date-time",
+          "description" : "Date when this card has been favorited by the current user",
+          "readOnly" : true
+        },
+        "slug" : {
+          "type" : "string",
+          "example" : "https://app.getguru.com/cards/:slug_goes_here",
+          "description" : "The slug is the URL address to the card",
+          "readOnly" : true
+        },
+        "boards" : {
+          "type" : "array",
+          "description" : "Returns Board objects that this card appears on",
+          "uniqueItems" : true,
+          "items" : {
+            "$ref" : "#/definitions/Board"
+          }
+        },
+        "shareStatus" : {
+          "type" : "string",
+          "example" : "TEAM",
+          "description" : "The share status of the Card.  TEAM for team shared cards and PRIVATE for privately shared cards",
+          "enum" : [ "PRIVATE", "TEAM", "PUBLIC" ]
+        },
+        "suppressVerification" : {
+          "type" : "boolean",
+          "description" : "Flag for enabling card verification on save"
+        },
+        "verificationInterval" : {
+          "type" : "integer",
+          "format" : "int32",
+          "description" : "Time interval (in days), indicating the frequency that this card needs re-verification. Passing in null will default to 30 days."
+        },
+        "verifiers" : {
+          "type" : "array",
+          "description" : "Users/Groups that are responsible for verifying this card",
+          "items" : {
+            "$ref" : "#/definitions/CardVerifier"
+          }
+        },
         "verificationType" : {
           "type" : "string",
           "description" : "Whether the card's verification date is ABSOLUTE or RELATIVE",
@@ -12906,18 +12922,6 @@
           "items" : {
             "$ref" : "#/definitions/CardCollaborator"
           }
-        },
-        "shareStatus" : {
-          "type" : "string",
-          "example" : "TEAM",
-          "description" : "The share status of the Card.  TEAM for team shared cards and PRIVATE for privately shared cards",
-          "enum" : [ "PRIVATE", "TEAM", "PUBLIC" ]
-        },
-        "lastVerified" : {
-          "type" : "string",
-          "format" : "date-time",
-          "example" : "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000",
-          "description" : "Date the Card was last verified"
         },
         "verificationState" : {
           "type" : "string",
@@ -12935,11 +12939,6 @@
           "readOnly" : true,
           "$ref" : "#/definitions/User"
         },
-        "lastVerifiedBy" : {
-          "description" : "The User to last verify the Card",
-          "readOnly" : true,
-          "$ref" : "#/definitions/User"
-        },
         "lastVerificationModifiedByType" : {
           "type" : "string",
           "enum" : [ "AUTOMATION", "USER" ]
@@ -12954,12 +12953,6 @@
         "lastVerificationConfidenceScore" : {
           "type" : "number",
           "format" : "double"
-        },
-        "slug" : {
-          "type" : "string",
-          "example" : "https://app.getguru.com/cards/:slug_goes_here",
-          "description" : "The slug is the URL address to the card",
-          "readOnly" : true
         },
         "publicLinkAllowed" : {
           "type" : "boolean"
@@ -12992,12 +12985,6 @@
           "description" : "Whether this card has been favorited by the current user",
           "readOnly" : true
         },
-        "favoritedDate" : {
-          "type" : "string",
-          "format" : "date-time",
-          "description" : "Date when this card has been favorited by the current user",
-          "readOnly" : true
-        },
         "attachments" : {
           "type" : "array",
           "description" : "Attachments to the card",
@@ -13027,22 +13014,10 @@
           "readOnly" : true,
           "$ref" : "#/definitions/CardInfo"
         },
-        "boards" : {
-          "type" : "array",
-          "description" : "Returns Board objects that this card appears on",
-          "uniqueItems" : true,
-          "items" : {
-            "$ref" : "#/definitions/Board"
-          }
-        },
         "syncInfo" : {
           "description" : "Returns an object about Sync information, if this card is from a synced Collection. Information includes: externalUrl, lastSyncDate, lastUpdateDate, and syncType.",
           "readOnly" : true,
           "$ref" : "#/definitions/CardSyncInfo"
-        },
-        "suppressVerification" : {
-          "type" : "boolean",
-          "description" : "Flag for enabling card verification on save"
         },
         "verificationInitiationDate" : {
           "type" : "string",
@@ -13083,43 +13058,6 @@
         "cardType" : {
           "type" : "string",
           "readOnly" : true
-        },
-        "tags" : {
-          "type" : "array",
-          "description" : "Returns Tag objects associated with this card",
-          "uniqueItems" : true,
-          "items" : {
-            "$ref" : "#/definitions/Tag"
-          }
-        },
-        "collection" : {
-          "description" : "The Collection the Card belongs to",
-          "readOnly" : true,
-          "$ref" : "#/definitions/CollectionModel"
-        },
-        "preferredPhrase" : {
-          "type" : "string",
-          "example" : "My New Card",
-          "description" : "The title of the Card"
-        },
-        "dateCreated" : {
-          "type" : "string",
-          "format" : "date-time",
-          "example" : "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000",
-          "description" : "Date the Card was created",
-          "readOnly" : true
-        },
-        "verificationInterval" : {
-          "type" : "integer",
-          "format" : "int32",
-          "description" : "Time interval (in days), indicating the frequency that this card needs re-verification. Passing in null will default to 30 days."
-        },
-        "verifiers" : {
-          "type" : "array",
-          "description" : "Users/Groups that are responsible for verifying this card",
-          "items" : {
-            "$ref" : "#/definitions/CardVerifier"
-          }
         }
       },
       "description" : "The Card is the basic unit of knowledge in Guru"
@@ -13143,16 +13081,14 @@
           "example" : "csv",
           "description" : "The attached file's extension"
         },
+        "filename" : {
+          "type" : "string",
+          "example" : "file-name.png",
+          "description" : "The file name and extension"
+        },
         "link" : {
           "type" : "string",
           "description" : "Link to where the uploaded file is hosted in Guru's servers"
-        },
-        "thumbnailLink" : {
-          "type" : "string",
-          "description" : "Link to where the thumbnail for the uploaded file is hosted in Guru's servers"
-        },
-        "previewable" : {
-          "type" : "boolean"
         },
         "mimetype" : {
           "type" : "string"
@@ -13160,10 +13096,12 @@
         "document" : {
           "$ref" : "#/definitions/Document"
         },
-        "filename" : {
+        "thumbnailLink" : {
           "type" : "string",
-          "example" : "file-name.png",
-          "description" : "The file name and extension"
+          "description" : "Link to where the thumbnail for the uploaded file is hosted in Guru's servers"
+        },
+        "previewable" : {
+          "type" : "boolean"
         }
       },
       "description" : "Information about attachments within a Card."
@@ -13181,11 +13119,11 @@
           "extension" : {
             "type" : "string"
           },
-          "previewable" : {
-            "type" : "boolean"
-          },
           "mimetype" : {
             "type" : "string"
+          },
+          "previewable" : {
+            "type" : "boolean"
           }
         },
         "x-discriminator-values" : [ "GURU_ATTACHMENT" ]
@@ -13200,14 +13138,14 @@
           "type" : "string",
           "description" : "The ID (email address or group ID) of the collaborator"
         },
-        "removed" : {
-          "type" : "boolean"
-        },
         "dateCreated" : {
           "type" : "string",
           "format" : "date-time",
           "example" : "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000",
           "description" : "Date the collaborator was created"
+        },
+        "removed" : {
+          "type" : "boolean"
         },
         "type" : {
           "type" : "string",
@@ -13223,10 +13161,10 @@
           "type" : "string",
           "description" : "ID of the comment"
         },
-        "totalReplies" : {
-          "type" : "integer",
-          "format" : "int32",
-          "description" : "Number of total replies on the comment"
+        "status" : {
+          "type" : "string",
+          "description" : "Status of the comment",
+          "enum" : [ "OPEN", "RESOLVED" ]
         },
         "replies" : {
           "type" : "array",
@@ -13239,10 +13177,10 @@
           "description" : "Extra details such as whether the comment corresponds to an announcement",
           "$ref" : "#/definitions/ExtraDetailsModel"
         },
-        "status" : {
-          "type" : "string",
-          "description" : "Status of the comment",
-          "enum" : [ "OPEN", "RESOLVED" ]
+        "totalReplies" : {
+          "type" : "integer",
+          "format" : "int32",
+          "description" : "Number of total replies on the comment"
         },
         "content" : {
           "type" : "string",
@@ -13264,18 +13202,18 @@
           "description" : "Indicates if the comment has been deleted",
           "readOnly" : true
         },
+        "dateCreated" : {
+          "type" : "string",
+          "format" : "date-time",
+          "description" : "Date the comment was created. Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000",
+          "readOnly" : true
+        },
         "reactions" : {
           "type" : "array",
           "readOnly" : true,
           "items" : {
             "$ref" : "#/definitions/ReactionDetail"
           }
-        },
-        "dateCreated" : {
-          "type" : "string",
-          "format" : "date-time",
-          "description" : "Date the comment was created. Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000",
-          "readOnly" : true
         }
       }
     },
@@ -13307,18 +13245,18 @@
           "description" : "Indicates if the comment has been deleted",
           "readOnly" : true
         },
+        "dateCreated" : {
+          "type" : "string",
+          "format" : "date-time",
+          "description" : "Date the comment was created. Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000",
+          "readOnly" : true
+        },
         "reactions" : {
           "type" : "array",
           "readOnly" : true,
           "items" : {
             "$ref" : "#/definitions/ReactionDetail"
           }
-        },
-        "dateCreated" : {
-          "type" : "string",
-          "format" : "date-time",
-          "description" : "Date the comment was created. Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000",
-          "readOnly" : true
         }
       }
     },
@@ -13334,10 +13272,10 @@
           "type" : "string",
           "description" : "ID of the comment"
         },
-        "totalReplies" : {
-          "type" : "integer",
-          "format" : "int32",
-          "description" : "Number of total replies on the comment"
+        "status" : {
+          "type" : "string",
+          "description" : "Status of the comment",
+          "enum" : [ "OPEN", "RESOLVED" ]
         },
         "replies" : {
           "type" : "array",
@@ -13350,10 +13288,10 @@
           "description" : "Extra details such as whether the comment corresponds to an announcement",
           "$ref" : "#/definitions/ExtraDetailsModel"
         },
-        "status" : {
-          "type" : "string",
-          "description" : "Status of the comment",
-          "enum" : [ "OPEN", "RESOLVED" ]
+        "totalReplies" : {
+          "type" : "integer",
+          "format" : "int32",
+          "description" : "Number of total replies on the comment"
         },
         "content" : {
           "type" : "string",
@@ -13375,18 +13313,18 @@
           "description" : "Indicates if the comment has been deleted",
           "readOnly" : true
         },
+        "dateCreated" : {
+          "type" : "string",
+          "format" : "date-time",
+          "description" : "Date the comment was created. Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000",
+          "readOnly" : true
+        },
         "reactions" : {
           "type" : "array",
           "readOnly" : true,
           "items" : {
             "$ref" : "#/definitions/ReactionDetail"
           }
-        },
-        "dateCreated" : {
-          "type" : "string",
-          "format" : "date-time",
-          "description" : "Date the comment was created. Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000",
-          "readOnly" : true
         }
       }
     },
@@ -13424,28 +13362,28 @@
             "description" : "Current version of the Card. As the card gets updated and revised, the version number will increase.",
             "readOnly" : true
           },
-          "lastVerified" : {
-            "type" : "string",
-            "format" : "date-time",
-            "example" : "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000",
-            "description" : "Date the Card was last verified"
-          },
-          "verificationState" : {
-            "type" : "string",
-            "description" : "Whether the card is TRUSTED, STALE, or NEEDS_VERIFICATION",
-            "enum" : [ "TRUSTED", "STALE", "NEEDS_VERIFICATION", "SYNCED_NO_VERIFICATION", "NONE" ]
-          },
-          "lastVerifiedBy" : {
-            "description" : "The User to last verify the Card",
-            "readOnly" : true,
-            "$ref" : "#/definitions/User"
-          },
           "dateCreated" : {
             "type" : "string",
             "format" : "date-time",
             "example" : "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000",
             "description" : "Date the Card was created",
             "readOnly" : true
+          },
+          "lastVerified" : {
+            "type" : "string",
+            "format" : "date-time",
+            "example" : "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000",
+            "description" : "Date the Card was last verified"
+          },
+          "lastVerifiedBy" : {
+            "description" : "The User to last verify the Card",
+            "readOnly" : true,
+            "$ref" : "#/definitions/User"
+          },
+          "verificationState" : {
+            "type" : "string",
+            "description" : "Whether the card is TRUSTED, STALE, or NEEDS_VERIFICATION",
+            "enum" : [ "TRUSTED", "STALE", "NEEDS_VERIFICATION", "SYNCED_NO_VERIFICATION", "NONE" ]
           },
           "permissions" : {
             "type" : "array",
@@ -13459,6 +13397,61 @@
             "readOnly" : true,
             "$ref" : "#/definitions/User"
           },
+          "tags" : {
+            "type" : "array",
+            "description" : "Returns Tag objects associated with this card",
+            "uniqueItems" : true,
+            "items" : {
+              "$ref" : "#/definitions/Tag"
+            }
+          },
+          "collection" : {
+            "description" : "The Collection the Card belongs to",
+            "readOnly" : true,
+            "$ref" : "#/definitions/CollectionModel"
+          },
+          "favoritedDate" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "Date when this card has been favorited by the current user",
+            "readOnly" : true
+          },
+          "slug" : {
+            "type" : "string",
+            "example" : "https://app.getguru.com/cards/:slug_goes_here",
+            "description" : "The slug is the URL address to the card",
+            "readOnly" : true
+          },
+          "boards" : {
+            "type" : "array",
+            "description" : "Returns Board objects that this card appears on",
+            "uniqueItems" : true,
+            "items" : {
+              "$ref" : "#/definitions/Board"
+            }
+          },
+          "shareStatus" : {
+            "type" : "string",
+            "example" : "TEAM",
+            "description" : "The share status of the Card.  TEAM for team shared cards and PRIVATE for privately shared cards",
+            "enum" : [ "PRIVATE", "TEAM", "PUBLIC" ]
+          },
+          "suppressVerification" : {
+            "type" : "boolean",
+            "description" : "Flag for enabling card verification on save"
+          },
+          "verificationInterval" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Time interval (in days), indicating the frequency that this card needs re-verification. Passing in null will default to 30 days."
+          },
+          "verifiers" : {
+            "type" : "array",
+            "description" : "Users/Groups that are responsible for verifying this card",
+            "items" : {
+              "$ref" : "#/definitions/CardVerifier"
+            }
+          },
           "verificationType" : {
             "type" : "string",
             "description" : "Whether the card's verification date is ABSOLUTE or RELATIVE",
@@ -13471,12 +13464,6 @@
               "$ref" : "#/definitions/CardCollaborator"
             }
           },
-          "shareStatus" : {
-            "type" : "string",
-            "example" : "TEAM",
-            "description" : "The share status of the Card.  TEAM for team shared cards and PRIVATE for privately shared cards",
-            "enum" : [ "PRIVATE", "TEAM", "PUBLIC" ]
-          },
           "verificationReason" : {
             "type" : "string",
             "description" : "Reason this card needs verification.  UPDATE if this card was updated by a user that is not the verifier. NEW_VERIFIER if this card was assigned to a new verifier but has not yet been verified.  This value will only be present if the verification state is NEEDS_VERIFICATION",
@@ -13487,12 +13474,6 @@
             "description" : "The User to last modify the Card",
             "readOnly" : true,
             "$ref" : "#/definitions/User"
-          },
-          "slug" : {
-            "type" : "string",
-            "example" : "https://app.getguru.com/cards/:slug_goes_here",
-            "description" : "The slug is the URL address to the card",
-            "readOnly" : true
           },
           "publicLinkAllowed" : {
             "type" : "boolean"
@@ -13525,12 +13506,6 @@
             "description" : "Whether this card has been favorited by the current user",
             "readOnly" : true
           },
-          "favoritedDate" : {
-            "type" : "string",
-            "format" : "date-time",
-            "description" : "Date when this card has been favorited by the current user",
-            "readOnly" : true
-          },
           "attachments" : {
             "type" : "array",
             "description" : "Attachments to the card",
@@ -13560,22 +13535,10 @@
             "readOnly" : true,
             "$ref" : "#/definitions/CardInfo"
           },
-          "boards" : {
-            "type" : "array",
-            "description" : "Returns Board objects that this card appears on",
-            "uniqueItems" : true,
-            "items" : {
-              "$ref" : "#/definitions/Board"
-            }
-          },
           "syncInfo" : {
             "description" : "Returns an object about Sync information, if this card is from a synced Collection. Information includes: externalUrl, lastSyncDate, lastUpdateDate, and syncType.",
             "readOnly" : true,
             "$ref" : "#/definitions/CardSyncInfo"
-          },
-          "suppressVerification" : {
-            "type" : "boolean",
-            "description" : "Flag for enabling card verification on save"
           },
           "verificationInitiationDate" : {
             "type" : "string",
@@ -13616,31 +13579,6 @@
           "cardType" : {
             "type" : "string",
             "readOnly" : true
-          },
-          "tags" : {
-            "type" : "array",
-            "description" : "Returns Tag objects associated with this card",
-            "uniqueItems" : true,
-            "items" : {
-              "$ref" : "#/definitions/Tag"
-            }
-          },
-          "collection" : {
-            "description" : "The Collection the Card belongs to",
-            "readOnly" : true,
-            "$ref" : "#/definitions/CollectionModel"
-          },
-          "verificationInterval" : {
-            "type" : "integer",
-            "format" : "int32",
-            "description" : "Time interval (in days), indicating the frequency that this card needs re-verification. Passing in null will default to 30 days."
-          },
-          "verifiers" : {
-            "type" : "array",
-            "description" : "Users/Groups that are responsible for verifying this card",
-            "items" : {
-              "$ref" : "#/definitions/CardVerifier"
-            }
           }
         },
         "description" : "The Card is the basic unit of knowledge in Guru",
@@ -13650,13 +13588,11 @@
     "CardInfo" : {
       "type" : "object",
       "properties" : {
-        "membersWithCardView" : {
-          "type" : "integer",
-          "format" : "int64"
-        },
-        "membersWithoutCardView" : {
-          "type" : "integer",
-          "format" : "int64"
+        "boards" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/Board"
+          }
         },
         "analytics" : {
           "type" : "object",
@@ -13665,11 +13601,13 @@
             "format" : "int64"
           }
         },
-        "boards" : {
-          "type" : "array",
-          "items" : {
-            "$ref" : "#/definitions/Board"
-          }
+        "membersWithCardView" : {
+          "type" : "integer",
+          "format" : "int64"
+        },
+        "membersWithoutCardView" : {
+          "type" : "integer",
+          "format" : "int64"
         }
       }
     },
@@ -13727,38 +13665,6 @@
           "type" : "string",
           "format" : "date-time"
         },
-        "shareStatus" : {
-          "type" : "string",
-          "enum" : [ "PRIVATE", "TEAM", "PUBLIC" ]
-        },
-        "createdBy" : {
-          "$ref" : "#/definitions/User"
-        },
-        "lastModifiedBy" : {
-          "$ref" : "#/definitions/User"
-        },
-        "jsonContent" : {
-          "type" : "string"
-        },
-        "cardTitle" : {
-          "type" : "string"
-        },
-        "boards" : {
-          "type" : "array",
-          "uniqueItems" : true,
-          "items" : {
-            "$ref" : "#/definitions/Folder"
-          }
-        },
-        "contentSchemaVersion" : {
-          "type" : "string"
-        },
-        "templateTitle" : {
-          "type" : "string"
-        },
-        "cardVerifier" : {
-          "$ref" : "#/definitions/CardVerifier"
-        },
         "description" : {
           "type" : "string"
         },
@@ -13769,6 +13675,18 @@
             "$ref" : "#/definitions/Tag"
           }
         },
+        "createdBy" : {
+          "$ref" : "#/definitions/User"
+        },
+        "templateTitle" : {
+          "type" : "string"
+        },
+        "cardVerifier" : {
+          "$ref" : "#/definitions/CardVerifier"
+        },
+        "jsonContent" : {
+          "type" : "string"
+        },
         "collection" : {
           "$ref" : "#/definitions/CollectionModel"
         },
@@ -13776,9 +13694,29 @@
           "type" : "string",
           "format" : "date-time"
         },
+        "boards" : {
+          "type" : "array",
+          "uniqueItems" : true,
+          "items" : {
+            "$ref" : "#/definitions/Folder"
+          }
+        },
+        "shareStatus" : {
+          "type" : "string",
+          "enum" : [ "PRIVATE", "TEAM", "PUBLIC" ]
+        },
         "verificationInterval" : {
           "type" : "integer",
           "format" : "int32"
+        },
+        "lastModifiedBy" : {
+          "$ref" : "#/definitions/User"
+        },
+        "cardTitle" : {
+          "type" : "string"
+        },
+        "contentSchemaVersion" : {
+          "type" : "string"
         }
       }
     },
@@ -13822,6 +13760,12 @@
     "CardVerifiers" : {
       "type" : "object",
       "properties" : {
+        "verifiers" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/CardVerifier"
+          }
+        },
         "verificationState" : {
           "type" : "string",
           "enum" : [ "TRUSTED", "STALE", "NEEDS_VERIFICATION", "SYNCED_NO_VERIFICATION", "NONE" ]
@@ -13832,12 +13776,6 @@
         },
         "verificationInitiator" : {
           "$ref" : "#/definitions/User"
-        },
-        "verifiers" : {
-          "type" : "array",
-          "items" : {
-            "$ref" : "#/definitions/CardVerifier"
-          }
         }
       }
     },
@@ -14058,48 +13996,27 @@
           "example" : "#f44336",
           "description" : "A hex value for the color of the Collection"
         },
-        "cards" : {
+        "description" : {
+          "type" : "string",
+          "description" : "Collection Description"
+        },
+        "tags" : {
           "type" : "integer",
           "format" : "int64",
-          "description" : "Number of cards in this Collection"
+          "description" : "Returns all Tag objects associated with this collection"
         },
-        "deleted" : {
-          "type" : "boolean",
-          "description" : "Flag for whether this Collection has been deleted"
-        },
-        "defaultVerifier" : {
+        "token" : {
           "type" : "string"
         },
-        "publicCardsEnabled" : {
-          "type" : "boolean"
+        "collectionStats" : {
+          "description" : "Returns an objects of stats for this collection that includes Collection Trust Score, and Card Count.",
+          "$ref" : "#/definitions/CollectionStats"
         },
         "lastSyncedDate" : {
           "type" : "string",
           "format" : "date-time",
           "example" : "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000",
           "description" : "The date that the Collection was last synced from the source"
-        },
-        "syncType" : {
-          "type" : "string",
-          "description" : "If this Collection has been synced, this will return the type. Types include: Zendesk, Confluence, Google Drive, and Manual.",
-          "enum" : [ "ZENDESK", "ZENDESK_IMPORT", "CONFLUENCE", "MANUAL", "GOOGLE_DRIVE", "ZENEFITS", "BOX", "KUSTOMER", "DROPBOX", "SALESFORCE", "GURU" ]
-        },
-        "emoji" : {
-          "type" : "string"
-        },
-        "slug" : {
-          "type" : "string",
-          "example" : "https://app.getguru.com/collections/:slug_goes_here",
-          "description" : "The slug is the URL to get to this Collection"
-        },
-        "boards" : {
-          "type" : "integer",
-          "format" : "int64",
-          "description" : "Number of boards in this Collection"
-        },
-        "collectionStats" : {
-          "description" : "Returns an objects of stats for this collection that includes Collection Trust Score, and Card Count.",
-          "$ref" : "#/definitions/CollectionStats"
         },
         "topLevelSyncLocation" : {
           "type" : "string",
@@ -14123,26 +14040,34 @@
           "type" : "string",
           "enum" : [ "ABSOLUTE", "RELATIVE", "MANUAL" ]
         },
-        "description" : {
-          "type" : "string",
-          "description" : "Collection Description"
-        },
-        "tags" : {
-          "type" : "integer",
-          "format" : "int64",
-          "description" : "Returns all Tag objects associated with this collection"
-        },
-        "token" : {
-          "type" : "string"
+        "deleted" : {
+          "type" : "boolean",
+          "description" : "Flag for whether this Collection has been deleted"
         },
         "team" : {
           "$ref" : "#/definitions/Team"
+        },
+        "defaultVerifier" : {
+          "type" : "string"
+        },
+        "syncType" : {
+          "type" : "string",
+          "description" : "If this Collection has been synced, this will return the type. Types include: Zendesk, Confluence, Google Drive, and Manual.",
+          "enum" : [ "ZENDESK", "ZENDESK_IMPORT", "CONFLUENCE", "MANUAL", "GOOGLE_DRIVE", "ZENEFITS", "BOX", "KUSTOMER", "DROPBOX", "SALESFORCE", "GURU" ]
         },
         "dateCreated" : {
           "type" : "string",
           "format" : "date-time",
           "example" : "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000",
           "description" : "Date the collection was created"
+        },
+        "slug" : {
+          "type" : "string",
+          "example" : "https://app.getguru.com/collections/:slug_goes_here",
+          "description" : "The slug is the URL to get to this Collection"
+        },
+        "publicCardsEnabled" : {
+          "type" : "boolean"
         },
         "collectionType" : {
           "type" : "string",
@@ -14157,9 +14082,22 @@
           "description" : "The type can be FRAMEWORK, ONBOARDING, USER or EXTERNAL.",
           "enum" : [ "ONBOARDING", "FRAMEWORK", "USER", "EXTERNAL", "SOURCE", "WELCOME", "ONBOARDING_UNEDITED" ]
         },
+        "boards" : {
+          "type" : "integer",
+          "format" : "int64",
+          "description" : "Number of boards in this Collection"
+        },
         "verificationInterval" : {
           "type" : "integer",
           "format" : "int32"
+        },
+        "cards" : {
+          "type" : "integer",
+          "format" : "int64",
+          "description" : "Number of cards in this Collection"
+        },
+        "emoji" : {
+          "type" : "string"
         }
       }
     },
@@ -14199,12 +14137,12 @@
       }, {
         "type" : "object",
         "properties" : {
+          "email" : {
+            "type" : "string"
+          },
           "op" : {
             "type" : "string",
             "enum" : [ "EQ", "NE" ]
-          },
-          "email" : {
-            "type" : "string"
           }
         },
         "x-discriminator-values" : [ "comment-from" ]
@@ -14373,19 +14311,29 @@
           "type" : "integer",
           "format" : "int32"
         },
-        "lastVerified" : {
-          "type" : "string",
-          "format" : "date-time"
+        "url" : {
+          "type" : "string"
+        },
+        "title" : {
+          "type" : "string"
         },
         "deleted" : {
           "type" : "boolean"
         },
-        "verificationState" : {
+        "dateCreated" : {
           "type" : "string",
-          "enum" : [ "TRUSTED", "STALE", "NEEDS_VERIFICATION", "SYNCED_NO_VERIFICATION", "NONE" ]
+          "format" : "date-time"
+        },
+        "lastVerified" : {
+          "type" : "string",
+          "format" : "date-time"
         },
         "lastVerifiedBy" : {
           "$ref" : "#/definitions/User"
+        },
+        "verificationState" : {
+          "type" : "string",
+          "enum" : [ "TRUSTED", "STALE", "NEEDS_VERIFICATION", "SYNCED_NO_VERIFICATION", "NONE" ]
         },
         "inaccessibleToAsker" : {
           "type" : "boolean"
@@ -14415,41 +14363,11 @@
           "type" : "number",
           "format" : "double"
         },
-        "url" : {
-          "type" : "string"
-        },
-        "title" : {
-          "type" : "string"
-        },
-        "dateCreated" : {
-          "type" : "string",
-          "format" : "date-time"
-        },
         "documentType" : {
           "type" : "string",
           "enum" : [ "GURU", "SOURCE", "GURU_ATTACHMENT", "WEB", "MCP" ]
         }
       }
-    },
-    "DocumentEntityIdExpression" : {
-      "allOf" : [ {
-        "$ref" : "#/definitions/Expression"
-      }, {
-        "type" : "object",
-        "properties" : {
-          "ids" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          },
-          "op" : {
-            "type" : "string",
-            "enum" : [ "IN" ]
-          }
-        },
-        "x-discriminator-values" : [ "document-entity-ids" ]
-      } ]
     },
     "DocumentSearchResponse" : {
       "type" : "object",
@@ -14489,31 +14407,18 @@
           "type" : "integer",
           "format" : "int32"
         },
-        "cardId" : {
-          "type" : "string"
+        "user" : {
+          "$ref" : "#/definitions/User"
         },
         "createdBy" : {
           "$ref" : "#/definitions/User"
         },
-        "lastModifiedBy" : {
-          "$ref" : "#/definitions/User"
-        },
-        "jsonContent" : {
+        "title" : {
           "type" : "string"
         },
         "createdDate" : {
           "type" : "string",
           "format" : "date-time"
-        },
-        "contentSchemaVersion" : {
-          "type" : "string"
-        },
-        "cardTemplateId" : {
-          "type" : "string"
-        },
-        "cardVersion" : {
-          "type" : "integer",
-          "format" : "int32"
         },
         "scheduledPublishDate" : {
           "type" : "string",
@@ -14522,14 +14427,27 @@
         "isCollaborator" : {
           "type" : "boolean"
         },
-        "user" : {
-          "$ref" : "#/definitions/User"
-        },
-        "title" : {
+        "jsonContent" : {
           "type" : "string"
         },
         "collection" : {
           "$ref" : "#/definitions/CollectionModel"
+        },
+        "cardVersion" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "cardId" : {
+          "type" : "string"
+        },
+        "lastModifiedBy" : {
+          "$ref" : "#/definitions/User"
+        },
+        "contentSchemaVersion" : {
+          "type" : "string"
+        },
+        "cardTemplateId" : {
+          "type" : "string"
         }
       }
     },
@@ -14609,11 +14527,6 @@
         "type" : {
           "type" : "string"
         },
-        "eventDate" : {
-          "type" : "string",
-          "format" : "date-time",
-          "description" : "Timestamp of event. Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000"
-        },
         "eventType" : {
           "type" : "string",
           "description" : "Event type"
@@ -14621,6 +14534,11 @@
         "user" : {
           "type" : "string",
           "description" : "Email of user"
+        },
+        "eventDate" : {
+          "type" : "string",
+          "format" : "date-time",
+          "description" : "Timestamp of event. Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000"
         }
       }
     },
@@ -14631,7 +14549,7 @@
       "properties" : {
         "type" : {
           "type" : "string",
-          "enum" : [ "tagcategory", "tag", "absolute-date", "board-ids", "folder-ids", "comment-from", "count", "file-attachment", "file-type", "grouping", "group-verifier", "last-verified-by", "last-modified-by", "owner", "originalOwner", "pin", "myfavorite", "myfollowedcards", "unverifiable", "topPerformers", "mostPopularUnverified", "mycards", "pin-url", "relative-date", "shared-to-user", "title", "trust-state", "share-type", "user-verifier", "recentCardsViewed", "card-template", "public-card", "verification-type", "user-collaborator", "group-collaborator", "auto-archived", "myverifiedcards", "sourceCustomField", "verification-modification-type", "object-type-id", "document-entity-ids" ]
+          "enum" : [ "tagcategory", "tag", "absolute-date", "board-ids", "folder-ids", "comment-from", "count", "file-attachment", "file-type", "grouping", "group-verifier", "last-verified-by", "last-modified-by", "owner", "originalOwner", "pin", "myfavorite", "myfollowedcards", "unverifiable", "topPerformers", "mostPopularUnverified", "mycards", "pin-url", "relative-date", "shared-to-user", "title", "trust-state", "share-type", "user-verifier", "recentCardsViewed", "card-template", "public-card", "verification-type", "user-collaborator", "group-collaborator", "auto-archived", "myverifiedcards", "sourceCustomField", "verification-modification-type", "object-type-id" ]
         }
       }
     },
@@ -14678,10 +14596,6 @@
           "description" : "The date that the favorite list was last modified",
           "readOnly" : true
         },
-        "defaultList" : {
-          "type" : "boolean",
-          "description" : "When this favorite list is a user's default list"
-        },
         "items" : {
           "type" : "array",
           "description" : "The cards that are on the favorite list",
@@ -14693,6 +14607,10 @@
         "title" : {
           "type" : "string",
           "description" : "The title of the favorite list"
+        },
+        "defaultList" : {
+          "type" : "boolean",
+          "description" : "When this favorite list is a user's default list"
         }
       }
     },
@@ -14743,6 +14661,84 @@
           "description" : "Current version of the Card. As the card gets updated and revised, the version number will increase.",
           "readOnly" : true
         },
+        "tags" : {
+          "type" : "array",
+          "description" : "Returns Tag objects associated with this card",
+          "uniqueItems" : true,
+          "items" : {
+            "$ref" : "#/definitions/Tag"
+          }
+        },
+        "collection" : {
+          "description" : "The Collection the Card belongs to",
+          "readOnly" : true,
+          "$ref" : "#/definitions/CollectionModel"
+        },
+        "dateCreated" : {
+          "type" : "string",
+          "format" : "date-time",
+          "example" : "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000",
+          "description" : "Date the Card was created",
+          "readOnly" : true
+        },
+        "lastVerified" : {
+          "type" : "string",
+          "format" : "date-time",
+          "example" : "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000",
+          "description" : "Date the Card was last verified"
+        },
+        "lastVerifiedBy" : {
+          "description" : "The User to last verify the Card",
+          "readOnly" : true,
+          "$ref" : "#/definitions/User"
+        },
+        "preferredPhrase" : {
+          "type" : "string",
+          "example" : "My New Card",
+          "description" : "The title of the Card"
+        },
+        "favoritedDate" : {
+          "type" : "string",
+          "format" : "date-time",
+          "description" : "Date when this card has been favorited by the current user",
+          "readOnly" : true
+        },
+        "slug" : {
+          "type" : "string",
+          "example" : "https://app.getguru.com/cards/:slug_goes_here",
+          "description" : "The slug is the URL address to the card",
+          "readOnly" : true
+        },
+        "boards" : {
+          "type" : "array",
+          "description" : "Returns Board objects that this card appears on",
+          "uniqueItems" : true,
+          "items" : {
+            "$ref" : "#/definitions/Board"
+          }
+        },
+        "shareStatus" : {
+          "type" : "string",
+          "example" : "TEAM",
+          "description" : "The share status of the Card.  TEAM for team shared cards and PRIVATE for privately shared cards",
+          "enum" : [ "PRIVATE", "TEAM", "PUBLIC" ]
+        },
+        "suppressVerification" : {
+          "type" : "boolean",
+          "description" : "Flag for enabling card verification on save"
+        },
+        "verificationInterval" : {
+          "type" : "integer",
+          "format" : "int32",
+          "description" : "Time interval (in days), indicating the frequency that this card needs re-verification. Passing in null will default to 30 days."
+        },
+        "verifiers" : {
+          "type" : "array",
+          "description" : "Users/Groups that are responsible for verifying this card",
+          "items" : {
+            "$ref" : "#/definitions/CardVerifier"
+          }
+        },
         "verificationType" : {
           "type" : "string",
           "description" : "Whether the card's verification date is ABSOLUTE or RELATIVE",
@@ -14754,18 +14750,6 @@
           "items" : {
             "$ref" : "#/definitions/CardCollaborator"
           }
-        },
-        "shareStatus" : {
-          "type" : "string",
-          "example" : "TEAM",
-          "description" : "The share status of the Card.  TEAM for team shared cards and PRIVATE for privately shared cards",
-          "enum" : [ "PRIVATE", "TEAM", "PUBLIC" ]
-        },
-        "lastVerified" : {
-          "type" : "string",
-          "format" : "date-time",
-          "example" : "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000",
-          "description" : "Date the Card was last verified"
         },
         "verificationState" : {
           "type" : "string",
@@ -14783,11 +14767,6 @@
           "readOnly" : true,
           "$ref" : "#/definitions/User"
         },
-        "lastVerifiedBy" : {
-          "description" : "The User to last verify the Card",
-          "readOnly" : true,
-          "$ref" : "#/definitions/User"
-        },
         "lastVerificationModifiedByType" : {
           "type" : "string",
           "enum" : [ "AUTOMATION", "USER" ]
@@ -14802,12 +14781,6 @@
         "lastVerificationConfidenceScore" : {
           "type" : "number",
           "format" : "double"
-        },
-        "slug" : {
-          "type" : "string",
-          "example" : "https://app.getguru.com/cards/:slug_goes_here",
-          "description" : "The slug is the URL address to the card",
-          "readOnly" : true
         },
         "publicLinkAllowed" : {
           "type" : "boolean"
@@ -14840,12 +14813,6 @@
           "description" : "Whether this card has been favorited by the current user",
           "readOnly" : true
         },
-        "favoritedDate" : {
-          "type" : "string",
-          "format" : "date-time",
-          "description" : "Date when this card has been favorited by the current user",
-          "readOnly" : true
-        },
         "attachments" : {
           "type" : "array",
           "description" : "Attachments to the card",
@@ -14875,22 +14842,10 @@
           "readOnly" : true,
           "$ref" : "#/definitions/CardInfo"
         },
-        "boards" : {
-          "type" : "array",
-          "description" : "Returns Board objects that this card appears on",
-          "uniqueItems" : true,
-          "items" : {
-            "$ref" : "#/definitions/Board"
-          }
-        },
         "syncInfo" : {
           "description" : "Returns an object about Sync information, if this card is from a synced Collection. Information includes: externalUrl, lastSyncDate, lastUpdateDate, and syncType.",
           "readOnly" : true,
           "$ref" : "#/definitions/CardSyncInfo"
-        },
-        "suppressVerification" : {
-          "type" : "boolean",
-          "description" : "Flag for enabling card verification on save"
         },
         "verificationInitiationDate" : {
           "type" : "string",
@@ -14931,56 +14886,19 @@
         "cardType" : {
           "type" : "string",
           "readOnly" : true
-        },
-        "tags" : {
-          "type" : "array",
-          "description" : "Returns Tag objects associated with this card",
-          "uniqueItems" : true,
-          "items" : {
-            "$ref" : "#/definitions/Tag"
-          }
-        },
-        "collection" : {
-          "description" : "The Collection the Card belongs to",
-          "readOnly" : true,
-          "$ref" : "#/definitions/CollectionModel"
-        },
-        "preferredPhrase" : {
-          "type" : "string",
-          "example" : "My New Card",
-          "description" : "The title of the Card"
-        },
-        "dateCreated" : {
-          "type" : "string",
-          "format" : "date-time",
-          "example" : "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000",
-          "description" : "Date the Card was created",
-          "readOnly" : true
-        },
-        "verificationInterval" : {
-          "type" : "integer",
-          "format" : "int32",
-          "description" : "Time interval (in days), indicating the frequency that this card needs re-verification. Passing in null will default to 30 days."
-        },
-        "verifiers" : {
-          "type" : "array",
-          "description" : "Users/Groups that are responsible for verifying this card",
-          "items" : {
-            "$ref" : "#/definitions/CardVerifier"
-          }
         }
       }
     },
     "FeaturedCard" : {
       "type" : "object",
       "properties" : {
-        "cardId" : {
-          "type" : "string"
-        },
         "image" : {
           "type" : "string"
         },
         "gradient" : {
+          "type" : "string"
+        },
+        "cardId" : {
           "type" : "string"
         }
       }
@@ -15027,22 +14945,22 @@
           "type" : "string",
           "enum" : [ "IMAGE", "IFRAME", "VIDEO" ]
         },
-        "cropSpec" : {
-          "$ref" : "#/definitions/ImageCropSpec"
-        },
-        "signedUrl" : {
-          "type" : "string"
-        },
         "url" : {
           "type" : "string"
+        },
+        "height" : {
+          "type" : "integer",
+          "format" : "int32"
         },
         "width" : {
           "type" : "integer",
           "format" : "int32"
         },
-        "height" : {
-          "type" : "integer",
-          "format" : "int32"
+        "cropSpec" : {
+          "$ref" : "#/definitions/ImageCropSpec"
+        },
+        "signedUrl" : {
+          "type" : "string"
         }
       }
     },
@@ -15114,16 +15032,35 @@
           "description" : "The date that the directory was last modified",
           "readOnly" : true
         },
-        "lastModifiedBy" : {
-          "description" : "Returns a User object for the User who last modified the directory",
+        "description" : {
+          "type" : "string",
+          "description" : "An optional short description of the directory"
+        },
+        "title" : {
+          "type" : "string",
+          "description" : "The title of the directory"
+        },
+        "collection" : {
+          "description" : "Returns the Collection object that the directory belongs to",
           "readOnly" : true,
-          "$ref" : "#/definitions/User"
+          "$ref" : "#/definitions/CollectionModel"
+        },
+        "favoritedDate" : {
+          "type" : "string",
+          "format" : "date-time",
+          "description" : "When this directory has been favorited by the current user",
+          "readOnly" : true
         },
         "slug" : {
           "type" : "string",
           "example" : "https://app.getguru.com/boards/:slug_goes_here",
           "description" : "The slug is the URL address to the directory",
           "readOnly" : true
+        },
+        "lastModifiedBy" : {
+          "description" : "Returns a User object for the User who last modified the directory",
+          "readOnly" : true,
+          "$ref" : "#/definitions/User"
         },
         "groupsSharedWith" : {
           "type" : "array",
@@ -15138,30 +15075,11 @@
           "description" : "Whether this board has been favorited by the current user",
           "readOnly" : true
         },
-        "favoritedDate" : {
-          "type" : "string",
-          "format" : "date-time",
-          "description" : "When this directory has been favorited by the current user",
-          "readOnly" : true
-        },
         "numberOfFacts" : {
           "type" : "integer",
           "format" : "int32",
           "description" : "The number of cards in the directory",
           "readOnly" : true
-        },
-        "description" : {
-          "type" : "string",
-          "description" : "An optional short description of the directory"
-        },
-        "title" : {
-          "type" : "string",
-          "description" : "The title of the directory"
-        },
-        "collection" : {
-          "description" : "Returns the Collection object that the directory belongs to",
-          "readOnly" : true,
-          "$ref" : "#/definitions/CollectionModel"
         }
       }
     },
@@ -15208,6 +15126,84 @@
             "description" : "Current version of the Card. As the card gets updated and revised, the version number will increase.",
             "readOnly" : true
           },
+          "tags" : {
+            "type" : "array",
+            "description" : "Returns Tag objects associated with this card",
+            "uniqueItems" : true,
+            "items" : {
+              "$ref" : "#/definitions/Tag"
+            }
+          },
+          "collection" : {
+            "description" : "The Collection the Card belongs to",
+            "readOnly" : true,
+            "$ref" : "#/definitions/CollectionModel"
+          },
+          "dateCreated" : {
+            "type" : "string",
+            "format" : "date-time",
+            "example" : "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000",
+            "description" : "Date the Card was created",
+            "readOnly" : true
+          },
+          "lastVerified" : {
+            "type" : "string",
+            "format" : "date-time",
+            "example" : "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000",
+            "description" : "Date the Card was last verified"
+          },
+          "lastVerifiedBy" : {
+            "description" : "The User to last verify the Card",
+            "readOnly" : true,
+            "$ref" : "#/definitions/User"
+          },
+          "preferredPhrase" : {
+            "type" : "string",
+            "example" : "My New Card",
+            "description" : "The title of the Card"
+          },
+          "favoritedDate" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "Date when this card has been favorited by the current user",
+            "readOnly" : true
+          },
+          "slug" : {
+            "type" : "string",
+            "example" : "https://app.getguru.com/cards/:slug_goes_here",
+            "description" : "The slug is the URL address to the card",
+            "readOnly" : true
+          },
+          "boards" : {
+            "type" : "array",
+            "description" : "Returns Board objects that this card appears on",
+            "uniqueItems" : true,
+            "items" : {
+              "$ref" : "#/definitions/Board"
+            }
+          },
+          "shareStatus" : {
+            "type" : "string",
+            "example" : "TEAM",
+            "description" : "The share status of the Card.  TEAM for team shared cards and PRIVATE for privately shared cards",
+            "enum" : [ "PRIVATE", "TEAM", "PUBLIC" ]
+          },
+          "suppressVerification" : {
+            "type" : "boolean",
+            "description" : "Flag for enabling card verification on save"
+          },
+          "verificationInterval" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Time interval (in days), indicating the frequency that this card needs re-verification. Passing in null will default to 30 days."
+          },
+          "verifiers" : {
+            "type" : "array",
+            "description" : "Users/Groups that are responsible for verifying this card",
+            "items" : {
+              "$ref" : "#/definitions/CardVerifier"
+            }
+          },
           "verificationType" : {
             "type" : "string",
             "description" : "Whether the card's verification date is ABSOLUTE or RELATIVE",
@@ -15219,18 +15215,6 @@
             "items" : {
               "$ref" : "#/definitions/CardCollaborator"
             }
-          },
-          "shareStatus" : {
-            "type" : "string",
-            "example" : "TEAM",
-            "description" : "The share status of the Card.  TEAM for team shared cards and PRIVATE for privately shared cards",
-            "enum" : [ "PRIVATE", "TEAM", "PUBLIC" ]
-          },
-          "lastVerified" : {
-            "type" : "string",
-            "format" : "date-time",
-            "example" : "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000",
-            "description" : "Date the Card was last verified"
           },
           "verificationState" : {
             "type" : "string",
@@ -15248,11 +15232,6 @@
             "readOnly" : true,
             "$ref" : "#/definitions/User"
           },
-          "lastVerifiedBy" : {
-            "description" : "The User to last verify the Card",
-            "readOnly" : true,
-            "$ref" : "#/definitions/User"
-          },
           "lastVerificationModifiedByType" : {
             "type" : "string",
             "enum" : [ "AUTOMATION", "USER" ]
@@ -15267,12 +15246,6 @@
           "lastVerificationConfidenceScore" : {
             "type" : "number",
             "format" : "double"
-          },
-          "slug" : {
-            "type" : "string",
-            "example" : "https://app.getguru.com/cards/:slug_goes_here",
-            "description" : "The slug is the URL address to the card",
-            "readOnly" : true
           },
           "publicLinkAllowed" : {
             "type" : "boolean"
@@ -15305,12 +15278,6 @@
             "description" : "Whether this card has been favorited by the current user",
             "readOnly" : true
           },
-          "favoritedDate" : {
-            "type" : "string",
-            "format" : "date-time",
-            "description" : "Date when this card has been favorited by the current user",
-            "readOnly" : true
-          },
           "attachments" : {
             "type" : "array",
             "description" : "Attachments to the card",
@@ -15340,22 +15307,10 @@
             "readOnly" : true,
             "$ref" : "#/definitions/CardInfo"
           },
-          "boards" : {
-            "type" : "array",
-            "description" : "Returns Board objects that this card appears on",
-            "uniqueItems" : true,
-            "items" : {
-              "$ref" : "#/definitions/Board"
-            }
-          },
           "syncInfo" : {
             "description" : "Returns an object about Sync information, if this card is from a synced Collection. Information includes: externalUrl, lastSyncDate, lastUpdateDate, and syncType.",
             "readOnly" : true,
             "$ref" : "#/definitions/CardSyncInfo"
-          },
-          "suppressVerification" : {
-            "type" : "boolean",
-            "description" : "Flag for enabling card verification on save"
           },
           "verificationInitiationDate" : {
             "type" : "string",
@@ -15396,43 +15351,6 @@
           "cardType" : {
             "type" : "string",
             "readOnly" : true
-          },
-          "tags" : {
-            "type" : "array",
-            "description" : "Returns Tag objects associated with this card",
-            "uniqueItems" : true,
-            "items" : {
-              "$ref" : "#/definitions/Tag"
-            }
-          },
-          "collection" : {
-            "description" : "The Collection the Card belongs to",
-            "readOnly" : true,
-            "$ref" : "#/definitions/CollectionModel"
-          },
-          "preferredPhrase" : {
-            "type" : "string",
-            "example" : "My New Card",
-            "description" : "The title of the Card"
-          },
-          "dateCreated" : {
-            "type" : "string",
-            "format" : "date-time",
-            "example" : "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000",
-            "description" : "Date the Card was created",
-            "readOnly" : true
-          },
-          "verificationInterval" : {
-            "type" : "integer",
-            "format" : "int32",
-            "description" : "Time interval (in days), indicating the frequency that this card needs re-verification. Passing in null will default to 30 days."
-          },
-          "verifiers" : {
-            "type" : "array",
-            "description" : "Users/Groups that are responsible for verifying this card",
-            "items" : {
-              "$ref" : "#/definitions/CardVerifier"
-            }
           }
         },
         "x-discriminator-values" : [ "card" ]
@@ -15444,15 +15362,15 @@
       }, {
         "type" : "object",
         "properties" : {
+          "op" : {
+            "type" : "string",
+            "enum" : [ "CONTAINS", "NOTCONTAINS", "CONTAINSIMMEDIATE", "NOTCONTAINSIMMEDIATE" ]
+          },
           "ids" : {
             "type" : "array",
             "items" : {
               "type" : "string"
             }
-          },
-          "op" : {
-            "type" : "string",
-            "enum" : [ "CONTAINS", "NOTCONTAINS", "CONTAINSIMMEDIATE", "NOTCONTAINSIMMEDIATE" ]
           }
         },
         "x-discriminator-values" : [ "folder-ids" ]
@@ -15650,16 +15568,16 @@
     "GroupCollectionAccess" : {
       "type" : "object",
       "properties" : {
+        "role" : {
+          "type" : "string",
+          "enum" : [ "ADMIN", "AUTHOR", "MEMBER", "COLL_ADMIN" ]
+        },
         "objectRole" : {
           "$ref" : "#/definitions/Role"
         },
         "numberOfAuthors" : {
           "type" : "integer",
           "format" : "int32"
-        },
-        "role" : {
-          "type" : "string",
-          "enum" : [ "ADMIN", "AUTHOR", "MEMBER", "COLL_ADMIN" ]
         },
         "collection" : {
           "$ref" : "#/definitions/CollectionModel"
@@ -15672,12 +15590,12 @@
       }, {
         "type" : "object",
         "properties" : {
+          "groupId" : {
+            "type" : "string"
+          },
           "op" : {
             "type" : "string",
             "enum" : [ "EQ", "NE" ]
-          },
-          "groupId" : {
-            "type" : "string"
           }
         },
         "x-discriminator-values" : [ "group-verifier" ]
@@ -15765,11 +15683,11 @@
     "ImageCropSpec" : {
       "type" : "object",
       "properties" : {
-        "x" : {
+        "y" : {
           "type" : "integer",
           "format" : "int32"
         },
-        "y" : {
+        "height" : {
           "type" : "integer",
           "format" : "int32"
         },
@@ -15777,7 +15695,7 @@
           "type" : "integer",
           "format" : "int32"
         },
-        "height" : {
+        "x" : {
           "type" : "integer",
           "format" : "int32"
         }
@@ -15799,10 +15717,10 @@
     "InternalProfileSlackDetail" : {
       "type" : "object",
       "properties" : {
-        "slackTeamName" : {
+        "slackTeamUrl" : {
           "type" : "string"
         },
-        "slackTeamUrl" : {
+        "slackTeamName" : {
           "type" : "string"
         }
       }
@@ -15864,6 +15782,9 @@
           "type" : "boolean"
         },
         "limitMSTeamsResponsesToAllMembersContent" : {
+          "type" : "boolean"
+        },
+        "slackAutoRespondThreadFollowups" : {
           "type" : "boolean"
         },
         "legacyMode" : {
@@ -16157,9 +16078,6 @@
           "type" : "string",
           "enum" : [ "ALL", "VERIFIED_ONLY", "VERIFIED_AND_NONE" ]
         },
-        "defaultConfig" : {
-          "$ref" : "#/definitions/QualityConfig"
-        },
         "qualitySourceScope" : {
           "type" : "string",
           "enum" : [ "ALL", "SELECTED" ]
@@ -16175,9 +16093,6 @@
           "items" : {
             "$ref" : "#/definitions/Source"
           }
-        },
-        "newApi" : {
-          "type" : "boolean"
         }
       }
     },
@@ -16266,7 +16181,8 @@
       "type" : "object",
       "properties" : {
         "groupId" : {
-          "type" : "string"
+          "type" : "string",
+          "description" : "The ID of the group to grant skill access to. In place of a group ID, you may provide a user's email address to target an individual user."
         }
       }
     },
@@ -16292,6 +16208,20 @@
         "dateModified" : {
           "type" : "string",
           "format" : "date-time"
+        },
+        "referenceType" : {
+          "type" : "string",
+          "enum" : [ "INLINE", "CARD", "SOURCE" ]
+        },
+        "documentId" : {
+          "type" : "string",
+          "format" : "uuid"
+        },
+        "document" : {
+          "$ref" : "#/definitions/Document"
+        },
+        "deleted" : {
+          "type" : "boolean"
         }
       }
     },
@@ -16367,6 +16297,19 @@
         "id" : {
           "type" : "string"
         },
+        "groups" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/UserGroup"
+          }
+        },
+        "dateCreated" : {
+          "type" : "string",
+          "format" : "date-time"
+        },
+        "creator" : {
+          "$ref" : "#/definitions/User"
+        },
         "cardId" : {
           "type" : "string"
         },
@@ -16387,25 +16330,18 @@
         },
         "suppressNotifications" : {
           "type" : "boolean"
-        },
-        "creator" : {
-          "$ref" : "#/definitions/User"
-        },
-        "groups" : {
-          "type" : "array",
-          "items" : {
-            "$ref" : "#/definitions/UserGroup"
-          }
-        },
-        "dateCreated" : {
-          "type" : "string",
-          "format" : "date-time"
         }
       }
     },
     "KnowledgeAlertDelegated" : {
       "type" : "object",
       "properties" : {
+        "groups" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/UserGroup"
+          }
+        },
         "card" : {
           "$ref" : "#/definitions/Card"
         },
@@ -16431,32 +16367,41 @@
           "type" : "integer",
           "format" : "int64"
         },
-        "dateSent" : {
-          "type" : "string",
-          "format" : "date-time"
-        },
-        "collectionHexColor" : {
-          "type" : "string"
-        },
         "alertId" : {
           "type" : "string"
         },
         "cardTitle" : {
           "type" : "string"
         },
-        "groups" : {
-          "type" : "array",
-          "items" : {
-            "$ref" : "#/definitions/UserGroup"
-          }
+        "dateSent" : {
+          "type" : "string",
+          "format" : "date-time"
+        },
+        "collectionHexColor" : {
+          "type" : "string"
         }
       }
     },
     "KnowledgeAlertNotification" : {
       "type" : "object",
       "properties" : {
+        "groups" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/UserGroup"
+          }
+        },
+        "creator" : {
+          "$ref" : "#/definitions/User"
+        },
         "card" : {
           "$ref" : "#/definitions/Card"
+        },
+        "alertId" : {
+          "type" : "string"
+        },
+        "cardTitle" : {
+          "type" : "string"
         },
         "dateSent" : {
           "type" : "string",
@@ -16476,36 +16421,21 @@
         },
         "read" : {
           "type" : "boolean"
-        },
-        "alertId" : {
-          "type" : "string"
-        },
-        "cardTitle" : {
-          "type" : "string"
-        },
-        "creator" : {
-          "$ref" : "#/definitions/User"
-        },
-        "groups" : {
-          "type" : "array",
-          "items" : {
-            "$ref" : "#/definitions/UserGroup"
-          }
         }
       }
     },
     "KnowledgeCenteredSupportInfo" : {
       "type" : "object",
       "properties" : {
+        "platform" : {
+          "type" : "string",
+          "enum" : [ "ZENDESK", "LIVEPERSON", "SALESFORCE" ]
+        },
         "cardId" : {
           "type" : "string"
         },
         "conversationId" : {
           "type" : "string"
-        },
-        "platform" : {
-          "type" : "string",
-          "enum" : [ "ZENDESK", "LIVEPERSON", "SALESFORCE" ]
         }
       }
     },
@@ -16516,18 +16446,18 @@
           "type" : "string",
           "format" : "date-time"
         },
-        "conversationId" : {
-          "type" : "string"
-        },
-        "card" : {
-          "$ref" : "#/definitions/Card"
-        },
         "user" : {
           "$ref" : "#/definitions/User"
         },
         "platform" : {
           "type" : "string",
           "enum" : [ "ZENDESK", "LIVEPERSON", "SALESFORCE" ]
+        },
+        "conversationId" : {
+          "type" : "string"
+        },
+        "card" : {
+          "$ref" : "#/definitions/Card"
         }
       }
     },
@@ -16537,12 +16467,12 @@
       }, {
         "type" : "object",
         "properties" : {
+          "email" : {
+            "type" : "string"
+          },
           "op" : {
             "type" : "string",
             "enum" : [ "EQ", "NE" ]
-          },
-          "email" : {
-            "type" : "string"
           }
         },
         "x-discriminator-values" : [ "last-modified-by" ]
@@ -16554,12 +16484,12 @@
       }, {
         "type" : "object",
         "properties" : {
+          "email" : {
+            "type" : "string"
+          },
           "op" : {
             "type" : "string",
             "enum" : [ "EQ", "NE" ]
-          },
-          "email" : {
-            "type" : "string"
           }
         },
         "x-discriminator-values" : [ "last-verified-by" ]
@@ -16614,10 +16544,10 @@
           "toolCallId" : {
             "type" : "string"
           },
-          "mcpDisplayName" : {
+          "mcpIconUrl" : {
             "type" : "string"
           },
-          "mcpIconUrl" : {
+          "mcpDisplayName" : {
             "type" : "string"
           }
         },
@@ -16653,18 +16583,8 @@
         "comment" : {
           "$ref" : "#/definitions/CardComment"
         },
-        "card" : {
-          "$ref" : "#/definitions/Card"
-        },
-        "dateSent" : {
-          "type" : "string",
-          "format" : "date-time"
-        },
-        "viewed" : {
-          "type" : "boolean"
-        },
-        "creator" : {
-          "$ref" : "#/definitions/User"
+        "title" : {
+          "type" : "string"
         },
         "mention" : {
           "type" : "string"
@@ -16685,8 +16605,18 @@
         "draftCommentReplySource" : {
           "$ref" : "#/definitions/DraftCommentReplySource"
         },
-        "title" : {
-          "type" : "string"
+        "creator" : {
+          "$ref" : "#/definitions/User"
+        },
+        "card" : {
+          "$ref" : "#/definitions/Card"
+        },
+        "dateSent" : {
+          "type" : "string",
+          "format" : "date-time"
+        },
+        "viewed" : {
+          "type" : "boolean"
         }
       }
     },
@@ -16994,6 +16924,84 @@
           "description" : "Current version of the Card. As the card gets updated and revised, the version number will increase.",
           "readOnly" : true
         },
+        "tags" : {
+          "type" : "array",
+          "description" : "Returns Tag objects associated with this card",
+          "uniqueItems" : true,
+          "items" : {
+            "$ref" : "#/definitions/Tag"
+          }
+        },
+        "collection" : {
+          "description" : "The Collection the Card belongs to",
+          "readOnly" : true,
+          "$ref" : "#/definitions/CollectionModel"
+        },
+        "dateCreated" : {
+          "type" : "string",
+          "format" : "date-time",
+          "example" : "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000",
+          "description" : "Date the Card was created",
+          "readOnly" : true
+        },
+        "lastVerified" : {
+          "type" : "string",
+          "format" : "date-time",
+          "example" : "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000",
+          "description" : "Date the Card was last verified"
+        },
+        "lastVerifiedBy" : {
+          "description" : "The User to last verify the Card",
+          "readOnly" : true,
+          "$ref" : "#/definitions/User"
+        },
+        "preferredPhrase" : {
+          "type" : "string",
+          "example" : "My New Card",
+          "description" : "The title of the Card"
+        },
+        "favoritedDate" : {
+          "type" : "string",
+          "format" : "date-time",
+          "description" : "Date when this card has been favorited by the current user",
+          "readOnly" : true
+        },
+        "slug" : {
+          "type" : "string",
+          "example" : "https://app.getguru.com/cards/:slug_goes_here",
+          "description" : "The slug is the URL address to the card",
+          "readOnly" : true
+        },
+        "boards" : {
+          "type" : "array",
+          "description" : "Returns Board objects that this card appears on",
+          "uniqueItems" : true,
+          "items" : {
+            "$ref" : "#/definitions/Board"
+          }
+        },
+        "shareStatus" : {
+          "type" : "string",
+          "example" : "TEAM",
+          "description" : "The share status of the Card.  TEAM for team shared cards and PRIVATE for privately shared cards",
+          "enum" : [ "PRIVATE", "TEAM", "PUBLIC" ]
+        },
+        "suppressVerification" : {
+          "type" : "boolean",
+          "description" : "Flag for enabling card verification on save"
+        },
+        "verificationInterval" : {
+          "type" : "integer",
+          "format" : "int32",
+          "description" : "Time interval (in days), indicating the frequency that this card needs re-verification. Passing in null will default to 30 days."
+        },
+        "verifiers" : {
+          "type" : "array",
+          "description" : "Users/Groups that are responsible for verifying this card",
+          "items" : {
+            "$ref" : "#/definitions/CardVerifier"
+          }
+        },
         "verificationType" : {
           "type" : "string",
           "description" : "Whether the card's verification date is ABSOLUTE or RELATIVE",
@@ -17005,18 +17013,6 @@
           "items" : {
             "$ref" : "#/definitions/CardCollaborator"
           }
-        },
-        "shareStatus" : {
-          "type" : "string",
-          "example" : "TEAM",
-          "description" : "The share status of the Card.  TEAM for team shared cards and PRIVATE for privately shared cards",
-          "enum" : [ "PRIVATE", "TEAM", "PUBLIC" ]
-        },
-        "lastVerified" : {
-          "type" : "string",
-          "format" : "date-time",
-          "example" : "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000",
-          "description" : "Date the Card was last verified"
         },
         "verificationState" : {
           "type" : "string",
@@ -17034,11 +17030,6 @@
           "readOnly" : true,
           "$ref" : "#/definitions/User"
         },
-        "lastVerifiedBy" : {
-          "description" : "The User to last verify the Card",
-          "readOnly" : true,
-          "$ref" : "#/definitions/User"
-        },
         "lastVerificationModifiedByType" : {
           "type" : "string",
           "enum" : [ "AUTOMATION", "USER" ]
@@ -17053,12 +17044,6 @@
         "lastVerificationConfidenceScore" : {
           "type" : "number",
           "format" : "double"
-        },
-        "slug" : {
-          "type" : "string",
-          "example" : "https://app.getguru.com/cards/:slug_goes_here",
-          "description" : "The slug is the URL address to the card",
-          "readOnly" : true
         },
         "publicLinkAllowed" : {
           "type" : "boolean"
@@ -17091,12 +17076,6 @@
           "description" : "Whether this card has been favorited by the current user",
           "readOnly" : true
         },
-        "favoritedDate" : {
-          "type" : "string",
-          "format" : "date-time",
-          "description" : "Date when this card has been favorited by the current user",
-          "readOnly" : true
-        },
         "attachments" : {
           "type" : "array",
           "description" : "Attachments to the card",
@@ -17126,22 +17105,10 @@
           "readOnly" : true,
           "$ref" : "#/definitions/CardInfo"
         },
-        "boards" : {
-          "type" : "array",
-          "description" : "Returns Board objects that this card appears on",
-          "uniqueItems" : true,
-          "items" : {
-            "$ref" : "#/definitions/Board"
-          }
-        },
         "syncInfo" : {
           "description" : "Returns an object about Sync information, if this card is from a synced Collection. Information includes: externalUrl, lastSyncDate, lastUpdateDate, and syncType.",
           "readOnly" : true,
           "$ref" : "#/definitions/CardSyncInfo"
-        },
-        "suppressVerification" : {
-          "type" : "boolean",
-          "description" : "Flag for enabling card verification on save"
         },
         "verificationInitiationDate" : {
           "type" : "string",
@@ -17182,43 +17149,6 @@
         "cardType" : {
           "type" : "string",
           "readOnly" : true
-        },
-        "tags" : {
-          "type" : "array",
-          "description" : "Returns Tag objects associated with this card",
-          "uniqueItems" : true,
-          "items" : {
-            "$ref" : "#/definitions/Tag"
-          }
-        },
-        "collection" : {
-          "description" : "The Collection the Card belongs to",
-          "readOnly" : true,
-          "$ref" : "#/definitions/CollectionModel"
-        },
-        "preferredPhrase" : {
-          "type" : "string",
-          "example" : "My New Card",
-          "description" : "The title of the Card"
-        },
-        "dateCreated" : {
-          "type" : "string",
-          "format" : "date-time",
-          "example" : "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000",
-          "description" : "Date the Card was created",
-          "readOnly" : true
-        },
-        "verificationInterval" : {
-          "type" : "integer",
-          "format" : "int32",
-          "description" : "Time interval (in days), indicating the frequency that this card needs re-verification. Passing in null will default to 30 days."
-        },
-        "verifiers" : {
-          "type" : "array",
-          "description" : "Users/Groups that are responsible for verifying this card",
-          "items" : {
-            "$ref" : "#/definitions/CardVerifier"
-          }
         }
       },
       "description" : "Card model with additional properties for use when creating cards"
@@ -17251,16 +17181,35 @@
           "description" : "The date that the directory was last modified",
           "readOnly" : true
         },
-        "lastModifiedBy" : {
-          "description" : "Returns a User object for the User who last modified the directory",
+        "description" : {
+          "type" : "string",
+          "description" : "An optional short description of the directory"
+        },
+        "title" : {
+          "type" : "string",
+          "description" : "The title of the directory"
+        },
+        "collection" : {
+          "description" : "Returns the Collection object that the directory belongs to",
           "readOnly" : true,
-          "$ref" : "#/definitions/User"
+          "$ref" : "#/definitions/CollectionModel"
+        },
+        "favoritedDate" : {
+          "type" : "string",
+          "format" : "date-time",
+          "description" : "When this directory has been favorited by the current user",
+          "readOnly" : true
         },
         "slug" : {
           "type" : "string",
           "example" : "https://app.getguru.com/boards/:slug_goes_here",
           "description" : "The slug is the URL address to the directory",
           "readOnly" : true
+        },
+        "lastModifiedBy" : {
+          "description" : "Returns a User object for the User who last modified the directory",
+          "readOnly" : true,
+          "$ref" : "#/definitions/User"
         },
         "groupsSharedWith" : {
           "type" : "array",
@@ -17275,30 +17224,11 @@
           "description" : "Whether this board has been favorited by the current user",
           "readOnly" : true
         },
-        "favoritedDate" : {
-          "type" : "string",
-          "format" : "date-time",
-          "description" : "When this directory has been favorited by the current user",
-          "readOnly" : true
-        },
         "numberOfFacts" : {
           "type" : "integer",
           "format" : "int32",
           "description" : "The number of cards in the directory",
           "readOnly" : true
-        },
-        "description" : {
-          "type" : "string",
-          "description" : "An optional short description of the directory"
-        },
-        "title" : {
-          "type" : "string",
-          "description" : "The title of the directory"
-        },
-        "collection" : {
-          "description" : "Returns the Collection object that the directory belongs to",
-          "readOnly" : true,
-          "$ref" : "#/definitions/CollectionModel"
         }
       }
     },
@@ -17400,15 +17330,15 @@
         "id" : {
           "type" : "string"
         },
-        "externalId" : {
-          "type" : "string"
+        "dataType" : {
+          "type" : "string",
+          "enum" : [ "JSON", "TEXT", "HTML", "MARKDOWN", "MIXED_HTML_MARKDOWN", "LONG", "DOUBLE", "BOOLEAN", "DATE_TIME" ]
         },
         "contentSelector" : {
           "type" : "string"
         },
-        "dataType" : {
-          "type" : "string",
-          "enum" : [ "JSON", "TEXT", "HTML", "MARKDOWN", "MIXED_HTML_MARKDOWN", "LONG", "DOUBLE", "BOOLEAN", "DATE_TIME" ]
+        "externalId" : {
+          "type" : "string"
         }
       }
     },
@@ -17425,8 +17355,9 @@
         "objectType" : {
           "$ref" : "#/definitions/ObjectType"
         },
-        "externalId" : {
-          "type" : "string"
+        "createdDate" : {
+          "type" : "string",
+          "format" : "date-time"
         },
         "externalChecksum" : {
           "type" : "string"
@@ -17441,6 +17372,9 @@
         "syncNumber" : {
           "type" : "integer",
           "format" : "int32"
+        },
+        "externalId" : {
+          "type" : "string"
         }
       }
     },
@@ -17488,14 +17422,8 @@
         "id" : {
           "type" : "string"
         },
-        "templates" : {
-          "$ref" : "#/definitions/ObjectTypeTemplates"
-        },
         "analyticsEnabled" : {
           "type" : "boolean"
-        },
-        "externalId" : {
-          "type" : "string"
         },
         "facets" : {
           "type" : "array",
@@ -17529,6 +17457,12 @@
         "currentSyncNumber" : {
           "type" : "integer",
           "format" : "int32"
+        },
+        "templates" : {
+          "$ref" : "#/definitions/ObjectTypeTemplates"
+        },
+        "externalId" : {
+          "type" : "string"
         }
       }
     },
@@ -17552,9 +17486,6 @@
     "ObjectTypeTemplates" : {
       "type" : "object",
       "properties" : {
-        "cardTemplate" : {
-          "$ref" : "#/definitions/CardTemplate"
-        },
         "objectTypeId" : {
           "type" : "string"
         },
@@ -17585,6 +17516,9 @@
         "orderByOrderType" : {
           "type" : "string",
           "enum" : [ "ASC", "DESC" ]
+        },
+        "cardTemplate" : {
+          "$ref" : "#/definitions/CardTemplate"
         }
       }
     },
@@ -17611,12 +17545,12 @@
       }, {
         "type" : "object",
         "properties" : {
+          "email" : {
+            "type" : "string"
+          },
           "op" : {
             "type" : "string",
             "enum" : [ "EQ", "NE" ]
-          },
-          "email" : {
-            "type" : "string"
           }
         },
         "x-discriminator-values" : [ "originalOwner" ]
@@ -17628,12 +17562,12 @@
       }, {
         "type" : "object",
         "properties" : {
+          "email" : {
+            "type" : "string"
+          },
           "op" : {
             "type" : "string",
             "enum" : [ "EQ", "NE" ]
-          },
-          "email" : {
-            "type" : "string"
           }
         },
         "x-discriminator-values" : [ "owner" ]
@@ -17671,13 +17605,14 @@
           "description" : "The date that the object was last modified",
           "readOnly" : true
         },
-        "lastModifiedBy" : {
-          "description" : "The last user who modified the object",
-          "$ref" : "#/definitions/User"
+        "editable" : {
+          "type" : "boolean",
+          "description" : "Indicates if this is editable by the current user",
+          "readOnly" : true
         },
-        "jsonContent" : {
+        "title" : {
           "type" : "string",
-          "description" : "The json content of the page"
+          "description" : "The title of the page"
         },
         "heroImage" : {
           "type" : "string",
@@ -17709,14 +17644,9 @@
           "type" : "string",
           "description" : "The ID of the default Knowledge Agent for this page"
         },
-        "editable" : {
-          "type" : "boolean",
-          "description" : "Indicates if this is editable by the current user",
-          "readOnly" : true
-        },
-        "title" : {
+        "jsonContent" : {
           "type" : "string",
-          "description" : "The title of the page"
+          "description" : "The json content of the page"
         },
         "team" : {
           "description" : "The team that the object is on",
@@ -17729,6 +17659,10 @@
           "example" : "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000",
           "description" : "The date that the object was created",
           "readOnly" : true
+        },
+        "lastModifiedBy" : {
+          "description" : "The last user who modified the object",
+          "$ref" : "#/definitions/User"
         }
       }
     },
@@ -17750,8 +17684,23 @@
         "displayName" : {
           "type" : "string"
         },
+        "startDate" : {
+          "type" : "string"
+        },
+        "userId" : {
+          "type" : "string"
+        },
+        "manager" : {
+          "$ref" : "#/definitions/Person"
+        },
         "deleted" : {
           "type" : "boolean"
+        },
+        "directReports" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/Person"
+          }
         },
         "pronouns" : {
           "type" : "string"
@@ -17792,9 +17741,6 @@
         "msTeamsProfileUrl" : {
           "type" : "string"
         },
-        "manager" : {
-          "$ref" : "#/definitions/Person"
-        },
         "syncedFields" : {
           "type" : "array",
           "items" : {
@@ -17808,29 +17754,30 @@
         "synced" : {
           "type" : "boolean"
         },
-        "directReports" : {
-          "type" : "array",
-          "items" : {
-            "$ref" : "#/definitions/Person"
-          }
-        },
-        "startDate" : {
-          "type" : "string"
-        },
-        "userId" : {
-          "type" : "string"
-        },
         "id" : {
           "type" : "string",
           "description" : "The identifier of this User"
         },
-        "firstName" : {
+        "status" : {
           "type" : "string",
-          "description" : "The user's first name"
+          "description" : "The status of a User can be ACTIVE or PENDING. The User must verify their email address to be considered ACTIVE.",
+          "enum" : [ "ACTIVE", "PENDING" ]
+        },
+        "email" : {
+          "type" : "string",
+          "description" : "The user's email address"
+        },
+        "userProfile" : {
+          "description" : "Additional information about a user",
+          "$ref" : "#/definitions/UserProfile"
         },
         "lastName" : {
           "type" : "string",
           "description" : "The user's last name"
+        },
+        "firstName" : {
+          "type" : "string",
+          "description" : "The user's first name"
         },
         "profilePicUrl" : {
           "type" : "string",
@@ -17846,19 +17793,6 @@
         "userType" : {
           "type" : "string",
           "enum" : [ "USER", "KNOWLEDGE_AGENT" ]
-        },
-        "status" : {
-          "type" : "string",
-          "description" : "The status of a User can be ACTIVE or PENDING. The User must verify their email address to be considered ACTIVE.",
-          "enum" : [ "ACTIVE", "PENDING" ]
-        },
-        "email" : {
-          "type" : "string",
-          "description" : "The user's email address"
-        },
-        "userProfile" : {
-          "description" : "Additional information about a user",
-          "$ref" : "#/definitions/UserProfile"
         },
         "custom" : {
           "type" : "object",
@@ -17968,48 +17902,27 @@
           "example" : "#f44336",
           "description" : "A hex value for the color of the Collection"
         },
-        "cards" : {
+        "description" : {
+          "type" : "string",
+          "description" : "Collection Description"
+        },
+        "tags" : {
           "type" : "integer",
           "format" : "int64",
-          "description" : "Number of cards in this Collection"
+          "description" : "Returns all Tag objects associated with this collection"
         },
-        "deleted" : {
-          "type" : "boolean",
-          "description" : "Flag for whether this Collection has been deleted"
-        },
-        "defaultVerifier" : {
+        "token" : {
           "type" : "string"
         },
-        "publicCardsEnabled" : {
-          "type" : "boolean"
+        "collectionStats" : {
+          "description" : "Returns an objects of stats for this collection that includes Collection Trust Score, and Card Count.",
+          "$ref" : "#/definitions/CollectionStats"
         },
         "lastSyncedDate" : {
           "type" : "string",
           "format" : "date-time",
           "example" : "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000",
           "description" : "The date that the Collection was last synced from the source"
-        },
-        "syncType" : {
-          "type" : "string",
-          "description" : "If this Collection has been synced, this will return the type. Types include: Zendesk, Confluence, Google Drive, and Manual.",
-          "enum" : [ "ZENDESK", "ZENDESK_IMPORT", "CONFLUENCE", "MANUAL", "GOOGLE_DRIVE", "ZENEFITS", "BOX", "KUSTOMER", "DROPBOX", "SALESFORCE", "GURU" ]
-        },
-        "emoji" : {
-          "type" : "string"
-        },
-        "slug" : {
-          "type" : "string",
-          "example" : "https://app.getguru.com/collections/:slug_goes_here",
-          "description" : "The slug is the URL to get to this Collection"
-        },
-        "boards" : {
-          "type" : "integer",
-          "format" : "int64",
-          "description" : "Number of boards in this Collection"
-        },
-        "collectionStats" : {
-          "description" : "Returns an objects of stats for this collection that includes Collection Trust Score, and Card Count.",
-          "$ref" : "#/definitions/CollectionStats"
         },
         "topLevelSyncLocation" : {
           "type" : "string",
@@ -18033,26 +17946,34 @@
           "type" : "string",
           "enum" : [ "ABSOLUTE", "RELATIVE", "MANUAL" ]
         },
-        "description" : {
-          "type" : "string",
-          "description" : "Collection Description"
-        },
-        "tags" : {
-          "type" : "integer",
-          "format" : "int64",
-          "description" : "Returns all Tag objects associated with this collection"
-        },
-        "token" : {
-          "type" : "string"
+        "deleted" : {
+          "type" : "boolean",
+          "description" : "Flag for whether this Collection has been deleted"
         },
         "team" : {
           "$ref" : "#/definitions/Team"
+        },
+        "defaultVerifier" : {
+          "type" : "string"
+        },
+        "syncType" : {
+          "type" : "string",
+          "description" : "If this Collection has been synced, this will return the type. Types include: Zendesk, Confluence, Google Drive, and Manual.",
+          "enum" : [ "ZENDESK", "ZENDESK_IMPORT", "CONFLUENCE", "MANUAL", "GOOGLE_DRIVE", "ZENEFITS", "BOX", "KUSTOMER", "DROPBOX", "SALESFORCE", "GURU" ]
         },
         "dateCreated" : {
           "type" : "string",
           "format" : "date-time",
           "example" : "Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000",
           "description" : "Date the collection was created"
+        },
+        "slug" : {
+          "type" : "string",
+          "example" : "https://app.getguru.com/collections/:slug_goes_here",
+          "description" : "The slug is the URL to get to this Collection"
+        },
+        "publicCardsEnabled" : {
+          "type" : "boolean"
         },
         "collectionType" : {
           "type" : "string",
@@ -18067,9 +17988,22 @@
           "description" : "The type can be FRAMEWORK, ONBOARDING, USER or EXTERNAL.",
           "enum" : [ "ONBOARDING", "FRAMEWORK", "USER", "EXTERNAL", "SOURCE", "WELCOME", "ONBOARDING_UNEDITED" ]
         },
+        "boards" : {
+          "type" : "integer",
+          "format" : "int64",
+          "description" : "Number of boards in this Collection"
+        },
         "verificationInterval" : {
           "type" : "integer",
           "format" : "int32"
+        },
+        "cards" : {
+          "type" : "integer",
+          "format" : "int64",
+          "description" : "Number of cards in this Collection"
+        },
+        "emoji" : {
+          "type" : "string"
         }
       }
     },
@@ -18215,31 +18149,6 @@
         }
       }
     },
-    "QualityAgentRunDetailUpdate" : {
-      "type" : "object",
-      "properties" : {
-        "confidenceScore" : {
-          "type" : "number",
-          "format" : "double"
-        },
-        "actionNotes" : {
-          "type" : "string"
-        },
-        "action" : {
-          "type" : "string",
-          "enum" : [ "VERIFY", "UNVERIFY", "ERROR", "SKIPPED", "INSUFFICIENT_INFO" ]
-        },
-        "usages" : {
-          "type" : "array",
-          "items" : {
-            "$ref" : "#/definitions/TokenUsage"
-          }
-        },
-        "ruleId" : {
-          "type" : "string"
-        }
-      }
-    },
     "QualityAgentSimulation" : {
       "type" : "object",
       "required" : [ "agentId", "mode" ],
@@ -18272,20 +18181,14 @@
         "config" : {
           "type" : "object",
           "additionalProperties" : {
-            "$ref" : "#/definitions/QualityConfigEntry"
+            "$ref" : "#/definitions/QualityConfigModeEntry"
           }
         }
       }
     },
-    "QualityConfigEntry" : {
+    "QualityConfigModeEntry" : {
       "type" : "object",
       "properties" : {
-        "verificationRules" : {
-          "type" : "array",
-          "items" : {
-            "$ref" : "#/definitions/QualityRule"
-          }
-        },
         "enabled" : {
           "type" : "boolean"
         }
@@ -18317,15 +18220,15 @@
         "query" : {
           "$ref" : "#/definitions/Expression"
         },
+        "startIndex" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
         "collectionIds" : {
           "type" : "array",
           "items" : {
             "type" : "string"
           }
-        },
-        "maxResults" : {
-          "type" : "integer",
-          "format" : "int32"
         },
         "sorts" : {
           "type" : "array",
@@ -18333,11 +18236,19 @@
             "$ref" : "#/definitions/Sort"
           }
         },
-        "showArchived" : {
-          "type" : "boolean"
+        "queryType" : {
+          "type" : "string",
+          "enum" : [ "cards", "archived", "draft", "legacy", "search_cards" ]
         },
         "searchTerms" : {
           "type" : "string"
+        },
+        "maxResults" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "showArchived" : {
+          "type" : "boolean"
         },
         "collectionUids" : {
           "type" : "array",
@@ -18354,14 +18265,6 @@
         },
         "phrase" : {
           "type" : "string"
-        },
-        "startIndex" : {
-          "type" : "integer",
-          "format" : "int32"
-        },
-        "queryType" : {
-          "type" : "string",
-          "enum" : [ "cards", "archived", "draft", "legacy", "search_cards" ]
         }
       }
     },
@@ -18698,13 +18601,13 @@
     "SearchQuerySpec" : {
       "type" : "object",
       "properties" : {
-        "includeFacets" : {
-          "type" : "boolean"
-        },
-        "includeSnippets" : {
-          "type" : "boolean"
-        },
         "includeContent" : {
+          "type" : "boolean"
+        },
+        "chunkDocs" : {
+          "type" : "boolean"
+        },
+        "limitToAllMemberAccess" : {
           "type" : "boolean"
         },
         "sourceTypes" : {
@@ -18713,11 +18616,21 @@
             "type" : "string"
           }
         },
+        "includeFacets" : {
+          "type" : "boolean"
+        },
+        "includeSnippets" : {
+          "type" : "boolean"
+        },
         "agentId" : {
           "type" : "string"
         },
         "query" : {
           "$ref" : "#/definitions/Expression"
+        },
+        "startIndex" : {
+          "type" : "integer",
+          "format" : "int32"
         },
         "collectionIds" : {
           "type" : "array",
@@ -18725,21 +18638,25 @@
             "type" : "string"
           }
         },
-        "maxResults" : {
-          "type" : "integer",
-          "format" : "int32"
-        },
         "sorts" : {
           "type" : "array",
           "items" : {
             "$ref" : "#/definitions/Sort"
           }
         },
-        "showArchived" : {
-          "type" : "boolean"
+        "queryType" : {
+          "type" : "string",
+          "enum" : [ "cards", "archived", "draft", "legacy", "search_cards" ]
         },
         "searchTerms" : {
           "type" : "string"
+        },
+        "maxResults" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "showArchived" : {
+          "type" : "boolean"
         },
         "collectionUids" : {
           "type" : "array",
@@ -18756,14 +18673,6 @@
         },
         "phrase" : {
           "type" : "string"
-        },
-        "startIndex" : {
-          "type" : "integer",
-          "format" : "int32"
-        },
-        "queryType" : {
-          "type" : "string",
-          "enum" : [ "cards", "archived", "draft", "legacy", "search_cards" ]
         }
       }
     },
@@ -19001,28 +18910,21 @@
         "definition" : {
           "$ref" : "#/definitions/SourceDefinition"
         },
+        "description" : {
+          "type" : "string"
+        },
+        "config" : {
+          "$ref" : "#/definitions/SourceConfig"
+        },
         "createdBy" : {
           "$ref" : "#/definitions/User"
         },
-        "syncStatus" : {
-          "type" : "string",
-          "enum" : [ "SYNCING", "SYNCED", "FAILED", "INVALID" ]
+        "iconUrl" : {
+          "type" : "string"
         },
         "lastSyncedDate" : {
           "type" : "string",
           "format" : "date-time"
-        },
-        "sourceObjectTypes" : {
-          "type" : "array",
-          "items" : {
-            "$ref" : "#/definitions/ObjectType"
-          }
-        },
-        "applicationId" : {
-          "type" : "string"
-        },
-        "iconUrl" : {
-          "type" : "string"
         },
         "statusReason" : {
           "type" : "string",
@@ -19032,12 +18934,22 @@
           "type" : "string",
           "format" : "date-time"
         },
+        "syncStatus" : {
+          "type" : "string",
+          "enum" : [ "SYNCING", "SYNCED", "FAILED", "INVALID" ]
+        },
         "connectionId" : {
           "type" : "string"
         },
         "authorizedBy" : {
           "type" : "string",
           "readOnly" : true
+        },
+        "sourceObjectTypes" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/ObjectType"
+          }
         },
         "connectionName" : {
           "type" : "string"
@@ -19078,14 +18990,11 @@
             "$ref" : "#/definitions/RemoteSourceObjectSync"
           }
         },
-        "config" : {
-          "$ref" : "#/definitions/SourceConfig"
-        },
-        "description" : {
-          "type" : "string"
-        },
         "team" : {
           "$ref" : "#/definitions/Team"
+        },
+        "applicationId" : {
+          "type" : "string"
         }
       }
     },
@@ -19146,10 +19055,16 @@
         "type" : {
           "type" : "string"
         },
-        "iconUrl" : {
+        "description" : {
           "type" : "string"
         },
+        "config" : {
+          "$ref" : "#/definitions/SourceDefinitionConfig"
+        },
         "category" : {
+          "type" : "string"
+        },
+        "iconUrl" : {
           "type" : "string"
         },
         "configType" : {
@@ -19160,20 +19075,14 @@
           "type" : "string",
           "enum" : [ "NONE", "GENERAL", "TEAM" ]
         },
+        "supportsDynamicDisplayProperties" : {
+          "type" : "boolean"
+        },
         "requestAccess" : {
           "type" : "boolean"
         },
         "manualSyncAllowed" : {
           "type" : "boolean"
-        },
-        "supportsDynamicDisplayProperties" : {
-          "type" : "boolean"
-        },
-        "config" : {
-          "$ref" : "#/definitions/SourceDefinitionConfig"
-        },
-        "description" : {
-          "type" : "string"
         }
       }
     },
@@ -19267,10 +19176,6 @@
         "objectType" : {
           "$ref" : "#/definitions/ObjectType"
         },
-        "syncStatus" : {
-          "type" : "string",
-          "enum" : [ "SYNCING", "SYNCED", "FAILED", "INVALID" ]
-        },
         "lastSyncedDate" : {
           "type" : "string",
           "format" : "date-time"
@@ -19283,8 +19188,9 @@
           "type" : "string",
           "format" : "date-time"
         },
-        "tagConfig" : {
-          "$ref" : "#/definitions/ObjectTagConfig"
+        "syncStatus" : {
+          "type" : "string",
+          "enum" : [ "SYNCING", "SYNCED", "FAILED", "INVALID" ]
         },
         "lastSyncCompleted" : {
           "type" : "string",
@@ -19313,6 +19219,9 @@
         "lastStatusReason" : {
           "type" : "string",
           "enum" : [ "INVALID_AUTHENTICATION", "UNAUTHORIZED", "NO_API_ACCESS", "TARGET_INACCESSIBLE", "TOO_LARGE", "TARGET_INSECURE", "AUTH_EXPIRED", "MISSING_FEATURE", "API_ERROR", "NO_ADMIN", "API_TIMEOUT", "API_INTERRUPTED", "PARSING_ERROR", "EXTRACTION_ERROR", "HOMEBOARD_IMPORT_FAILED", "JOB_TIMEOUT", "UNKNOWN_ERROR" ]
+        },
+        "tagConfig" : {
+          "$ref" : "#/definitions/ObjectTagConfig"
         }
       }
     },
@@ -19372,16 +19281,35 @@
             "description" : "The date that the directory was last modified",
             "readOnly" : true
           },
-          "lastModifiedBy" : {
-            "description" : "Returns a User object for the User who last modified the directory",
+          "description" : {
+            "type" : "string",
+            "description" : "An optional short description of the directory"
+          },
+          "title" : {
+            "type" : "string",
+            "description" : "The title of the directory"
+          },
+          "collection" : {
+            "description" : "Returns the Collection object that the directory belongs to",
             "readOnly" : true,
-            "$ref" : "#/definitions/User"
+            "$ref" : "#/definitions/CollectionModel"
+          },
+          "favoritedDate" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "When this directory has been favorited by the current user",
+            "readOnly" : true
           },
           "slug" : {
             "type" : "string",
             "example" : "https://app.getguru.com/boards/:slug_goes_here",
             "description" : "The slug is the URL address to the directory",
             "readOnly" : true
+          },
+          "lastModifiedBy" : {
+            "description" : "Returns a User object for the User who last modified the directory",
+            "readOnly" : true,
+            "$ref" : "#/definitions/User"
           },
           "groupsSharedWith" : {
             "type" : "array",
@@ -19396,30 +19324,11 @@
             "description" : "Whether this board has been favorited by the current user",
             "readOnly" : true
           },
-          "favoritedDate" : {
-            "type" : "string",
-            "format" : "date-time",
-            "description" : "When this directory has been favorited by the current user",
-            "readOnly" : true
-          },
           "numberOfFacts" : {
             "type" : "integer",
             "format" : "int32",
             "description" : "The number of cards in the directory",
             "readOnly" : true
-          },
-          "description" : {
-            "type" : "string",
-            "description" : "An optional short description of the directory"
-          },
-          "title" : {
-            "type" : "string",
-            "description" : "The title of the directory"
-          },
-          "collection" : {
-            "description" : "Returns the Collection object that the directory belongs to",
-            "readOnly" : true,
-            "$ref" : "#/definitions/CollectionModel"
           }
         },
         "x-discriminator-values" : [ "folder" ]
@@ -19448,6 +19357,10 @@
           "example" : "IDs are formatted like this: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
           "description" : "The ID of the Tag"
         },
+        "categoryName" : {
+          "type" : "string",
+          "description" : "If the tag belongs to a category, this is the name for the category"
+        },
         "numberOfCards" : {
           "type" : "integer",
           "format" : "int64",
@@ -19457,10 +19370,6 @@
           "type" : "string",
           "example" : "IDs are formatted like this: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
           "description" : "If the tag belongs to a category, this is the ID for the category"
-        },
-        "categoryName" : {
-          "type" : "string",
-          "description" : "If the tag belongs to a category, this is the name for the category"
         }
       },
       "description" : "Information about the Tag and its Category"
@@ -19474,18 +19383,18 @@
         "id" : {
           "type" : "string"
         },
-        "createdBy" : {
-          "$ref" : "#/definitions/User"
-        },
-        "defaultCategory" : {
-          "type" : "boolean"
-        },
         "tags" : {
           "type" : "array",
           "uniqueItems" : true,
           "items" : {
             "$ref" : "#/definitions/Tag"
           }
+        },
+        "createdBy" : {
+          "$ref" : "#/definitions/User"
+        },
+        "defaultCategory" : {
+          "type" : "boolean"
         },
         "collection" : {
           "$ref" : "#/definitions/CollectionModel"
@@ -19502,15 +19411,15 @@
       }, {
         "type" : "object",
         "properties" : {
+          "op" : {
+            "type" : "string",
+            "enum" : [ "EXISTS", "NOTEXISTS" ]
+          },
           "ids" : {
             "type" : "array",
             "items" : {
               "type" : "string"
             }
-          },
-          "op" : {
-            "type" : "string",
-            "enum" : [ "EXISTS", "NOTEXISTS" ]
           }
         },
         "x-discriminator-values" : [ "tagcategory" ]
@@ -19522,15 +19431,15 @@
       }, {
         "type" : "object",
         "properties" : {
+          "op" : {
+            "type" : "string",
+            "enum" : [ "EXISTS", "NOTEXISTS" ]
+          },
           "ids" : {
             "type" : "array",
             "items" : {
               "type" : "string"
             }
-          },
-          "op" : {
-            "type" : "string",
-            "enum" : [ "EXISTS", "NOTEXISTS" ]
           }
         },
         "x-discriminator-values" : [ "tag" ]
@@ -19562,30 +19471,22 @@
           "type" : "string",
           "description" : "ID of the fact"
         },
-        "deleted" : {
-          "type" : "boolean",
-          "description" : "Indicates if the fact has been deleted"
-        },
-        "trialExpirationDate" : {
-          "type" : "string",
-          "format" : "date-time"
-        },
-        "edition" : {
-          "$ref" : "#/definitions/TeamEdition"
-        },
-        "profilePicUrl" : {
-          "type" : "string"
-        },
-        "companyName" : {
-          "type" : "string",
-          "description" : "Team Company Name"
-        },
-        "currentUserIsMember" : {
-          "type" : "boolean"
-        },
         "domain" : {
           "type" : "string",
           "description" : "Domain"
+        },
+        "description" : {
+          "type" : "string"
+        },
+        "status" : {
+          "type" : "string",
+          "enum" : [ "ACTIVE", "DORMANT", "LOCKED", "EXPIRED", "LOCKED_PAY" ]
+        },
+        "organization" : {
+          "$ref" : "#/definitions/Organization"
+        },
+        "currentUserIsMember" : {
+          "type" : "boolean"
         },
         "billableUsers" : {
           "type" : "integer",
@@ -19614,6 +19515,10 @@
           "type" : "string",
           "enum" : [ "FREE_CORE", "CORE" ]
         },
+        "trialExpirationDate" : {
+          "type" : "string",
+          "format" : "date-time"
+        },
         "fileSharingDisabled" : {
           "type" : "boolean"
         },
@@ -19641,15 +19546,9 @@
         "allMembersGroupId" : {
           "type" : "string"
         },
-        "description" : {
-          "type" : "string"
-        },
-        "status" : {
-          "type" : "string",
-          "enum" : [ "ACTIVE", "DORMANT", "LOCKED", "EXPIRED", "LOCKED_PAY" ]
-        },
-        "organization" : {
-          "$ref" : "#/definitions/Organization"
+        "deleted" : {
+          "type" : "boolean",
+          "description" : "Indicates if the fact has been deleted"
         },
         "dateCreated" : {
           "type" : "string",
@@ -19661,6 +19560,16 @@
         },
         "useCase" : {
           "type" : "string"
+        },
+        "edition" : {
+          "$ref" : "#/definitions/TeamEdition"
+        },
+        "profilePicUrl" : {
+          "type" : "string"
+        },
+        "companyName" : {
+          "type" : "string",
+          "description" : "Team Company Name"
         }
       }
     },
@@ -19681,9 +19590,6 @@
     "TeamDomain" : {
       "type" : "object",
       "properties" : {
-        "verificationCode" : {
-          "type" : "string"
-        },
         "domain" : {
           "type" : "string"
         },
@@ -19692,6 +19598,9 @@
         },
         "capture" : {
           "type" : "boolean"
+        },
+        "verificationCode" : {
+          "type" : "string"
         }
       }
     },
@@ -19713,13 +19622,6 @@
         "id" : {
           "type" : "string"
         },
-        "usage" : {
-          "type" : "object",
-          "additionalProperties" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        },
         "features" : {
           "type" : "object",
           "additionalProperties" : {
@@ -19728,6 +19630,13 @@
         },
         "code" : {
           "type" : "string"
+        },
+        "usage" : {
+          "type" : "object",
+          "additionalProperties" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
         }
       }
     },
@@ -19825,23 +19734,6 @@
           "type" : "string",
           "description" : "ID of the team member"
         },
-        "highestRole" : {
-          "type" : "string",
-          "enum" : [ "ADMIN", "AUTHOR", "MEMBER", "COLL_ADMIN" ]
-        },
-        "numberOfCardsAsVerifier" : {
-          "type" : "integer",
-          "format" : "int64"
-        },
-        "managedByScim" : {
-          "type" : "boolean"
-        },
-        "userAttributes" : {
-          "type" : "object",
-          "additionalProperties" : {
-            "type" : "string"
-          }
-        },
         "user" : {
           "description" : "The team member",
           "$ref" : "#/definitions/User"
@@ -19858,6 +19750,23 @@
         "dateCreated" : {
           "type" : "string",
           "format" : "date-time"
+        },
+        "userAttributes" : {
+          "type" : "object",
+          "additionalProperties" : {
+            "type" : "string"
+          }
+        },
+        "highestRole" : {
+          "type" : "string",
+          "enum" : [ "ADMIN", "AUTHOR", "MEMBER", "COLL_ADMIN" ]
+        },
+        "numberOfCardsAsVerifier" : {
+          "type" : "integer",
+          "format" : "int64"
+        },
+        "managedByScim" : {
+          "type" : "boolean"
         }
       }
     },
@@ -19908,32 +19817,6 @@
         "x-discriminator-values" : [ "title" ]
       } ]
     },
-    "TokenUsage" : {
-      "type" : "object",
-      "properties" : {
-        "promptTokens" : {
-          "type" : "integer",
-          "format" : "int64"
-        },
-        "completionTokens" : {
-          "type" : "integer",
-          "format" : "int64"
-        },
-        "totalTokens" : {
-          "type" : "integer",
-          "format" : "int64"
-        },
-        "model" : {
-          "type" : "string"
-        },
-        "activityName" : {
-          "type" : "string"
-        },
-        "rawTokenUsageData" : {
-          "type" : "object"
-        }
-      }
-    },
     "TopPerformersExpression" : {
       "allOf" : [ {
         "$ref" : "#/definitions/Expression"
@@ -19948,13 +19831,13 @@
       }, {
         "type" : "object",
         "properties" : {
-          "verificationState" : {
-            "type" : "string",
-            "enum" : [ "TRUSTED", "STALE", "NEEDS_VERIFICATION", "SYNCED_NO_VERIFICATION", "NONE" ]
-          },
           "op" : {
             "type" : "string",
             "enum" : [ "EQ", "NE" ]
+          },
+          "verificationState" : {
+            "type" : "string",
+            "enum" : [ "TRUSTED", "STALE", "NEEDS_VERIFICATION", "SYNCED_NO_VERIFICATION", "NONE" ]
           }
         },
         "x-discriminator-values" : [ "trust-state" ]
@@ -19985,13 +19868,26 @@
           "type" : "string",
           "description" : "The identifier of this User"
         },
-        "firstName" : {
+        "status" : {
           "type" : "string",
-          "description" : "The user's first name"
+          "description" : "The status of a User can be ACTIVE or PENDING. The User must verify their email address to be considered ACTIVE.",
+          "enum" : [ "ACTIVE", "PENDING" ]
+        },
+        "email" : {
+          "type" : "string",
+          "description" : "The user's email address"
+        },
+        "userProfile" : {
+          "description" : "Additional information about a user",
+          "$ref" : "#/definitions/UserProfile"
         },
         "lastName" : {
           "type" : "string",
           "description" : "The user's last name"
+        },
+        "firstName" : {
+          "type" : "string",
+          "description" : "The user's first name"
         },
         "profilePicUrl" : {
           "type" : "string",
@@ -20007,19 +19903,6 @@
         "userType" : {
           "type" : "string",
           "enum" : [ "USER", "KNOWLEDGE_AGENT" ]
-        },
-        "status" : {
-          "type" : "string",
-          "description" : "The status of a User can be ACTIVE or PENDING. The User must verify their email address to be considered ACTIVE.",
-          "enum" : [ "ACTIVE", "PENDING" ]
-        },
-        "email" : {
-          "type" : "string",
-          "description" : "The user's email address"
-        },
-        "userProfile" : {
-          "description" : "Additional information about a user",
-          "$ref" : "#/definitions/UserProfile"
         }
       }
     },
@@ -20118,6 +20001,18 @@
             "$ref" : "#/definitions/UserGroupMember"
           }
         },
+        "role" : {
+          "type" : "string",
+          "enum" : [ "ADMIN", "AUTHOR", "MEMBER", "COLL_ADMIN" ]
+        },
+        "team" : {
+          "$ref" : "#/definitions/Team"
+        },
+        "dateCreated" : {
+          "type" : "string",
+          "format" : "date-time",
+          "description" : "Date the group was created. Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000"
+        },
         "expertIdRank" : {
           "type" : "integer",
           "format" : "int64"
@@ -20144,29 +20039,15 @@
         },
         "singleUser" : {
           "type" : "boolean"
-        },
-        "role" : {
-          "type" : "string",
-          "enum" : [ "ADMIN", "AUTHOR", "MEMBER", "COLL_ADMIN" ]
-        },
-        "team" : {
-          "$ref" : "#/definitions/Team"
-        },
-        "dateCreated" : {
-          "type" : "string",
-          "format" : "date-time",
-          "description" : "Date the group was created. Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000"
         }
       }
     },
     "UserGroupAccess" : {
       "type" : "object",
       "properties" : {
-        "objectRole" : {
-          "$ref" : "#/definitions/Role"
-        },
         "groupId" : {
-          "type" : "string"
+          "type" : "string",
+          "description" : "The ID of the group to grant access to. In place of a group ID, you may provide a user's email address to target an individual user."
         },
         "role" : {
           "type" : "string",
@@ -20177,6 +20058,9 @@
         },
         "groupName" : {
           "type" : "string"
+        },
+        "objectRole" : {
+          "$ref" : "#/definitions/Role"
         }
       }
     },
@@ -20201,9 +20085,6 @@
           "type" : "string",
           "description" : "ID of the group member"
         },
-        "managedByScim" : {
-          "type" : "boolean"
-        },
         "user" : {
           "description" : "The group member",
           "$ref" : "#/definitions/User"
@@ -20212,6 +20093,9 @@
           "type" : "string",
           "format" : "date-time",
           "description" : "Date the group member was added to the group. Dates are in ISO-8601 format. Example date (January 2nd 2014 12pm UTC): 2014-01-02T12:00:00.000+0000"
+        },
+        "managedByScim" : {
+          "type" : "boolean"
         }
       }
     },
@@ -20254,6 +20138,10 @@
     "UserProfile" : {
       "type" : "object",
       "properties" : {
+        "role" : {
+          "type" : "string",
+          "description" : "The functional role a Guru user performs on their team"
+        },
         "roleLevel" : {
           "type" : "string",
           "description" : "The level at which the user operates in their current role"
@@ -20264,10 +20152,6 @@
           "items" : {
             "$ref" : "#/definitions/UseCase"
           }
-        },
-        "role" : {
-          "type" : "string",
-          "description" : "The functional role a Guru user performs on their team"
         }
       },
       "description" : "Specifies additional information about a Guru User"
@@ -20293,12 +20177,12 @@
       }, {
         "type" : "object",
         "properties" : {
+          "email" : {
+            "type" : "string"
+          },
           "op" : {
             "type" : "string",
             "enum" : [ "EQ", "NE" ]
-          },
-          "email" : {
-            "type" : "string"
           }
         },
         "x-discriminator-values" : [ "user-verifier" ]
@@ -20400,19 +20284,19 @@
           "type" : "string",
           "enum" : [ "FEATURED_CARDS", "FEATURED_CARDS_V2", "CONTENT", "ANNOUNCEMENTS", "RECOMMENDED_FOR_YOU", "IMAGE" ]
         },
-        "dateLastUpdated" : {
-          "type" : "string",
-          "format" : "date-time"
-        },
-        "lastUpdatedBy" : {
-          "type" : "string"
-        },
         "visible" : {
           "type" : "boolean"
         },
         "dateCreated" : {
           "type" : "string",
           "format" : "date-time"
+        },
+        "dateLastUpdated" : {
+          "type" : "string",
+          "format" : "date-time"
+        },
+        "lastUpdatedBy" : {
+          "type" : "string"
         }
       }
     },
