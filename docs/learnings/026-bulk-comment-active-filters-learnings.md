@@ -41,9 +41,43 @@
   fields, or (b) integration tests against a live/staging server that would
   catch a filter silently not filtering.
 
+- **Positional codegen names are a silent-correctness hazard, not just a
+  readability one.** Review of this PR turned up that the refresh renumbered
+  18 surviving anonymous enum names onto *different* member sets — `Op10`
+  went from `EQ`/`NE` to `AND`/`OR`, `Op17` from `EXISTS`/`NOTEXISTS` to
+  `ISPUBLIC`/`ISNOTPUBLIC`, `Op20` from 2 members to 12. Every model *field's*
+  allowed value set was preserved, which is what "value-preserving" in the
+  grooming plan actually meant; the plan's stronger claim that all affected
+  *classes* were value-preserving was not accurate. Nothing broke only because
+  `Type8` — the sole numbered name referenced outside `_generated.py`
+  (`contrib/publisher.py`, `contrib/workflows.py`) — happened to be stable.
+  Had it shifted, the annotation would still have type-checked and validation
+  would still have passed: `mypy --strict` and all 719 tests would have stayed
+  green while folder/card dispatch compared against the wrong enum.
+
 ## What We'd Do Differently
 
-- Nothing material for this story's scope. For the broader codebase: a
-  recurring post-spec-refresh check for renamed (not just added/removed)
-  query params on existing methods would catch this class of drift earlier,
-  before a story like sc-158926 has to trace it back manually.
+- **Guard the positional names, don't just document them.**
+  `docs/conventions.md` already warned that numbered enum names can shift on
+  regeneration, but a prose warning in a conventions doc is not load-bearing —
+  it did not stop this refresh from shipping an unverified `Type8` dependency.
+  Added `PINNED_ANONYMOUS_ENUMS` in `tests/models/test_generated.py`: a pin
+  table asserting the exact members of every numbered enum referenced by name,
+  plus `test_every_referenced_anonymous_enum_is_pinned`, which scans `src/` and
+  fails if a new by-name reference is added without a pin. The rule now
+  enforces itself rather than depending on someone reading the docs. Verified
+  by mutation — emptying the table, corrupting the expected members, and
+  simulating a renumbered-away name each produce a distinct, actionable
+  failure. The pin's failure message deliberately says *repoint the consumer*,
+  not *update the pin*, since updating the pin to match would hide exactly the
+  bug it exists to catch.
+- The better long-term fix is to not depend on positional names at all —
+  resolve the enum through its parent model's field annotation, or match on
+  the string value. Pinning makes the dependency safe; removing it makes the
+  dependency unnecessary.
+- For the broader codebase: a recurring post-spec-refresh check for renamed
+  (not just added/removed) query params on existing methods would catch this
+  class of drift earlier, before a story like sc-158926 has to trace it back
+  manually. Now written up as a post-refresh checklist in
+  `docs/conventions.md` covering all four failure modes seen here: renamed
+  query params, renumbered enums, removed definitions, and narrowed enums.

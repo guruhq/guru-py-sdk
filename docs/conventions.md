@@ -130,6 +130,15 @@ python scripts/generate_models.py
 
 Generated code is committed — inspectable, diffable, reviewable. The generator applies `GuruModel` base class, field aliases, and filters out deprecated schemas.
 
+### Post-Refresh Checklist
+
+A refresh diff is large but mostly meaningless — the server emits Swagger properties in a nondeterministic order, so thousands of lines churn with no semantic change. Do not try to read it line by line. Check these instead:
+
+1. **`make check` is green** — ruff, `mypy --strict`, and the full suite. The pin tests below live here.
+2. **Renamed query params on endpoints you already call.** Diff the `paths` block, not just `definitions`. This is the failure mode iteration 026 existed to fix: `/comments` renamed `createdAfter` → `activeAfter`, and because the endpoint ignores unknown query params, the SDK's filters silently stopped applying instead of erroring. Added/removed fields are the easy case; renames are the dangerous one.
+3. **Numbered enums you reference by name** — see the pinning rule under *Generated Code Rules*.
+4. **Removed or narrowed definitions.** Grep `src/`, `tests/`, and `examples/` for anything the refresh dropped. A narrowed enum can also be a latent break: if a response can still carry the removed member, validation will now reject it even though nothing fails today.
+
 ### Manual Models for Internal API
 
 Models for endpoints not in the public Swagger spec live in `models/_manual.py` — hand-written but following the same conventions as generated models. Currently covers: `PageDraft`, `PagePermission`, `PageDraftCollaborator`.
@@ -144,7 +153,13 @@ Models for endpoints not in the public Swagger spec live in `models/_manual.py` 
 - Three-way field access: create from API dicts via camelCase alias, access via snake_case field name, serialize to API via `model_dump(by_alias=True)`
 - Tests for generated models use realistic API shapes (real UUIDs, correct enum values, required fields)
 - **No override mechanism yet** — if a regeneration breaks something, that's the signal to add `swagger/overrides.json` with post-processing rules. Until then, `EXCLUDED_SCHEMAS` in the generator and `models/_manual.py` are sufficient.
-- **`Type1`, `Type2`, ... `TypeN` enums** — the Swagger spec has inline enums without explicit names (e.g., the `type` field on `FolderItem` can be `"card"` or `"folder"`). Since these enums aren't named in the spec, `datamodel-code-generator` assigns sequential names like `Type9`. The numbers are arbitrary — they reflect the order the enum was encountered during generation and can change on regeneration. When working with these, check `_generated.py` for the actual enum values rather than guessing from the name. If this becomes a readability problem, the deferred codegen override mechanism (iteration 018) could rename them in post-processing.
+- **`Type1`, `Op2`, ... numbered enums** — the Swagger spec has inline enums without explicit names (e.g., the `type` field on `FolderItem` can be `"card"` or `"folder"`). Since these enums aren't named in the spec, `datamodel-code-generator` assigns sequential names like `Type9` or `Op12`. The numbers are arbitrary — they reflect the order the enum was encountered during generation and can change on regeneration. When working with these, check `_generated.py` for the actual enum values rather than guessing from the name. If this becomes a readability problem, the deferred codegen override mechanism (iteration 018) could rename them in post-processing.
+
+- **Pin any numbered enum you reference by name.** Renumbering is not just a readability problem — it is a *silent correctness* problem. Because the names are positional, an unrelated upstream spec change can hand a surviving name a completely different member set, and both the annotation and validation still pass. The iteration 026 spec refresh did exactly this: 18 names changed meaning (`Op10` went from `EQ`/`NE` to `AND`/`OR`, `Op17` from `EXISTS`/`NOTEXISTS` to `ISPUBLIC`/`ISNOTPUBLIC`), with no mypy error and no failing test. Nothing broke only because `Type8` — the one name referenced outside `_generated.py` — happened to be stable.
+
+  So: **if you reference a numbered class by name outside `_generated.py`, add it to `PINNED_ANONYMOUS_ENUMS` in `tests/models/test_generated.py`** with its expected members and a note on where it is used. `test_every_referenced_anonymous_enum_is_pinned` scans `src/` and fails if you forget, so this rule enforces itself.
+
+  When a pin fails after a spec refresh, **do not update the pin to match the new values** — that hides the bug. The name was renumbered onto a different enum; find the class that now holds the expected members and repoint the consumers at it. Prefer resolving the enum via its parent model's field annotation (or matching on the string value) over importing a numbered name, so there is nothing positional to pin in the first place.
 
 ## Patterns and Rules
 

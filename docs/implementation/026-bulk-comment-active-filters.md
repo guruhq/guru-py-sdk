@@ -60,9 +60,15 @@ filters silently no-op instead of raising an error.
 
 ## What Changed From Plan
 
-- None. This was a pure rename exactly as scoped — no model-shape concerns
-  (confirmed by US-001), no new HTTP-layer code, no additional test coverage
-  beyond renaming the three tests that referenced the old kwarg names.
+- The rename itself landed exactly as scoped — no model-shape concerns
+  (confirmed by US-001), no new HTTP-layer code.
+- **US-003 (added during review): pin the anonymous numbered enums.** Review
+  found that US-001's refresh renumbered 18 surviving `Op*`/`Type*` names onto
+  different member sets. No code change was required — `Type8`, the only such
+  name referenced outside `_generated.py`, was unchanged — but the absence of
+  any test asserting that made the safety accidental. Added a pin table and a
+  self-enforcing coverage test so a future refresh cannot repeat the risk
+  silently. See the 026 learnings record for the full analysis.
 
 ## Test Coverage
 
@@ -70,7 +76,14 @@ filters silently no-op instead of raising an error.
   (`tests/resources/test_cards.py`): filter query-param assertions,
   full-ISO-8601-timestamp handling, pre-encoded-timestamp rejection. All 9
   tests in the class pass (the 3 renamed plus 6 unchanged siblings).
-- Full suite: 719 tests, all passing (same count as after US-001 — a pure
-  rename adds no new coverage).
+- 2 new tests in `TestPinnedAnonymousEnums`
+  (`tests/models/test_generated.py`): `test_pinned_enum_members_unchanged`
+  pins `Type8` to `card`/`folder` (consumed by name in `contrib/publisher.py`
+  and `contrib/workflows.py`), and
+  `test_every_referenced_anonymous_enum_is_pinned` scans `src/guru_sdk/` for
+  by-name references to numbered enums and fails on any that lack a pin.
+  Both were mutation-verified: emptying the pin table, corrupting the expected
+  members, and renaming the pinned key each fail with a distinct message.
+- Full suite: 721 tests, all passing (719 after US-002, plus the 2 pins).
 - `uv run ruff check src tests`, `uv run ruff format --check src tests`, and
   `uv run mypy src/guru_sdk/ --strict`: all clean.
