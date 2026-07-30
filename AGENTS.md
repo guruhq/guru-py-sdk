@@ -32,6 +32,7 @@ Two-layer separation: `src/guru_sdk/` (SDK core) and `src/commands/` never exist
 - **No circular imports**: Resources depend on `http`, `models`, `errors` — never on `client.py` or each other.
 - **Two validation modes**: `validate_input()` for IDs/names (strict), `validate_free_text()` for natural language (lenient).
 - **Name resolution**: Resources accept UUIDs or names, resolve transparently.
+- **Pin numbered enums**: `Type8`, `Op10`, etc. are *positional* codegen names — a spec refresh can silently repoint them at a different member set. Referencing one by name outside `_generated.py` requires a pin in `PINNED_ANONYMOUS_ENUMS` (`tests/models/test_generated.py`). See `docs/conventions.md`.
 
 ## Documentation
 

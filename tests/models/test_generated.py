@@ -8,9 +8,13 @@ These tests validate that:
 5. Cross-references between models work (e.g., Card → User, Card → CollectionModel)
 6. Enum fields validate correctly
 7. Excluded schemas (Board, etc.) are not present
+8. Anonymous numbered enums referenced by name (Type8, ...) keep their members
 """
 
 from __future__ import annotations
+
+import re
+from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
@@ -329,3 +333,82 @@ class TestExcludedSchemas:
         import guru_sdk.models._generated as gen
 
         assert not hasattr(gen, class_name), f"{class_name} should have been excluded"
+
+
+# =============================================================================
+# Pinned Anonymous Enums — numbered names are POSITIONAL, so pin what we use
+# =============================================================================
+#
+# The Swagger spec has inline enums with no name of their own, so
+# datamodel-code-generator assigns sequential names (`Type8`, `Op10`, ...).
+# Those numbers reflect only the order the enum was encountered during
+# generation: an unrelated upstream spec change can renumber them, handing a
+# surviving name a completely different set of members. A renumbered name
+# still type-checks and still validates, so a by-name reference can silently
+# change meaning with no mypy error and no test failure.
+#
+# The guard is this pin table. If you reference a numbered class by name
+# anywhere outside `_generated.py`, add it here with its expected members and
+# a note on where it is used. `test_every_referenced_anonymous_enum_is_pinned`
+# fails if you forget. See docs/conventions.md ("Generated Code Rules").
+
+PINNED_ANONYMOUS_ENUMS: dict[str, dict[str, str]] = {
+    # `FolderItem.type` dispatch — referenced by name in
+    # contrib/publisher.py and contrib/workflows.py.
+    "Type8": {"card": "card", "folder": "folder"},
+}
+
+# Prefixes datamodel-code-generator uses for anonymous inline enums.
+_ANON_ENUM_RE = re.compile(r"\b((?:Type|Op|Status|Kind|Mode|Format|State|Action|Role|Scope)\d+)\b")
+
+
+class TestPinnedAnonymousEnums:
+    """Numbered enum names are positional; pin the members of the ones we use."""
+
+    @pytest.mark.parametrize("class_name", sorted(PINNED_ANONYMOUS_ENUMS))
+    def test_pinned_enum_members_unchanged(self, class_name: str) -> None:
+        """A pinned enum must keep exactly the members its consumers expect.
+
+        If this fails after a spec refresh, the name was renumbered onto a
+        different enum. Do NOT update the pin to match — find the class that
+        now holds these members and repoint the consumers at it.
+        """
+        import guru_sdk.models._generated as gen
+
+        enum_cls = getattr(gen, class_name, None)
+        assert enum_cls is not None, (
+            f"{class_name} no longer exists in _generated.py — it was renumbered "
+            f"away. Find the class holding {PINNED_ANONYMOUS_ENUMS[class_name]} "
+            f"and update its consumers."
+        )
+        actual = {member.name: member.value for member in enum_cls}
+        assert actual == PINNED_ANONYMOUS_ENUMS[class_name], (
+            f"{class_name} changed members — it was renumbered onto a different "
+            f"inline enum. Repoint consumers at the correct class rather than "
+            f"editing the pin."
+        )
+
+    def test_every_referenced_anonymous_enum_is_pinned(self) -> None:
+        """Any numbered enum referenced from src/ must have a pin above."""
+        src_root = Path(__file__).resolve().parents[2] / "src" / "guru_sdk"
+        import guru_sdk.models._generated as gen
+
+        referenced: dict[str, set[str]] = {}
+        for path in src_root.rglob("*.py"):
+            if path.name == "_generated.py":
+                continue
+            for name in _ANON_ENUM_RE.findall(path.read_text()):
+                # Only names that are actually generated classes count; this
+                # keeps unrelated identifiers from tripping the check.
+                if isinstance(getattr(gen, name, None), type):
+                    referenced.setdefault(name, set()).add(path.name)
+
+        unpinned = {name: sorted(files) for name, files in referenced.items()}
+        for name in PINNED_ANONYMOUS_ENUMS:
+            unpinned.pop(name, None)
+
+        assert not unpinned, (
+            f"These anonymous enums are referenced by name but not pinned: "
+            f"{unpinned}. Add each to PINNED_ANONYMOUS_ENUMS so a spec refresh "
+            f"that renumbers them fails loudly instead of silently."
+        )

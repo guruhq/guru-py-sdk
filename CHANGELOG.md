@@ -20,6 +20,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   group collaborators under `userGroup` (pages use `group` — ADR-014), so
   user-group collaborators now parse correctly. Any caller reading `.group` on a
   card-draft collaborator must switch to `.user_group`.
+- **Breaking (minor):** `CardResource.bulk_get_comments()` — renamed the
+  `created_after`/`created_before` kwargs to `active_after`/`active_before`,
+  matching guru-server's renamed `activeAfter`/`activeBefore` query params.
+  The old kwargs silently sent params the server now ignores, so filters
+  stopped applying without error. No deprecation shim: the package is
+  unreleased (`0.1.0`).
 
 ### Added (foundation)
 - Project skeleton: `pyproject.toml`, package structure, CI config
