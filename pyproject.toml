@@ -34,7 +34,7 @@ dev = [
     "ruff>=0.4",
 ]
 codegen = [
-    "datamodel-code-generator>=0.25",
+    "datamodel-code-generator>=0.64.0",
 ]
 publish = [
     "build>=1.0",
@@ -124,5 +124,5 @@ dev = [
     "ruff>=0.4",
 ]
 codegen = [
-    "datamodel-code-generator>=0.25",
+    "datamodel-code-generator>=0.64.0",
 ]
