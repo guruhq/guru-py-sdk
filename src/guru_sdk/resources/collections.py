@@ -14,11 +14,13 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     import builtins
 
+    from guru_sdk.http import PaginatedList
+
 from guru_sdk._compat import is_uuid, validate_input
 from guru_sdk.errors import NotFoundError
 from guru_sdk.models import CollectionModel, Folder
 from guru_sdk.models._generated import UserGroupAccess
-from guru_sdk.resources._base import BaseResource
+from guru_sdk.resources._base import RESOLVE_MAX_PAGES, BaseResource
 
 # =============================================================================
 # Public API — CollectionResource
@@ -45,9 +47,13 @@ class CollectionResource(BaseResource):
         resolved = self._resolve_collection(collection_id)
         return self._http.get(f"/collections/{resolved}", CollectionModel)
 
-    def list(self) -> list[CollectionModel]:
-        """List all accessible collections."""
-        return self._http.get_list("/collections", CollectionModel)
+    def list(self, *, max_pages: int = 10) -> PaginatedList[CollectionModel]:
+        """List all accessible collections.
+
+        Follows Link-header pages up to *max_pages*. Returns a
+        :class:`PaginatedList`; ``complete`` is False if the cap truncated it.
+        """
+        return self._http.get_paginated("/collections", CollectionModel, max_pages=max_pages)
 
     def create(
         self,
@@ -188,7 +194,9 @@ class CollectionResource(BaseResource):
             NotFoundError: If no home folder exists for the collection.
         """
         resolved = self._resolve_collection(collection_id)
-        folders = self._http.get_list("/folders", Folder, collection=resolved)
+        folders = self._http.get_paginated(
+            "/folders", Folder, max_pages=RESOLVE_MAX_PAGES, collection=resolved
+        )
         for folder in folders:
             if folder.home is True:
                 return folder
@@ -211,7 +219,9 @@ class CollectionResource(BaseResource):
             return collection_id
 
         # Name resolution: list collections and match by name
-        collections = self._http.get_list("/collections", CollectionModel)
+        collections = self._http.get_paginated(
+            "/collections", CollectionModel, max_pages=RESOLVE_MAX_PAGES
+        )
         for coll in collections:
             if coll.name is not None and coll.name.lower() == collection_id.lower():
                 if coll.id is None:

@@ -25,7 +25,7 @@ from guru_sdk.models import (
     FolderItemDetail,
 )
 from guru_sdk.models._generated import UserGroupAccess
-from guru_sdk.resources._base import BaseResource
+from guru_sdk.resources._base import RESOLVE_MAX_PAGES, BaseResource
 
 # =============================================================================
 # Public API — FolderResource
@@ -52,16 +52,26 @@ class FolderResource(BaseResource):
         resolved = self._resolve_folder(folder_id)
         return self._http.get(f"/folders/{resolved}", Folder)
 
-    def list(self, *, collection_id: str | None = None) -> list[Folder]:
+    def list(
+        self, *, collection_id: str | None = None, max_pages: int = 10
+    ) -> PaginatedList[Folder]:
         """List all accessible folders.
+
+        The API returns at most 110 folders per page; all pages are followed
+        up to *max_pages*.
 
         Args:
             collection_id: Optional collection UUID to filter by.
+            max_pages: Safety cap on pages walked (default 10).
+
+        Returns a :class:`PaginatedList`; check its ``complete`` attribute to
+        detect when ``max_pages`` truncated the result.
         """
+        params: dict[str, Any] = {}
         if collection_id is not None:
             validate_input(collection_id, "collection_id")
-            return self._http.get_list("/folders", Folder, collection=collection_id)
-        return self._http.get_list("/folders", Folder)
+            params["collection"] = collection_id
+        return self._http.get_paginated("/folders", Folder, max_pages=max_pages, **params)
 
     def create(
         self,
@@ -260,7 +270,7 @@ class FolderResource(BaseResource):
             return folder_id
 
         # Name resolution: list folders and match by title
-        folders = self._http.get_list("/folders", Folder)
+        folders = self._http.get_paginated("/folders", Folder, max_pages=RESOLVE_MAX_PAGES)
         for folder in folders:
             if folder.title is not None and folder.title.lower() == folder_id.lower():
                 if folder.id is None:

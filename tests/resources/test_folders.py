@@ -513,3 +513,38 @@ class TestInputValidation:
     def test_items_validates(self, folders: FolderResource) -> None:
         with pytest.raises(ValidationError):
             folders.items("bad%20id")
+
+
+# =============================================================================
+# Pagination — GET /folders caps a page at 110 folders (spec description)
+# =============================================================================
+
+FOLDERS_NEXT = {"Link": '<https://api.getguru.com/api/v1/folders?token=next>; rel="next"'}
+
+
+class TestFolderListPagination:
+    """folders.list() and name resolution must read past the first page."""
+
+    def test_list_follows_link_pages(self, folders: FolderResource, httpx_mock) -> None:
+        httpx_mock.add_response(json=[_folder_json(FOLDER_UUID, "One")], headers=FOLDERS_NEXT)
+        httpx_mock.add_response(json=[_folder_json(FOLDER_UUID_2, "Two")])
+
+        result = folders.list()
+
+        assert [f.title for f in result] == ["One", "Two"]
+        assert result.complete is True
+
+    def test_name_resolution_finds_folder_past_ten_pages(
+        self, folders: FolderResource, httpx_mock
+    ) -> None:
+        """A miss on name resolution raises NotFoundError, so it must not stop at the default cap."""
+        for i in range(11):
+            httpx_mock.add_response(
+                json=[_folder_json(f"filler-{i}", f"Filler {i}")], headers=FOLDERS_NEXT
+            )
+        httpx_mock.add_response(json=[_folder_json(FOLDER_UUID_2, "Deep Folder")])
+        httpx_mock.add_response(json=_folder_json(FOLDER_UUID_2, "Deep Folder"))
+
+        result = folders.get("Deep Folder")
+
+        assert result.id == FOLDER_UUID_2
