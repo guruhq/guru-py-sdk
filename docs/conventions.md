@@ -152,7 +152,7 @@ Models for endpoints not in the public Swagger spec live in `models/_manual.py` 
 - Field names are snake_case (Pythonic); camelCase from the API spec is preserved as `Field(alias=...)` for API compat
 - Three-way field access: create from API dicts via camelCase alias, access via snake_case field name, serialize to API via `model_dump(by_alias=True)`
 - Tests for generated models use realistic API shapes (real UUIDs, correct enum values, required fields)
-- **No override mechanism yet** — if a regeneration breaks something, that's the signal to add `swagger/overrides.json` with post-processing rules. Until then, `EXCLUDED_SCHEMAS` in the generator and `models/_manual.py` are sufficient.
+- **Optional-field overrides** — `OPTIONAL_FIELD_OVERRIDES` in `scripts/generate_models.py` drops specific fields from a schema's `required` list when the live API is known to omit them (ADR-009). Each entry needs live evidence. Other overrides still go through `EXCLUDED_SCHEMAS` or `models/_manual.py`.
 - **`Type1`, `Op2`, ... numbered enums** — the Swagger spec has inline enums without explicit names (e.g., the `type` field on `FolderItem` can be `"card"` or `"folder"`). Since these enums aren't named in the spec, `datamodel-code-generator` assigns sequential names like `Type9` or `Op12`. The numbers are arbitrary — they reflect the order the enum was encountered during generation and can change on regeneration. When working with these, check `_generated.py` for the actual enum values rather than guessing from the name. If this becomes a readability problem, the deferred codegen override mechanism (iteration 018) could rename them in post-processing.
 
 - **Pin any numbered enum you reference by name.** Renumbering is not just a readability problem — it is a *silent correctness* problem. Because the names are positional, an unrelated upstream spec change can hand a surviving name a completely different member set, and both the annotation and validation still pass. The iteration 026 spec refresh did exactly this: 18 names changed meaning (`Op10` went from `EQ`/`NE` to `AND`/`OR`, `Op17` from `EXISTS`/`NOTEXISTS` to `ISPUBLIC`/`ISNOTPUBLIC`), with no mypy error and no failing test. Nothing broke only because `Type8` — the one name referenced outside `_generated.py` — happened to be stable.
@@ -251,7 +251,7 @@ Always check actual enum definitions in `_generated.py` when writing tests. API 
 
 ### Test Data Realism
 
-Test fixtures must include all required fields for nested models. E.g., `User` requires `firstName` and `lastName`. Always check required fields on generated models before writing fixtures.
+Test fixtures must include all required fields for nested models. E.g., `User` requires `email` (`firstName`/`lastName` are optional via `OPTIONAL_FIELD_OVERRIDES`, ADR-009). Always check required fields on generated models before writing fixtures.
 
 ## Documentation (Compound Engineering)
 

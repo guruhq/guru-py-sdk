@@ -57,7 +57,7 @@ These are sequenced in order of operation. Each depends on the one before it.
 
 | # | Title | Reason |
 |---|-------|--------|
-| 018 | Codegen Override Mechanism | No concrete override needed today. `EXCLUDED_SCHEMAS` handles schema removal, `--use-default` handles field optionality, `_manual.py` handles internal-API types. Build `swagger/overrides.json` when a regeneration actually breaks something. guru-cli has no such mechanism either. |
+| 018 | Codegen Override Mechanism (partly done) | Optional-field overrides landed in 031 (ADR-009). A general `swagger/overrides.json` is still deferred. Original note: no concrete override needed today. `EXCLUDED_SCHEMAS` handles schema removal, `--use-default` handles field optionality, `_manual.py` handles internal-API types. Build `swagger/overrides.json` when a regeneration actually breaks something. guru-cli has no such mechanism either. |
 | 021 | Frameworks | Not in public spec, not in CLI. See ADR-007. |
 | — | Bundle Security Hardening | Security audit findings: (1) HIGH — `collection_id` not validated before URL construction in `Bundle.upload()`, add `validate_input()` call. (2) HIGH — `_to_yaml()` doesn't escape user-controlled values (titles with colons, newlines, `---` produce malformed YAML). (3) MEDIUM — `upload()` bypasses HttpClient public interface, reaches into `_g._http._client.post()` directly. (4) MEDIUM — `Publisher` metadata_path accepts arbitrary paths without traversal validation. |
 

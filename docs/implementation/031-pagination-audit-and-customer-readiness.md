@@ -38,6 +38,10 @@ Link: <https://qaapi.getguru.com/api/v1/folders/<id>/items?token=...>; rel="next
 
 and `_parse_link_header` matched only `rel="next"`, so every first page was treated as the last. This affected every `get_paginated` caller since iteration 001, including `members.list`, `search` and `bulk_get_comments`, not just the 030/031 fixes. The truncation guards could not catch it: an unreadable header is indistinguishable from a complete result. guru-cli fixed the same thing on 2026-07-20 (`cee35c1`). The pattern now accepts `next` or `next-page`.
 
+## Models Stricter Than Live Data
+
+With pagination working, the same live run reached page 2 of `GET /folders` and failed validation: a folder's `lastModifiedBy` was a pending invite with no `firstName`/`lastName`, both required by the spec. This would have made `folders.list()` and `collections.home_folder()` fail on this collection, which worked on `main` only because pagination never reached page 2. Fixed with a targeted codegen override (`OPTIONAL_FIELD_OVERRIDES`, ADR-009); regenerating on datamodel-code-generator 0.81 changed only those two fields.
+
 ## Truncation in the Collection Walks
 
 Review on #16 added a check to `dump_folder_hierarchy`: if `folders.items()` reports `complete=False` (a folder past its 500-item cap), raise `GuruError` instead of writing a partial CSV. `replace_text_in_collection_cards` walked folders the same way and ignored the flag, so it could skip cards and still report success.
@@ -55,4 +59,4 @@ Card name resolution matches titles against `/cards/verificationmgr`, which list
 
 ## Tests
 
-9 new tests at the HTTP layer with `Link` headers (stubbing the resource can't catch truncation): `folders.list()`, folder resolution past 10 pages, `collections.list()`, collection resolution, `home_folder()` on page 2, `list_unverified()`, `list_comments()` (plus status on the first page), card resolution. Plus 2 replace-text tests: truncation aborts before any edit, and results keep walk order. Plus 3 HTTP tests using the live `next-page` header format. 760 tests total.
+9 new tests at the HTTP layer with `Link` headers (stubbing the resource can't catch truncation): `folders.list()`, folder resolution past 10 pages, `collections.list()`, collection resolution, `home_folder()` on page 2, `list_unverified()`, `list_comments()` (plus status on the first page), card resolution. Plus 2 replace-text tests: truncation aborts before any edit, and results keep walk order. Plus 3 HTTP tests using the live `next-page` header format, and 3 model tests for the `User` override. 763 tests total.
