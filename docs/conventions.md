@@ -141,7 +141,7 @@ A refresh diff is large but mostly meaningless — the server emits Swagger prop
 
 ### Manual Models for Internal API
 
-Models for endpoints not in the public Swagger spec live in `models/_manual.py` — hand-written but following the same conventions as generated models. Currently covers: `PageDraft`, `PagePermission`, `PageDraftCollaborator`.
+Models for endpoints not in the public Swagger spec live in `models/_manual.py` — hand-written but following the same conventions as generated models. Currently covers: `PageDraft`, `PagePermission`, `PageDraftCollaborator`, `DraftCollaborator`, and `FolderItemDetail` (a public endpoint whose live payload carries fields the spec omits; it subclasses the generated `FolderItem`).
 
 ### Generated Code Rules
 

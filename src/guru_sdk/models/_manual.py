@@ -2,7 +2,9 @@
 
 These models cover resources that are NOT in the Guru public Swagger spec
 (pages, page drafts, page permissions, page draft collaborators). They are
-used by the internal API endpoints documented in guru-cli's ADR-014.
+used by the internal API endpoints documented in guru-cli's ADR-014. They
+also cover public endpoints whose live payload carries fields the spec
+omits (FolderItemDetail).
 
 Unlike _generated.py, these models are hand-written. They follow the same
 conventions: GuruModel base class, snake_case fields with camelCase aliases,
@@ -16,7 +18,7 @@ from typing import Annotated
 from pydantic import AwareDatetime, Field
 
 from guru_sdk.models._base import GuruModel
-from guru_sdk.models._generated import Team, User, UserGroup
+from guru_sdk.models._generated import FolderItem, Team, User, UserGroup
 
 # =============================================================================
 # Page Draft — response model for /pagedrafts endpoints
@@ -133,3 +135,21 @@ class DraftCollaborator(GuruModel):
     user: User | None = None
     user_group: Annotated[UserGroup | None, Field(alias="userGroup")] = None
     date_created: Annotated[AwareDatetime | None, Field(alias="dateCreated")] = None
+
+
+# =============================================================================
+# Folder Item Detail — GET /folders/{id}/items as the live API returns it
+# =============================================================================
+
+
+class FolderItemDetail(FolderItem):
+    """A folder item with the title fields the live API sends.
+
+    The spec's ``FolderItem`` lists only ``id``, ``itemId`` and ``type``, but
+    the default response (``cardDetail=BASIC``) also carries ``title`` on
+    folders and ``preferredPhrase`` on cards (confirmed on QA). guru-cli reads
+    the same fields. Subclassing keeps ``isinstance(item, FolderItem)`` true.
+    """
+
+    title: str | None = None
+    preferred_phrase: Annotated[str | None, Field(alias="preferredPhrase")] = None

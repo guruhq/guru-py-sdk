@@ -300,6 +300,23 @@ class TestItems:
         assert request is not None
         assert request.url.path == f"/api/v1/folders/{FOLDER_UUID}/items"
 
+    def test_items_carry_titles_from_live_payload(
+        self, folders: FolderResource, httpx_mock
+    ) -> None:
+        """Cards carry preferredPhrase and folders carry title (not in the spec; seen on QA)."""
+        from guru_sdk.models import FolderItemDetail
+
+        httpx_mock.add_response(
+            json=[
+                {"id": "card-1", "itemId": "p-1", "type": "card", "preferredPhrase": "Welcome"},
+                {"id": "folder-1", "itemId": "p-2", "type": "folder", "title": "Guides"},
+            ]
+        )
+        card, folder = folders.items(FOLDER_UUID)
+        assert isinstance(card, FolderItemDetail)
+        assert card.preferred_phrase == "Welcome"
+        assert folder.title == "Guides"
+
     def test_items_paginates_across_link_header_pages(
         self, folders: FolderResource, httpx_mock
     ) -> None:

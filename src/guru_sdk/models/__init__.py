@@ -57,6 +57,7 @@ from guru_sdk.models._generated import (
 )
 from guru_sdk.models._manual import (
     DraftCollaborator,
+    FolderItemDetail,
     PageDraft,
     PageDraftCollaborator,
     PagePermission,
@@ -88,6 +89,7 @@ __all__ = [
     "Folder",
     "FolderCard",
     "FolderItem",
+    "FolderItemDetail",
     "GroupedSourceConnection",
     "GuruModel",
     "KnowledgeAgent",

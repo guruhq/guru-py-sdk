@@ -22,7 +22,7 @@ from guru_sdk.errors import NotFoundError
 from guru_sdk.models import (
     EffectivePermissions,
     Folder,
-    FolderItem,
+    FolderItemDetail,
 )
 from guru_sdk.models._generated import UserGroupAccess
 from guru_sdk.resources._base import BaseResource
@@ -142,11 +142,13 @@ class FolderResource(BaseResource):
     # Hierarchy
     # -------------------------------------------------------------------------
 
-    def items(self, folder_id: str, *, max_pages: int = 10) -> PaginatedList[FolderItem]:
+    def items(self, folder_id: str, *, max_pages: int = 10) -> PaginatedList[FolderItemDetail]:
         """List items (cards, sub-folders) in a folder.
 
         The API returns at most 50 items per page and links to the next page
-        via the Link header; all pages are followed up to *max_pages*.
+        via the Link header; all pages are followed up to *max_pages*. Each
+        item carries its title (``title`` for folders, ``preferred_phrase``
+        for cards), so callers rarely need a follow-up lookup.
 
         Args:
             folder_id: Folder UUID or title.
@@ -157,7 +159,7 @@ class FolderResource(BaseResource):
         """
         resolved = self._resolve_folder(folder_id)
         return self._http.get_paginated(
-            f"/folders/{resolved}/items", FolderItem, max_pages=max_pages
+            f"/folders/{resolved}/items", FolderItemDetail, max_pages=max_pages
         )
 
     def parent(self, folder_id: str) -> Folder:

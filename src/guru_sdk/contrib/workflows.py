@@ -298,8 +298,9 @@ def dump_folder_hierarchy(
         ["folder", "Onboarding"]
         ["card", "Onboarding", "How to set up VPN"]
 
-    Rows follow walk order, so each card appears under its folder. Card
-    titles are fetched with one ``cards.get_bulk()`` call per folder.
+    Rows follow walk order, so each card appears under its folder. Titles
+    come from the folder listing itself, so the walk makes one
+    ``folders.items()`` call per folder.
 
     Args:
         g: Guru client instance.
@@ -347,15 +348,22 @@ def _walk_folder_items(
 
     For each sub-folder found in items(), writes its parent chain to CSV
     and recurses into it. Cards are written only when include_cards is set,
-    in which case every row is prefixed with its type.
+    in which case every row is prefixed with its type. Titles are read from
+    the items() payload; folders.get / cards.get_bulk are only a fallback
+    for items that arrive without one.
     """
     from guru_sdk.models._generated import Type8
 
     items = g.folders.items(folder_id)
 
+    # Titles come inline from items(); bulk-fetch only cards that lack one
     card_titles: dict[str, str] = {}
     if include_cards:
-        card_ids = [item.id for item in items if item.type == Type8.card and item.id]
+        card_ids = [
+            item.id
+            for item in items
+            if item.type == Type8.card and item.id and not item.preferred_phrase
+        ]
         if card_ids:
             card_titles = {
                 card.id: card.preferred_phrase or card.id
@@ -365,7 +373,8 @@ def _walk_folder_items(
 
     for item in items:
         if item.type == Type8.card and include_cards and item.id:
-            writer.writerow(["card", *parent_chain, card_titles.get(item.id, item.id)])
+            title = item.preferred_phrase or card_titles.get(item.id, item.id)
+            writer.writerow(["card", *parent_chain, title])
             continue
 
         # Only process folders from here on
@@ -377,8 +386,7 @@ def _walk_folder_items(
         if sub_folder_id is None:
             continue
 
-        sub_folder = g.folders.get(sub_folder_id)
-        title = sub_folder.title or sub_folder_id
+        title = item.title or g.folders.get(sub_folder_id).title or sub_folder_id
 
         # Build the chain and write to CSV
         current_chain = [*parent_chain, title]
