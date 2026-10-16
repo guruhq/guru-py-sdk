@@ -486,8 +486,9 @@ def _warn_if_budget_cut(max_calls: int | None, *, unopened: int, partial: int) -
         parts.append(f"{partial:,} folder{'s' if partial != 1 else ''} not fully listed")
     if parts:
         warnings.warn(
-            f"dump_folder_hierarchy reached max_calls={max_calls}: {', '.join(parts)}. "
-            "Pass max_calls=None to list everything.",
+            f"dump_folder_hierarchy: call budget of {max_calls} reached; this collection "
+            f"is too large to process in full ({', '.join(parts)}). The dump lists what "
+            "was reached. Pass max_calls=None to list everything.",
             UserWarning,
             stacklevel=3,
         )

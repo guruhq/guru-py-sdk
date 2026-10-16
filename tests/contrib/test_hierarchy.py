@@ -66,8 +66,27 @@ class TestRenderText:
         )
 
         assert render_hierarchy(csv_path, root_name="R") == (
-            "R\n├── 📁 A\n│   └── … contents not listed (3 cards)\n└── 📁 B"
+            "R\n├── 📁 A\n│   └── … contents not listed (3 cards)\n└── 📁 B\n\n"
+            "Note: the call budget was reached; this collection is too large to process "
+            "in full. Folders marked … were not opened."
         )
+
+    def test_no_note_when_nothing_was_left_out(self, tmp_path: Path) -> None:
+        from guru_sdk.contrib.hierarchy import render_hierarchy
+
+        csv_path = _write_csv(tmp_path / "x.csv", TYPED_ROWS)
+
+        assert "Note:" not in render_hierarchy(csv_path, root_name="R")
+
+    def test_mermaid_omits_the_note(self, tmp_path: Path) -> None:
+        """A trailing prose line would break the mindmap syntax."""
+        from guru_sdk.contrib.hierarchy import render_hierarchy
+
+        csv_path = _write_csv(
+            tmp_path / "x.csv", [["folder", "A"], ["more", "A", "contents not listed"]]
+        )
+
+        assert "Note:" not in render_hierarchy(csv_path, format="mermaid", root_name="R")
 
     def test_folders_only_csv_is_detected(self, tmp_path: Path) -> None:
         """A CSV from dump_folder_hierarchy without include_cards has no type column."""

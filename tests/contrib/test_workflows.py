@@ -716,6 +716,19 @@ class TestDumpFolderHierarchy:
         opened = [c.args[0] for c in g.folders.items.call_args_list]
         assert opened == [HOME_FOLDER_UUID, "fa", "fb"]
 
+    def test_budget_warning_says_collection_is_too_large(self, tmp_path: Path) -> None:
+        from guru_sdk.contrib.workflows import dump_folder_hierarchy
+
+        g = self._two_branch_tree()
+
+        with pytest.warns(UserWarning) as caught:
+            dump_folder_hierarchy(g, COLL_UUID, path=str(tmp_path / "o.csv"), max_calls=3)
+
+        message = str(caught[0].message)
+        assert "call budget of 3 reached" in message
+        assert "too large to process in full" in message
+        assert "max_calls=None" in message
+
     def test_max_calls_none_opens_everything(self, tmp_path: Path) -> None:
         import warnings
 

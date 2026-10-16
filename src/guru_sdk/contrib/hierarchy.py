@@ -21,6 +21,10 @@ import os
 _FORMATS = ("text", "mermaid")
 _TYPES = ("folder", "card", "more")
 _CSV_SUFFIX = "_folder_hierarchy.csv"
+_BUDGET_NOTE = (
+    "Note: the call budget was reached; this collection is too large to process "
+    "in full. Folders marked … were not opened."
+)
 
 
 def render_hierarchy(
@@ -38,7 +42,8 @@ def render_hierarchy(
         format: ``"text"`` for a ``tree``-style listing (folders marked 📁),
             or ``"mermaid"`` for a mindmap (folders as boxes, cards rounded).
             Rows for folders a call budget left unopened render as
-            ``… contents not listed``.
+            ``… contents not listed``, and the text tree then ends with a
+            note that the collection was too large to process in full.
         root_name: Label for the root node. Defaults to the CSV filename
             with any ``_folder_hierarchy.csv`` suffix removed.
         path: Also write the rendering to this file. A Mermaid rendering
@@ -99,6 +104,8 @@ def _render_text(rows: list[tuple[str, list[str]]], root: str) -> str:
         prefix = "".join("    " if done else "│   " for done in ancestors_last[:depth])
         icon = {"folder": "📁 ", "more": "… "}.get(kind, "")
         lines.append(f"{prefix}{'└── ' if last else '├── '}{icon}{item_path[-1]}")
+    if any(kind == "more" for kind, _ in rows):
+        lines += ["", _BUDGET_NOTE]
     return "\n".join(lines)
 
 
