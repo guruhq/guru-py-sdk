@@ -300,6 +300,35 @@ class TestItems:
         assert request is not None
         assert request.url.path == f"/api/v1/folders/{FOLDER_UUID}/items"
 
+    def test_items_paginates_across_link_header_pages(
+        self, folders: FolderResource, httpx_mock
+    ) -> None:
+        # The endpoint caps a page at 50 items and links to the next page.
+        httpx_mock.add_response(
+            json=[_folder_item_json(item_id="item-1")],
+            headers={
+                "Link": f'<https://api.getguru.com/api/v1/folders/{FOLDER_UUID}/items?token=abc>; rel="next"'
+            },
+        )
+        httpx_mock.add_response(json=[_folder_item_json(item_id="item-2")])
+
+        result = folders.items(FOLDER_UUID)
+
+        assert [item.id for item in result] == ["item-1", "item-2"]
+        assert result.complete is True
+
+    def test_items_reports_incomplete_when_truncated_by_max_pages(
+        self, folders: FolderResource, httpx_mock
+    ) -> None:
+        httpx_mock.add_response(
+            json=[_folder_item_json()],
+            headers={
+                "Link": f'<https://api.getguru.com/api/v1/folders/{FOLDER_UUID}/items?token=abc>; rel="next"'
+            },
+        )
+        result = folders.items(FOLDER_UUID, max_pages=1)
+        assert result.complete is False
+
 
 # =============================================================================
 # FolderResource.parent() — GET /folders/{id}/parent
