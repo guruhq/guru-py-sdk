@@ -202,6 +202,23 @@ class TestPagination:
         assert folders[0].id == "1"
         assert folders[1].id == "2"
 
+    def test_follows_next_page_rel(self, httpx_mock):
+        """The live API's rel="next-page" must advance pagination, not end it."""
+        httpx_mock.add_response(
+            json=[{"id": "1", "name": "F1"}],
+            headers={
+                "Link": "<https://api.getguru.com/api/v1/folders?token=abc>; "
+                'rel="next-page"; title="Next Page"; type="application/json"'
+            },
+        )
+        httpx_mock.add_response(json=[{"id": "2", "name": "F2"}])
+
+        client = HttpClient("https://api.getguru.com/api/v1", "user", "token")
+        folders = client.get_paginated("/folders", FakeFolder)
+
+        assert [f.id for f in folders] == ["1", "2"]
+        assert folders.complete is True
+
     def test_respects_max_pages(self, httpx_mock):
         # Register exactly max_pages responses — each has a Link header
         for _ in range(3):
@@ -299,6 +316,22 @@ class TestParseLinkHeader:
     def test_parses_next_link(self):
         header = '<https://api.getguru.com/api/v1/folders?page=2>; rel="next"'
         assert _parse_link_header(header) == "https://api.getguru.com/api/v1/folders?page=2"
+
+    def test_parses_next_page_link_as_guru_sends_it(self):
+        """Guru's live API sends rel="next-page" (confirmed on QA for /folders and
+        /folders/{id}/items), with title and type params after it."""
+        header = (
+            "<https://qaapi.getguru.com/api/v1/folders/abc/items?token=TGhHojVW_x-Y%3D>; "
+            'rel="next-page"; title="Next Page"; type="application/json"'
+        )
+        assert (
+            _parse_link_header(header)
+            == "https://qaapi.getguru.com/api/v1/folders/abc/items?token=TGhHojVW_x-Y%3D"
+        )
+
+    def test_ignores_other_rels_that_start_with_next(self):
+        header = '<https://api.getguru.com/api/v1/folders?page=2>; rel="next-pages"'
+        assert _parse_link_header(header) is None
 
     def test_returns_none_when_no_next(self):
         header = '<https://api.getguru.com/api/v1/folders?page=1>; rel="prev"'

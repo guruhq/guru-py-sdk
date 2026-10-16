@@ -344,8 +344,10 @@ class HttpClient:
 # Internal Helpers
 # =============================================================================
 
-# Link: <https://api.getguru.com/api/v1/folders?page=2>; rel="next"
-_LINK_NEXT_RE = re.compile(r'<([^>]+)>;\s*rel="next"')
+# Link: <https://api.getguru.com/api/v1/folders?token=...>; rel="next-page"; title="Next Page"
+# Guru's live API sends rel="next-page" (confirmed on QA for /folders and
+# /folders/{id}/items); accept plain rel="next" too, matching guru-cli.
+_LINK_NEXT_RE = re.compile(r'<([^>]+)>;\s*rel="next(?:-page)?"')
 
 
 def _parse_link_header(header: str | None) -> str | None:
