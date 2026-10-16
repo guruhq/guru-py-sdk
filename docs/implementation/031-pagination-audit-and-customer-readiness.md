@@ -28,6 +28,12 @@ Two caps, by purpose:
 
 The other endpoints either state no cap in the spec or are not in the spec at all; guru-cli does not paginate any of the unlisted ones the SDK uses.
 
+## Truncation in the Collection Walks
+
+Review on #16 added a check to `dump_folder_hierarchy`: if `folders.items()` reports `complete=False` (a folder past its 500-item cap), raise `GuruError` instead of writing a partial CSV. `replace_text_in_collection_cards` walked folders the same way and ignored the flag, so it could skip cards and still report success.
+
+Because that workflow edits as it walks, raising mid-walk would leave earlier folders changed and the results list lost. It now runs in two passes: `_collect_card_ids` walks the whole tree first (raising on truncation before any card is read or patched), then `_replace_text_in_card` processes each card. Result order and the one-visit-per-card rule are unchanged. Both walks share `_complete_folder_items`.
+
 ## Customer Readiness
 
 - **README**: install from source (`git clone` + `uv sync`), since `pip install guru-sdk` fails until the package is on PyPI; a short "Using it with Claude Code" section.
@@ -39,4 +45,4 @@ Card name resolution matches titles against `/cards/verificationmgr`, which list
 
 ## Tests
 
-9 new tests at the HTTP layer with `Link` headers (stubbing the resource can't catch truncation): `folders.list()`, folder resolution past 10 pages, `collections.list()`, collection resolution, `home_folder()` on page 2, `list_unverified()`, `list_comments()` (plus status on the first page), card resolution. 754 tests total, stacked on iteration 030.
+9 new tests at the HTTP layer with `Link` headers (stubbing the resource can't catch truncation): `folders.list()`, folder resolution past 10 pages, `collections.list()`, collection resolution, `home_folder()` on page 2, `list_unverified()`, `list_comments()` (plus status on the first page), card resolution. Plus 2 replace-text tests: truncation aborts before any edit, and results keep walk order. 757 tests total.

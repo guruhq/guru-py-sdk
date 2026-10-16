@@ -313,6 +313,10 @@ def dump_folder_hierarchy(
 
     Returns:
         The path to the created CSV file.
+
+    Raises:
+        GuruError: If any folder holds more items than ``folders.items()``
+            fetches, rather than writing an incomplete hierarchy.
     """
     # Get the home folder for the collection
     home = g.collections.home_folder(collection_id)
@@ -354,12 +358,7 @@ def _walk_folder_items(
     """
     from guru_sdk.models._generated import Type8
 
-    items = g.folders.items(folder_id)
-    if not getattr(items, "complete", True):
-        raise GuruError(
-            f"Folder {folder_id} has more items than one fetch returns; "
-            "refusing to write an incomplete hierarchy dump"
-        )
+    items = _complete_folder_items(g, folder_id, purpose="write an incomplete hierarchy dump")
 
     # Titles come inline from items(); bulk-fetch only cards that lack one
     card_titles: dict[str, str] = {}
@@ -467,6 +466,8 @@ def replace_text_in_collection_cards(
     Raises:
         ValueError: If ``old_text`` is empty.
         NotFoundError: If the collection has no home folder / does not exist.
+        GuruError: If any folder holds more items than ``folders.items()``
+            fetches. Raised before any card is read or patched.
     """
     if not old_text:
         msg = "old_text must not be empty"
@@ -474,100 +475,88 @@ def replace_text_in_collection_cards(
 
     home = g.collections.home_folder(collection_id)
 
-    results: list[CardReplaceResult] = []
-    visited: set[str] = set()
-    _replace_text_walk(
-        g,
-        home.id or "",
-        old_text=old_text,
-        new_text=new_text,
-        dry_run=dry_run,
-        case_sensitive=case_sensitive,
-        keep_verification=keep_verification,
-        results=results,
-        visited=visited,
-    )
-    return results
+    # Walk the whole tree before touching any card, so a truncated folder
+    # aborts cleanly instead of leaving earlier folders edited.
+    card_ids: list[str] = []
+    _collect_card_ids(g, home.id or "", card_ids, seen=set())
+
+    return [
+        _replace_text_in_card(
+            g,
+            card_id,
+            old_text=old_text,
+            new_text=new_text,
+            dry_run=dry_run,
+            case_sensitive=case_sensitive,
+            keep_verification=keep_verification,
+        )
+        for card_id in card_ids
+    ]
 
 
-def _replace_text_walk(
+def _collect_card_ids(g: Guru, folder_id: str, card_ids: list[str], *, seen: set[str]) -> None:
+    """Depth-first, in folder order: append each card ID once.
+
+    Cards can appear in multiple folders; *seen* keeps only the first.
+    """
+    from guru_sdk.models._generated import Type8
+
+    items = _complete_folder_items(g, folder_id, purpose="edit only part of the collection")
+
+    for item in items:
+        if item.id is None:
+            continue
+        if item.type == Type8.folder:
+            _collect_card_ids(g, item.id, card_ids, seen=seen)
+        elif item.type == Type8.card and item.id not in seen:
+            seen.add(item.id)
+            card_ids.append(item.id)
+
+
+def _replace_text_in_card(
     g: Guru,
-    folder_id: str,
+    card_id: str,
     *,
     old_text: str,
     new_text: str,
     dry_run: bool,
     case_sensitive: bool,
     keep_verification: bool,
-    results: list[CardReplaceResult],
-    visited: set[str],
-) -> None:
-    """Recursively walk a folder, processing each card it finds."""
+) -> CardReplaceResult:
+    """Replace text in one card, reporting the outcome instead of raising."""
     from guru_sdk.contrib.content import replace_text
-    from guru_sdk.models._generated import Type8
 
+    try:
+        card = g.cards.get(card_id)
+        modified_content, changed = replace_text(
+            card.content or "",
+            old_text,
+            new_text,
+            case_sensitive=case_sensitive,
+        )
+        title = card.preferred_phrase or ""
+
+        if not changed:
+            return CardReplaceResult(card_id=card_id, title=title, status="unchanged")
+        if dry_run:
+            return CardReplaceResult(card_id=card_id, title=title, status="would_update")
+
+        g.cards.patch(card_id, content=modified_content, keep_verification=keep_verification)
+        return CardReplaceResult(card_id=card_id, title=title, status="updated")
+    except Exception as exc:
+        return CardReplaceResult(card_id=card_id, title="", status="failed", error=str(exc))
+
+
+def _complete_folder_items(g: Guru, folder_id: str, *, purpose: str) -> Any:
+    """Return every item in a folder, or raise if items() hit its page cap.
+
+    ``folders.items()`` stops at ``max_pages`` and reports it via
+    ``PaginatedList.complete``; a walk that ignored it would silently skip
+    content. *purpose* finishes the sentence "refusing to ...".
+    """
     items = g.folders.items(folder_id)
-
-    for item in items:
-        item_id = item.id
-        if item_id is None:
-            continue
-
-        if item.type == Type8.folder:
-            _replace_text_walk(
-                g,
-                item_id,
-                old_text=old_text,
-                new_text=new_text,
-                dry_run=dry_run,
-                case_sensitive=case_sensitive,
-                keep_verification=keep_verification,
-                results=results,
-                visited=visited,
-            )
-            continue
-
-        if item.type != Type8.card:
-            continue
-
-        # Cards can appear in multiple folders — only process each once.
-        if item_id in visited:
-            continue
-        visited.add(item_id)
-
-        try:
-            card = g.cards.get(item_id)
-            content = card.content or ""
-            modified_content, changed = replace_text(
-                content,
-                old_text,
-                new_text,
-                case_sensitive=case_sensitive,
-            )
-            title = card.preferred_phrase or ""
-
-            if not changed:
-                results.append(CardReplaceResult(card_id=item_id, title=title, status="unchanged"))
-                continue
-
-            if dry_run:
-                results.append(
-                    CardReplaceResult(card_id=item_id, title=title, status="would_update")
-                )
-                continue
-
-            g.cards.patch(
-                item_id,
-                content=modified_content,
-                keep_verification=keep_verification,
-            )
-            results.append(CardReplaceResult(card_id=item_id, title=title, status="updated"))
-        except Exception as exc:
-            results.append(
-                CardReplaceResult(
-                    card_id=item_id,
-                    title="",
-                    status="failed",
-                    error=str(exc),
-                )
-            )
+    if not getattr(items, "complete", True):
+        raise GuruError(
+            f"Folder {folder_id} has more items than one fetch returns; refusing to {purpose}"
+        )
+    return items

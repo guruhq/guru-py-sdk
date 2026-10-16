@@ -940,6 +940,57 @@ class TestReplaceTextInCollectionCards:
         statuses = sorted(r.status for r in results)
         assert statuses == ["updated", "updated"]
 
+    def test_truncated_folder_raises_before_any_edit(self) -> None:
+        """A truncated folder anywhere in the tree aborts before any card is read or patched.
+
+        The walk edits as it goes would leave earlier folders changed and the
+        results lost; collecting first makes truncation all-or-nothing.
+        """
+        from guru_sdk.contrib.workflows import replace_text_in_collection_cards
+        from guru_sdk.errors import GuruError
+        from guru_sdk.http import PaginatedList
+
+        g = _make_guru_mock()
+        g.collections.home_folder.return_value = _make_folder_obj(HOME_FOLDER_UUID, "Home")
+        g.folders.items.side_effect = [
+            # Home: a card that would be edited, then a sub-folder
+            [
+                _make_folder_item(CARD_UUID_1, "card"),
+                _make_folder_item(SUB_FOLDER_UUID_1, "folder"),
+            ],
+            # Sub-folder: truncated by max_pages
+            PaginatedList([], complete=False),
+        ]
+
+        with pytest.raises(GuruError, match="more items"):
+            replace_text_in_collection_cards(g, COLL_UUID, "Acme Corp", "Acme Inc.")
+
+        g.cards.get.assert_not_called()
+        g.cards.patch.assert_not_called()
+
+    def test_results_follow_walk_order(self) -> None:
+        """Cards are processed depth-first in folder order, each once."""
+        from guru_sdk.contrib.workflows import replace_text_in_collection_cards
+
+        g = _make_guru_mock()
+        g.collections.home_folder.return_value = _make_folder_obj(HOME_FOLDER_UUID, "Home")
+        g.folders.items.side_effect = [
+            [
+                _make_folder_item(CARD_UUID_1, "card"),
+                _make_folder_item(SUB_FOLDER_UUID_1, "folder"),
+                _make_folder_item(CARD_UUID_3, "card"),
+            ],
+            [
+                _make_folder_item(CARD_UUID_2, "card"),
+                _make_folder_item(CARD_UUID_1, "card"),  # same card filed twice
+            ],
+        ]
+        g.cards.get.side_effect = lambda cid: _make_card(cid, content="<p>none</p>")
+
+        results = replace_text_in_collection_cards(g, COLL_UUID, "Acme", "X", dry_run=True)
+
+        assert [r.card_id for r in results] == [CARD_UUID_1, CARD_UUID_2, CARD_UUID_3]
+
     def test_skips_cards_without_text(self) -> None:
         """Cards that don't contain old_text are reported as unchanged and not patched."""
         from guru_sdk.contrib.workflows import replace_text_in_collection_cards
