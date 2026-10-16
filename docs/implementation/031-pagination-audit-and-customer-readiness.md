@@ -46,6 +46,10 @@ With pagination working, the same live run reached page 2 of `GET /folders` and 
 
 The next live run reached all 3,091 folders (29 pages of `/folders`) and the truncation guard fired on the collection root: more than 500 items, `items()`' default of 10 pages. A walk that must be complete now asks for `_WALK_MAX_PAGES = 200` pages (10,000 items per folder), keeping the guard as the backstop, and the error states the limit. The SDK has no retry on 429; a long walk that is rate-limited stops with `RateLimitError`. Not addressed until seen live.
 
+## Call Budget for the Export
+
+With every fix in place, a full export of the 3,091-folder QA collection would make about 3,100 sequential API calls to produce a listing no one can read. `dump_folder_hierarchy` now takes `max_calls` (default 200; `None` for no limit). The walk opens folders breadth-first so the budget covers the top levels first, then writes rows in tree order. A folder the budget didn't reach still gets its row (its title comes from the parent's listing) plus, with `include_cards`, a marker row `["more", *path, "contents not listed (N cards)"]`, using the live `numberOfFacts` count now on `FolderItemDetail`. A `UserWarning` reports how many folders were left out. The budget counts pages, not folders, via a new `PaginatedList.pages`. A depth limit was considered and dropped: Guru folders nest at most 3 levels.
+
 ## Truncation in the Collection Walks
 
 Review on #16 added a check to `dump_folder_hierarchy`: if `folders.items()` reports `complete=False` (a folder past its 500-item cap), raise `GuruError` instead of writing a partial CSV. `replace_text_in_collection_cards` walked folders the same way and ignored the flag, so it could skip cards and still report success.
@@ -63,4 +67,4 @@ Card name resolution matches titles against `/cards/verificationmgr`, which list
 
 ## Tests
 
-9 new tests at the HTTP layer with `Link` headers (stubbing the resource can't catch truncation): `folders.list()`, folder resolution past 10 pages, `collections.list()`, collection resolution, `home_folder()` on page 2, `list_unverified()`, `list_comments()` (plus status on the first page), card resolution. Plus 2 replace-text tests: truncation aborts before any edit, and results keep walk order. Plus 3 HTTP tests using the live `next-page` header format, and 3 model tests for the `User` override. 766 tests total.
+9 new tests at the HTTP layer with `Link` headers (stubbing the resource can't catch truncation): `folders.list()`, folder resolution past 10 pages, `collections.list()`, collection resolution, `home_folder()` on page 2, `list_unverified()`, `list_comments()` (plus status on the first page), card resolution. Plus 2 replace-text tests: truncation aborts before any edit, and results keep walk order. Plus 3 HTTP tests using the live `next-page` header format, and 3 model tests for the `User` override. 774 tests total.

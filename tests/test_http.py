@@ -219,6 +219,19 @@ class TestPagination:
         assert [f.id for f in folders] == ["1", "2"]
         assert folders.complete is True
 
+    def test_reports_pages_fetched(self, httpx_mock):
+        """pages lets callers charge real API calls against a budget."""
+        httpx_mock.add_response(
+            json=[{"id": "1", "name": "F1"}],
+            headers={"Link": '<https://api.getguru.com/api/v1/folders?token=a>; rel="next-page"'},
+        )
+        httpx_mock.add_response(json=[{"id": "2", "name": "F2"}])
+
+        client = HttpClient("https://api.getguru.com/api/v1", "user", "token")
+        folders = client.get_paginated("/folders", FakeFolder)
+
+        assert folders.pages == 2
+
     def test_respects_max_pages(self, httpx_mock):
         # Register exactly max_pages responses — each has a Link header
         for _ in range(3):

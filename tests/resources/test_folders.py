@@ -314,8 +314,16 @@ class TestItems:
         )
         card, folder = folders.items(FOLDER_UUID)
         assert isinstance(card, FolderItemDetail)
+        assert folder.number_of_facts is None
         assert card.preferred_phrase == "Welcome"
         assert folder.title == "Guides"
+
+    def test_folder_items_carry_card_count(self, folders: FolderResource, httpx_mock) -> None:
+        httpx_mock.add_response(
+            json=[{"id": "f", "itemId": "p", "type": "folder", "title": "G", "numberOfFacts": 38}]
+        )
+        (folder,) = folders.items(FOLDER_UUID)
+        assert folder.number_of_facts == 38
 
     def test_items_paginates_across_link_header_pages(
         self, folders: FolderResource, httpx_mock

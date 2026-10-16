@@ -53,6 +53,22 @@ class TestRenderText:
             "    └── In Two Places"
         )
 
+    def test_more_rows_render_as_unlisted_marker(self, tmp_path: Path) -> None:
+        from guru_sdk.contrib.hierarchy import render_hierarchy
+
+        csv_path = _write_csv(
+            tmp_path / "x.csv",
+            [
+                ["folder", "A"],
+                ["more", "A", "contents not listed (3 cards)"],
+                ["folder", "B"],
+            ],
+        )
+
+        assert render_hierarchy(csv_path, root_name="R") == (
+            "R\n├── 📁 A\n│   └── … contents not listed (3 cards)\n└── 📁 B"
+        )
+
     def test_folders_only_csv_is_detected(self, tmp_path: Path) -> None:
         """A CSV from dump_folder_hierarchy without include_cards has no type column."""
         from guru_sdk.contrib.hierarchy import render_hierarchy

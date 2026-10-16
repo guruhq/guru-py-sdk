@@ -127,6 +127,10 @@ from guru_sdk.contrib import dump_folder_hierarchy
 dump_folder_hierarchy(g, "Engineering")                                  # folders only
 csv_path = dump_folder_hierarchy(g, "Engineering", include_cards=True)  # folders and cards, with a type column
 
+# Very large collections: the walk stops after 200 API calls by default, opening
+# the top levels first and marking folders it didn't reach. To list everything:
+dump_folder_hierarchy(g, "Engineering", include_cards=True, max_calls=None)
+
 # View it as a tree
 from guru_sdk.contrib import render_hierarchy
 
