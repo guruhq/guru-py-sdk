@@ -1224,25 +1224,65 @@ class TestMoveToCollection:
 
 
 class TestGetBulk:
-    """Retrieve multiple cards in a single request."""
+    """Retrieve multiple cards in a single request.
+
+    The endpoint isn't in the Swagger spec. Contract from the legacy py-sdk:
+    body is ``{"ids": [...]}`` and the response is a dict keyed by card ID.
+    QA rejects a bare JSON array body with 400 "Error parsing JSON body", and
+    confirms the dict response with a per-entry ``status`` (e.g. 200).
+    """
 
     def test_get_bulk_returns_cards(self, cards: CardResource, httpx_mock) -> None:
         httpx_mock.add_response(
-            json=[_card_json(), _card_json(card_id=CARD_UUID_2, title="Second")]
+            json={
+                CARD_UUID: _card_json(),
+                CARD_UUID_2: _card_json(card_id=CARD_UUID_2, title="Second"),
+            }
         )
         result = cards.get_bulk([CARD_UUID, CARD_UUID_2])
         assert len(result) == 2
         assert all(isinstance(c, Card) for c in result)
 
-    def test_get_bulk_sends_correct_body(self, cards: CardResource, httpx_mock) -> None:
-        httpx_mock.add_response(json=[_card_json()])
+    def test_get_bulk_sends_ids_object(self, cards: CardResource, httpx_mock) -> None:
+        httpx_mock.add_response(json={CARD_UUID: _card_json()})
         cards.get_bulk([CARD_UUID])
         request = httpx_mock.get_request()
         assert request is not None
         assert request.url.path == "/api/v1/cards/bulk"
         assert request.method == "POST"
-        body = json.loads(request.content)
-        assert CARD_UUID in body
+        assert json.loads(request.content) == {"ids": [CARD_UUID]}
+
+    def test_get_bulk_preserves_request_order(self, cards: CardResource, httpx_mock) -> None:
+        httpx_mock.add_response(
+            json={
+                CARD_UUID_2: _card_json(card_id=CARD_UUID_2, title="Second"),
+                CARD_UUID: _card_json(),
+            }
+        )
+        result = cards.get_bulk([CARD_UUID, CARD_UUID_2])
+        assert [c.id for c in result] == [CARD_UUID, CARD_UUID_2]
+
+    def test_get_bulk_omits_ids_missing_from_response(
+        self, cards: CardResource, httpx_mock
+    ) -> None:
+        httpx_mock.add_response(json={CARD_UUID: _card_json()})
+        result = cards.get_bulk([CARD_UUID, CARD_UUID_2])
+        assert [c.id for c in result] == [CARD_UUID]
+
+    def test_get_bulk_skips_entries_with_error_status(
+        self, cards: CardResource, httpx_mock
+    ) -> None:
+        httpx_mock.add_response(
+            json={
+                CARD_UUID: {**_card_json(), "status": 200},
+                CARD_UUID_2: {"id": CARD_UUID_2, "status": 404},
+            }
+        )
+        result = cards.get_bulk([CARD_UUID, CARD_UUID_2])
+        assert [c.id for c in result] == [CARD_UUID]
+
+    def test_get_bulk_empty_list_makes_no_request(self, cards: CardResource) -> None:
+        assert cards.get_bulk([]) == []
 
     def test_get_bulk_validates_ids(self, cards: CardResource) -> None:
         with pytest.raises(ValidationError):

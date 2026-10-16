@@ -231,12 +231,26 @@ class CardResource(BaseResource):
         Args:
             card_ids: List of card UUIDs to fetch.
 
+        POST /cards/bulk isn't in the Swagger spec. It takes ``{"ids": [...]}``
+        and responds with a dict keyed by card ID, each entry carrying a
+        per-card HTTP ``status`` (contract from the legacy py-sdk, confirmed
+        against QA).
+
         Returns:
-            List of Card objects.
+            List of Card objects in request order. IDs absent from the
+            response, or whose entry status isn't 2xx, are omitted.
         """
         for cid in card_ids:
             validate_input(cid, "card_id")
-        return self._http.post_list("/cards/bulk", card_ids, Card)
+        if not card_ids:
+            return []
+        response = self._http.post_raw("/cards/bulk", {"ids": card_ids})
+        by_id: dict[str, Any] = response.json()
+        return [
+            Card.model_validate(by_id[cid])
+            for cid in card_ids
+            if cid in by_id and 200 <= by_id[cid].get("status", 200) < 300
+        ]
 
     def move_to_collection(self, card_id: str, collection_id: str) -> None:
         """Move a card to a different collection.
