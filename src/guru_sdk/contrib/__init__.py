@@ -2,6 +2,7 @@
 
 Workflows: convenience functions that compose multiple resource calls.
 Content: pure functions for working with card HTML content.
+Hierarchy: render a folder hierarchy CSV as a text tree or Mermaid mindmap.
 Publisher: folder-based content sync framework for external systems.
 Bundle: zip-based content import for bulk card/folder creation.
 """
@@ -17,6 +18,7 @@ from guru_sdk.contrib.content import (
     replace_text,
     replace_url,
 )
+from guru_sdk.contrib.hierarchy import render_hierarchy
 from guru_sdk.contrib.publisher import (
     CardChanges,
     PublisherFolders,
@@ -49,6 +51,7 @@ __all__ = [
     "make_collection_with_setup",
     "move_card_between_folders",
     "remove_user_from_groups",
+    "render_hierarchy",
     "replace_text",
     "replace_text_in_collection_cards",
     "replace_url",
