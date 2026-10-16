@@ -23,10 +23,10 @@ from guru_sdk.models._generated import (
     Card,
     CollectionModel,
     Folder,
-    FolderItem,
     Tag,
     UserGroupAccess,
 )
+from guru_sdk.models._manual import FolderItemDetail
 
 # =============================================================================
 # Test Data
@@ -502,16 +502,22 @@ SUB_FOLDER_UUID_2 = "s2s2s2s2-s2s2-s2s2-s2s2-s2s2s2s2s2s2"
 SUB_SUB_FOLDER_UUID = "s3s3s3s3-s3s3-s3s3-s3s3-s3s3s3s3s3s3"
 
 
-def _make_folder_item(item_id: str, entry_type: str = "folder") -> FolderItem:
-    """Build a FolderItem (folder or card) for mocking items() responses.
+def _make_folder_item(
+    item_id: str, entry_type: str = "folder", *, title: str | None = None
+) -> FolderItemDetail:
+    """Build a folder item (folder or card) for mocking items() responses.
 
     id = actual folder/card UUID (used by folders.get / cards.get)
     itemId = placement UUID (Guru's internal position reference — NOT used for lookups)
     These must be distinct so tests catch id vs item_id misuse (see SC-152729).
+
+    title, when given, is sent the way the live API does: ``title`` on folders,
+    ``preferredPhrase`` on cards. Omitted, the walk must fall back to lookups.
     """
-    return FolderItem.model_validate(
-        {"id": item_id, "itemId": f"placement-{item_id}", "type": entry_type}
-    )
+    data: dict[str, str] = {"id": item_id, "itemId": f"placement-{item_id}", "type": entry_type}
+    if title is not None:
+        data["title" if entry_type == "folder" else "preferredPhrase"] = title
+    return FolderItemDetail.model_validate(data)
 
 
 def _make_folder_obj(folder_id: str, title: str) -> Folder:
@@ -619,6 +625,19 @@ class TestDumpFolderHierarchy:
 
         assert rows == []
 
+    def test_truncated_folder_items_raises(self, tmp_path: Path) -> None:
+        """A truncated items() fetch must not yield a silently incomplete CSV."""
+        from guru_sdk.contrib.workflows import dump_folder_hierarchy
+        from guru_sdk.errors import GuruError
+        from guru_sdk.http import PaginatedList
+
+        g = _make_guru_mock()
+        g.collections.home_folder.return_value = _make_folder_obj(HOME_FOLDER_UUID, "Big")
+        g.folders.items.return_value = PaginatedList([], complete=False)
+
+        with pytest.raises(GuruError, match="more items"):
+            dump_folder_hierarchy(g, COLL_UUID, path=str(tmp_path / "big.csv"))
+
     def test_default_path_uses_collection_title(self, tmp_path: Path) -> None:
         """When no path is given, uses <collection_title>_folder_hierarchy.csv."""
         from guru_sdk.contrib.workflows import dump_folder_hierarchy
@@ -699,6 +718,162 @@ class TestDumpFolderHierarchy:
 
         # folders.get must be called with the actual folder UUID, not the placement UUID
         g.folders.get.assert_called_with(SUB_FOLDER_UUID_1)
+
+    def test_cards_not_fetched_by_default(self, tmp_path: Path) -> None:
+        """Without include_cards, no card lookups are made."""
+        from guru_sdk.contrib.workflows import dump_folder_hierarchy
+
+        g = _make_guru_mock()
+        g.collections.home_folder.return_value = _make_folder_obj(HOME_FOLDER_UUID, "Mixed")
+        g.folders.items.return_value = [_make_folder_item("card-1", "card")]
+
+        dump_folder_hierarchy(g, COLL_UUID, path=str(tmp_path / "out.csv"))
+
+        g.cards.get_bulk.assert_not_called()
+
+    def test_include_cards_writes_typed_rows_in_walk_order(self, tmp_path: Path) -> None:
+        """include_cards=True prefixes each row with its type and lists cards under their folder."""
+        from guru_sdk.contrib.workflows import dump_folder_hierarchy
+
+        g = _make_guru_mock()
+        g.collections.home_folder.return_value = _make_folder_obj(HOME_FOLDER_UUID, "Eng Home")
+
+        g.folders.items.side_effect = [
+            # Home → a card, then a sub-folder
+            [
+                _make_folder_item("card-charter", "card"),
+                _make_folder_item(SUB_FOLDER_UUID_1, "folder"),
+            ],
+            # Sub-folder → two cards, then a nested sub-folder
+            [
+                _make_folder_item("card-vpn", "card"),
+                _make_folder_item("card-laptop", "card"),
+                _make_folder_item(SUB_SUB_FOLDER_UUID, "folder"),
+            ],
+            # Nested sub-folder → empty
+            [],
+        ]
+
+        def get_side_effect(folder_id: str) -> Folder:
+            if folder_id == SUB_FOLDER_UUID_1:
+                return _make_folder_obj(SUB_FOLDER_UUID_1, "Onboarding")
+            if folder_id == SUB_SUB_FOLDER_UUID:
+                return _make_folder_obj(SUB_SUB_FOLDER_UUID, "Week 1")
+            raise NotFoundError(f"Unknown folder {folder_id}")
+
+        g.folders.get.side_effect = get_side_effect
+
+        def get_bulk_side_effect(card_ids: list[str]) -> list[Card]:
+            titles = {
+                "card-charter": "Team charter",
+                "card-vpn": "How to set up VPN",
+                "card-laptop": "Laptop checklist",
+            }
+            # Return in reverse to prove rows follow folder order, not bulk response order
+            return [_make_card(cid, content="", title=titles[cid]) for cid in reversed(card_ids)]
+
+        g.cards.get_bulk.side_effect = get_bulk_side_effect
+
+        csv_path = tmp_path / "with_cards.csv"
+        dump_folder_hierarchy(g, COLL_UUID, path=str(csv_path), include_cards=True)
+
+        with open(csv_path, newline="", encoding="utf-8") as f:
+            rows = list(csv.reader(f))
+
+        assert rows == [
+            ["card", "Team charter"],
+            ["folder", "Onboarding"],
+            ["card", "Onboarding", "How to set up VPN"],
+            ["card", "Onboarding", "Laptop checklist"],
+            ["folder", "Onboarding", "Week 1"],
+        ]
+
+    def test_include_cards_batches_title_lookups_per_folder(self, tmp_path: Path) -> None:
+        """Card titles come from one get_bulk call per folder that has cards."""
+        from guru_sdk.contrib.workflows import dump_folder_hierarchy
+
+        g = _make_guru_mock()
+        g.collections.home_folder.return_value = _make_folder_obj(HOME_FOLDER_UUID, "Home")
+        g.folders.items.side_effect = [
+            [
+                _make_folder_item("card-1", "card"),
+                _make_folder_item(SUB_FOLDER_UUID_1, "folder"),
+                _make_folder_item("card-2", "card"),
+            ],
+            [],  # sub-folder has no cards → no get_bulk call
+        ]
+        g.folders.get.return_value = _make_folder_obj(SUB_FOLDER_UUID_1, "Empty")
+        g.cards.get_bulk.return_value = [
+            _make_card("card-1", content="", title="One"),
+            _make_card("card-2", content="", title="Two"),
+        ]
+
+        dump_folder_hierarchy(g, COLL_UUID, path=str(tmp_path / "out.csv"), include_cards=True)
+
+        g.cards.get_bulk.assert_called_once_with(["card-1", "card-2"])
+
+    def test_titles_from_items_payload_skip_lookups(self, tmp_path: Path) -> None:
+        """When items() already carries titles, no folders.get or cards.get_bulk calls are made."""
+        from guru_sdk.contrib.workflows import dump_folder_hierarchy
+
+        g = _make_guru_mock()
+        g.collections.home_folder.return_value = _make_folder_obj(HOME_FOLDER_UUID, "Home")
+        g.folders.items.side_effect = [
+            [
+                _make_folder_item("card-1", "card", title="Welcome"),
+                _make_folder_item(SUB_FOLDER_UUID_1, "folder", title="Guides"),
+            ],
+            [_make_folder_item("card-2", "card", title="Install Steps")],
+        ]
+
+        csv_path = tmp_path / "out.csv"
+        dump_folder_hierarchy(g, COLL_UUID, path=str(csv_path), include_cards=True)
+
+        with open(csv_path, newline="", encoding="utf-8") as f:
+            rows = list(csv.reader(f))
+
+        assert rows == [
+            ["card", "Welcome"],
+            ["folder", "Guides"],
+            ["card", "Guides", "Install Steps"],
+        ]
+        g.folders.get.assert_not_called()
+        g.cards.get_bulk.assert_not_called()
+
+    def test_bulk_lookup_only_for_cards_missing_a_title(self, tmp_path: Path) -> None:
+        from guru_sdk.contrib.workflows import dump_folder_hierarchy
+
+        g = _make_guru_mock()
+        g.collections.home_folder.return_value = _make_folder_obj(HOME_FOLDER_UUID, "Home")
+        g.folders.items.return_value = [
+            _make_folder_item("card-1", "card", title="Has Title"),
+            _make_folder_item("card-2", "card"),
+        ]
+        g.cards.get_bulk.return_value = [_make_card("card-2", content="", title="Looked Up")]
+
+        csv_path = tmp_path / "out.csv"
+        dump_folder_hierarchy(g, COLL_UUID, path=str(csv_path), include_cards=True)
+
+        g.cards.get_bulk.assert_called_once_with(["card-2"])
+        with open(csv_path, newline="", encoding="utf-8") as f:
+            assert list(csv.reader(f)) == [["card", "Has Title"], ["card", "Looked Up"]]
+
+    def test_include_cards_falls_back_to_id_when_title_missing(self, tmp_path: Path) -> None:
+        """A card absent from the bulk response is still listed, by its ID."""
+        from guru_sdk.contrib.workflows import dump_folder_hierarchy
+
+        g = _make_guru_mock()
+        g.collections.home_folder.return_value = _make_folder_obj(HOME_FOLDER_UUID, "Home")
+        g.folders.items.return_value = [_make_folder_item("card-gone", "card")]
+        g.cards.get_bulk.return_value = []
+
+        csv_path = tmp_path / "out.csv"
+        dump_folder_hierarchy(g, COLL_UUID, path=str(csv_path), include_cards=True)
+
+        with open(csv_path, newline="", encoding="utf-8") as f:
+            rows = list(csv.reader(f))
+
+        assert rows == [["card", "card-gone"]]
 
 
 # =============================================================================

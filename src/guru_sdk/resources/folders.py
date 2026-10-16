@@ -15,12 +15,14 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     import builtins
 
+    from guru_sdk.http import PaginatedList
+
 from guru_sdk._compat import is_uuid, validate_input
 from guru_sdk.errors import NotFoundError
 from guru_sdk.models import (
     EffectivePermissions,
     Folder,
-    FolderItem,
+    FolderItemDetail,
 )
 from guru_sdk.models._generated import UserGroupAccess
 from guru_sdk.resources._base import BaseResource
@@ -140,14 +142,25 @@ class FolderResource(BaseResource):
     # Hierarchy
     # -------------------------------------------------------------------------
 
-    def items(self, folder_id: str) -> builtins.list[FolderItem]:
+    def items(self, folder_id: str, *, max_pages: int = 10) -> PaginatedList[FolderItemDetail]:
         """List items (cards, sub-folders) in a folder.
+
+        The API returns at most 50 items per page and links to the next page
+        via the Link header; all pages are followed up to *max_pages*. Each
+        item carries its title (``title`` for folders, ``preferred_phrase``
+        for cards), so callers rarely need a follow-up lookup.
 
         Args:
             folder_id: Folder UUID or title.
+            max_pages: Safety cap on pages walked (default 10, i.e. 500 items).
+
+        Returns a :class:`PaginatedList`; check its ``complete`` attribute to
+        detect when ``max_pages`` truncated the result.
         """
         resolved = self._resolve_folder(folder_id)
-        return self._http.get_list(f"/folders/{resolved}/items", FolderItem)
+        return self._http.get_paginated(
+            f"/folders/{resolved}/items", FolderItemDetail, max_pages=max_pages
+        )
 
     def parent(self, folder_id: str) -> Folder:
         """Get the parent folder.

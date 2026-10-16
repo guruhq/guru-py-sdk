@@ -19,7 +19,7 @@ import csv
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
-from guru_sdk.errors import NotFoundError
+from guru_sdk.errors import GuruError, NotFoundError
 
 if TYPE_CHECKING:
     from guru_sdk.client import Guru
@@ -284,12 +284,23 @@ def dump_folder_hierarchy(
     *,
     path: str | None = None,
     output_dir: str | None = None,
+    include_cards: bool = False,
 ) -> str:
     """Recursively walk a collection's folder tree and write it to CSV.
 
     Each row represents a folder, with columns showing the parent chain
-    (e.g., ["Engineering", "Onboarding", "Week 1"]). Cards are skipped —
-    only folders appear in the output.
+    (e.g., ["Engineering", "Onboarding", "Week 1"]). By default cards are
+    skipped and only folders appear in the output.
+
+    With ``include_cards=True``, cards are listed too and every row starts
+    with its type, followed by the chain ending in the item's title::
+
+        ["folder", "Onboarding"]
+        ["card", "Onboarding", "How to set up VPN"]
+
+    Rows follow walk order, so each card appears under its folder. Titles
+    come from the folder listing itself, so the walk makes one
+    ``folders.items()`` call per folder.
 
     Args:
         g: Guru client instance.
@@ -298,6 +309,7 @@ def dump_folder_hierarchy(
               the home folder title.
         output_dir: Directory for auto-generated filenames. Defaults to
                     current working directory. Ignored if path is set.
+        include_cards: Also list cards, with a leading type column.
 
     Returns:
         The path to the created CSV file.
@@ -319,7 +331,7 @@ def dump_folder_hierarchy(
     # Write the CSV by recursively walking the folder tree
     with open(path, "w", newline="", encoding="utf-8") as csvfile:
         writer = csv.writer(csvfile, quoting=csv.QUOTE_ALL)
-        _walk_folder_items(g, home.id or "", writer, parent_chain=[])
+        _walk_folder_items(g, home.id or "", writer, parent_chain=[], include_cards=include_cards)
 
     return path
 
@@ -329,18 +341,48 @@ def _walk_folder_items(
     folder_id: str,
     writer: Any,  # csv.writer returns _csv._writer which isn't a public type
     parent_chain: list[str],
+    *,
+    include_cards: bool = False,
 ) -> None:
     """Recursively walk folder items, writing folder paths to CSV.
 
     For each sub-folder found in items(), writes its parent chain to CSV
-    and recurses into it. Cards are skipped.
+    and recurses into it. Cards are written only when include_cards is set,
+    in which case every row is prefixed with its type. Titles are read from
+    the items() payload; folders.get / cards.get_bulk are only a fallback
+    for items that arrive without one.
     """
     from guru_sdk.models._generated import Type8
 
     items = g.folders.items(folder_id)
+    if not getattr(items, "complete", True):
+        raise GuruError(
+            f"Folder {folder_id} has more items than one fetch returns; "
+            "refusing to write an incomplete hierarchy dump"
+        )
+
+    # Titles come inline from items(); bulk-fetch only cards that lack one
+    card_titles: dict[str, str] = {}
+    if include_cards:
+        card_ids = [
+            item.id
+            for item in items
+            if item.type == Type8.card and item.id and not item.preferred_phrase
+        ]
+        if card_ids:
+            card_titles = {
+                card.id: card.preferred_phrase or card.id
+                for card in g.cards.get_bulk(card_ids)
+                if card.id
+            }
 
     for item in items:
-        # Only process folders, skip cards
+        if item.type == Type8.card and include_cards and item.id:
+            title = item.preferred_phrase or card_titles.get(item.id, item.id)
+            writer.writerow(["card", *parent_chain, title])
+            continue
+
+        # Only process folders from here on
         if item.type != Type8.folder:
             continue
 
@@ -349,15 +391,14 @@ def _walk_folder_items(
         if sub_folder_id is None:
             continue
 
-        sub_folder = g.folders.get(sub_folder_id)
-        title = sub_folder.title or sub_folder_id
+        title = item.title or g.folders.get(sub_folder_id).title or sub_folder_id
 
         # Build the chain and write to CSV
         current_chain = [*parent_chain, title]
-        writer.writerow(current_chain)
+        writer.writerow(["folder", *current_chain] if include_cards else current_chain)
 
         # Recurse into sub-folder
-        _walk_folder_items(g, sub_folder_id, writer, current_chain)
+        _walk_folder_items(g, sub_folder_id, writer, current_chain, include_cards=include_cards)
 
 
 # =============================================================================

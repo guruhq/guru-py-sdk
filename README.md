@@ -108,6 +108,21 @@ if has_text(card.content, "deprecated"):
     print("Card mentions deprecated content")
 ```
 
+Dump a collection's folder tree to CSV, optionally with the cards in each folder:
+
+```python
+from guru_sdk.contrib import dump_folder_hierarchy
+
+dump_folder_hierarchy(g, "Engineering")                                  # folders only
+csv_path = dump_folder_hierarchy(g, "Engineering", include_cards=True)  # folders and cards, with a type column
+
+# View it as a tree
+from guru_sdk.contrib import render_hierarchy
+
+print(render_hierarchy(csv_path))                                # text tree, like `tree`
+render_hierarchy(csv_path, format="mermaid", path="tree.md")     # Mermaid mindmap in Markdown
+```
+
 Also includes `PublisherFolders` (sync Guru content to external systems), `Bundle` (bulk zip import), and content utilities (`find_urls`, `replace_url`).
 
 ## Migrating from py-sdk
