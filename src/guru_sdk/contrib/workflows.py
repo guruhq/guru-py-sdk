@@ -25,6 +25,11 @@ if TYPE_CHECKING:
     from guru_sdk.client import Guru
     from guru_sdk.models._generated import CollectionModel, Folder, Tag
 
+# Page cap for walks that must see every item in a folder (50 items a page,
+# so 10,000 per folder). folders.items() defaults to 10 pages (500 items),
+# which a live QA collection root exceeded.
+_WALK_MAX_PAGES = 200
+
 # =============================================================================
 # Card Workflows
 # =============================================================================
@@ -548,15 +553,15 @@ def _replace_text_in_card(
 
 
 def _complete_folder_items(g: Guru, folder_id: str, *, purpose: str) -> Any:
-    """Return every item in a folder, or raise if items() hit its page cap.
+    """Return every item in a folder, or raise if even _WALK_MAX_PAGES wasn't enough.
 
     ``folders.items()`` stops at ``max_pages`` and reports it via
     ``PaginatedList.complete``; a walk that ignored it would silently skip
     content. *purpose* finishes the sentence "refusing to ...".
     """
-    items = g.folders.items(folder_id)
+    items = g.folders.items(folder_id, max_pages=_WALK_MAX_PAGES)
     if not getattr(items, "complete", True):
         raise GuruError(
-            f"Folder {folder_id} has more items than one fetch returns; refusing to {purpose}"
+            f"Folder {folder_id} has more than {_WALK_MAX_PAGES * 50:,} items; refusing to {purpose}"
         )
     return items

@@ -635,7 +635,36 @@ class TestDumpFolderHierarchy:
         g.collections.home_folder.return_value = _make_folder_obj(HOME_FOLDER_UUID, "Big")
         g.folders.items.return_value = PaginatedList([], complete=False)
 
-        with pytest.raises(GuruError, match="more items"):
+        with pytest.raises(GuruError, match="more than"):
+            dump_folder_hierarchy(g, COLL_UUID, path=str(tmp_path / "big.csv"))
+
+    def test_walk_reads_folders_past_the_default_page_cap(self, tmp_path: Path) -> None:
+        """A complete dump can't stop at items()' default 10 pages (500 items).
+
+        Seen live: a QA collection root with more than 500 items raised under
+        the default cap. The walk asks for far more pages.
+        """
+        from guru_sdk.contrib.workflows import _WALK_MAX_PAGES, dump_folder_hierarchy
+
+        g = _make_guru_mock()
+        g.collections.home_folder.return_value = _make_folder_obj(HOME_FOLDER_UUID, "Big")
+        g.folders.items.return_value = []
+
+        dump_folder_hierarchy(g, COLL_UUID, path=str(tmp_path / "big.csv"))
+
+        g.folders.items.assert_called_once_with(HOME_FOLDER_UUID, max_pages=_WALK_MAX_PAGES)
+        assert _WALK_MAX_PAGES * 50 >= 10_000
+
+    def test_truncation_error_names_the_item_limit(self, tmp_path: Path) -> None:
+        from guru_sdk.contrib.workflows import _WALK_MAX_PAGES, dump_folder_hierarchy
+        from guru_sdk.errors import GuruError
+        from guru_sdk.http import PaginatedList
+
+        g = _make_guru_mock()
+        g.collections.home_folder.return_value = _make_folder_obj(HOME_FOLDER_UUID, "Big")
+        g.folders.items.return_value = PaginatedList([], complete=False)
+
+        with pytest.raises(GuruError, match=f"more than {_WALK_MAX_PAGES * 50:,} items"):
             dump_folder_hierarchy(g, COLL_UUID, path=str(tmp_path / "big.csv"))
 
     def test_default_path_uses_collection_title(self, tmp_path: Path) -> None:
@@ -962,11 +991,22 @@ class TestReplaceTextInCollectionCards:
             PaginatedList([], complete=False),
         ]
 
-        with pytest.raises(GuruError, match="more items"):
+        with pytest.raises(GuruError, match="more than"):
             replace_text_in_collection_cards(g, COLL_UUID, "Acme Corp", "Acme Inc.")
 
         g.cards.get.assert_not_called()
         g.cards.patch.assert_not_called()
+
+    def test_walk_reads_folders_past_the_default_page_cap(self) -> None:
+        from guru_sdk.contrib.workflows import _WALK_MAX_PAGES, replace_text_in_collection_cards
+
+        g = _make_guru_mock()
+        g.collections.home_folder.return_value = _make_folder_obj(HOME_FOLDER_UUID, "Home")
+        g.folders.items.return_value = []
+
+        replace_text_in_collection_cards(g, COLL_UUID, "a", "b")
+
+        g.folders.items.assert_called_once_with(HOME_FOLDER_UUID, max_pages=_WALK_MAX_PAGES)
 
     def test_results_follow_walk_order(self) -> None:
         """Cards are processed depth-first in folder order, each once."""

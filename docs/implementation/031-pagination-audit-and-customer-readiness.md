@@ -42,6 +42,10 @@ and `_parse_link_header` matched only `rel="next"`, so every first page was trea
 
 With pagination working, the same live run reached page 2 of `GET /folders` and failed validation: a folder's `lastModifiedBy` was a pending invite with no `firstName`/`lastName`, both required by the spec. This would have made `folders.list()` and `collections.home_folder()` fail on this collection, which worked on `main` only because pagination never reached page 2. Fixed with a targeted codegen override (`OPTIONAL_FIELD_OVERRIDES`, ADR-009); regenerating on datamodel-code-generator 0.81 changed only those two fields.
 
+## Walk Page Cap
+
+The next live run reached all 3,091 folders (29 pages of `/folders`) and the truncation guard fired on the collection root: more than 500 items, `items()`' default of 10 pages. A walk that must be complete now asks for `_WALK_MAX_PAGES = 200` pages (10,000 items per folder), keeping the guard as the backstop, and the error states the limit. The SDK has no retry on 429; a long walk that is rate-limited stops with `RateLimitError`. Not addressed until seen live.
+
 ## Truncation in the Collection Walks
 
 Review on #16 added a check to `dump_folder_hierarchy`: if `folders.items()` reports `complete=False` (a folder past its 500-item cap), raise `GuruError` instead of writing a partial CSV. `replace_text_in_collection_cards` walked folders the same way and ignored the flag, so it could skip cards and still report success.
@@ -59,4 +63,4 @@ Card name resolution matches titles against `/cards/verificationmgr`, which list
 
 ## Tests
 
-9 new tests at the HTTP layer with `Link` headers (stubbing the resource can't catch truncation): `folders.list()`, folder resolution past 10 pages, `collections.list()`, collection resolution, `home_folder()` on page 2, `list_unverified()`, `list_comments()` (plus status on the first page), card resolution. Plus 2 replace-text tests: truncation aborts before any edit, and results keep walk order. Plus 3 HTTP tests using the live `next-page` header format, and 3 model tests for the `User` override. 763 tests total.
+9 new tests at the HTTP layer with `Link` headers (stubbing the resource can't catch truncation): `folders.list()`, folder resolution past 10 pages, `collections.list()`, collection resolution, `home_folder()` on page 2, `list_unverified()`, `list_comments()` (plus status on the first page), card resolution. Plus 2 replace-text tests: truncation aborts before any edit, and results keep walk order. Plus 3 HTTP tests using the live `next-page` header format, and 3 model tests for the `User` override. 766 tests total.
