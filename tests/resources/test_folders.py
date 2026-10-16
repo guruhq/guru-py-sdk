@@ -314,8 +314,16 @@ class TestItems:
         )
         card, folder = folders.items(FOLDER_UUID)
         assert isinstance(card, FolderItemDetail)
+        assert folder.number_of_facts is None
         assert card.preferred_phrase == "Welcome"
         assert folder.title == "Guides"
+
+    def test_folder_items_carry_card_count(self, folders: FolderResource, httpx_mock) -> None:
+        httpx_mock.add_response(
+            json=[{"id": "f", "itemId": "p", "type": "folder", "title": "G", "numberOfFacts": 38}]
+        )
+        (folder,) = folders.items(FOLDER_UUID)
+        assert folder.number_of_facts == 38
 
     def test_items_paginates_across_link_header_pages(
         self, folders: FolderResource, httpx_mock
@@ -513,3 +521,38 @@ class TestInputValidation:
     def test_items_validates(self, folders: FolderResource) -> None:
         with pytest.raises(ValidationError):
             folders.items("bad%20id")
+
+
+# =============================================================================
+# Pagination — GET /folders caps a page at 110 folders (spec description)
+# =============================================================================
+
+FOLDERS_NEXT = {"Link": '<https://api.getguru.com/api/v1/folders?token=next>; rel="next"'}
+
+
+class TestFolderListPagination:
+    """folders.list() and name resolution must read past the first page."""
+
+    def test_list_follows_link_pages(self, folders: FolderResource, httpx_mock) -> None:
+        httpx_mock.add_response(json=[_folder_json(FOLDER_UUID, "One")], headers=FOLDERS_NEXT)
+        httpx_mock.add_response(json=[_folder_json(FOLDER_UUID_2, "Two")])
+
+        result = folders.list()
+
+        assert [f.title for f in result] == ["One", "Two"]
+        assert result.complete is True
+
+    def test_name_resolution_finds_folder_past_ten_pages(
+        self, folders: FolderResource, httpx_mock
+    ) -> None:
+        """A miss on name resolution raises NotFoundError, so it must not stop at the default cap."""
+        for i in range(11):
+            httpx_mock.add_response(
+                json=[_folder_json(f"filler-{i}", f"Filler {i}")], headers=FOLDERS_NEXT
+            )
+        httpx_mock.add_response(json=[_folder_json(FOLDER_UUID_2, "Deep Folder")])
+        httpx_mock.add_response(json=_folder_json(FOLDER_UUID_2, "Deep Folder"))
+
+        result = folders.get("Deep Folder")
+
+        assert result.id == FOLDER_UUID_2

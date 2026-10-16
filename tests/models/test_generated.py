@@ -314,6 +314,36 @@ class TestNewCard:
 # =============================================================================
 
 
+class TestOptionalFieldOverrides:
+    """Fields the spec marks required but the live API omits (OPTIONAL_FIELD_OVERRIDES)."""
+
+    def test_pending_invite_user_without_names_parses(self) -> None:
+        """Pending invites have no first/last name yet (seen on QA in a folder's
+        lastModifiedBy, which broke folders.list on page 2)."""
+        user = User.model_validate(
+            {"email": "invitee@example.com", "status": "PENDING", "userType": "USER"}
+        )
+        assert user.first_name is None
+        assert user.last_name is None
+
+    def test_folder_with_pending_last_modified_by_parses(self) -> None:
+        folder = Folder.model_validate(
+            {
+                "id": "f1",
+                "title": "Imported",
+                "slug": "imported",
+                "home": False,
+                "lastModifiedBy": {"email": "invitee@example.com", "status": "PENDING"},
+            }
+        )
+        assert folder.last_modified_by is not None
+        assert folder.last_modified_by.first_name is None
+
+    def test_email_is_still_required(self) -> None:
+        with pytest.raises(ValidationError):
+            User.model_validate({"firstName": "No", "lastName": "Email"})
+
+
 class TestExcludedSchemas:
     """Verify that deprecated schemas were filtered out during generation."""
 
