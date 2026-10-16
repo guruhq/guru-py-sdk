@@ -52,6 +52,8 @@ With every fix in place, a full export of the 3,091-folder QA collection would m
 
 When the budget is hit, the warning states it plainly ("call budget of 200 reached; this collection is too large to process in full", with counts), and `render_hierarchy`'s text tree ends with the same note whenever the CSV has marker rows, so the call-out survives into the file people share. Folders-only CSVs carry no type column, so they get the warning but no in-file marker.
 
+Live run at the default budget: 230 HTTP requests in 30s (200 for the walk, 29 for `home_folder()` reading every `/folders` page, 1 for collection resolution); 1,671 folder rows, 876 cards, 1,507 folders marked not opened, warning shown. The 29-call lookup is backlog 031b.
+
 Sizing on the QA collection: 1,670 top-level folders (34 pages for the root alone), 3,091 overall. At the default budget every top-level folder gets a row, about 166 are opened, and the rest are marked.
 
 ## Truncation in the Collection Walks
