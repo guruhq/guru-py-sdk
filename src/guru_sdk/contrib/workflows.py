@@ -19,7 +19,7 @@ import csv
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
-from guru_sdk.errors import NotFoundError
+from guru_sdk.errors import GuruError, NotFoundError
 
 if TYPE_CHECKING:
     from guru_sdk.client import Guru
@@ -355,6 +355,11 @@ def _walk_folder_items(
     from guru_sdk.models._generated import Type8
 
     items = g.folders.items(folder_id)
+    if not getattr(items, "complete", True):
+        raise GuruError(
+            f"Folder {folder_id} has more items than one fetch returns; "
+            "refusing to write an incomplete hierarchy dump"
+        )
 
     # Titles come inline from items(); bulk-fetch only cards that lack one
     card_titles: dict[str, str] = {}

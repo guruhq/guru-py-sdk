@@ -625,6 +625,19 @@ class TestDumpFolderHierarchy:
 
         assert rows == []
 
+    def test_truncated_folder_items_raises(self, tmp_path: Path) -> None:
+        """A truncated items() fetch must not yield a silently incomplete CSV."""
+        from guru_sdk.contrib.workflows import dump_folder_hierarchy
+        from guru_sdk.errors import GuruError
+        from guru_sdk.http import PaginatedList
+
+        g = _make_guru_mock()
+        g.collections.home_folder.return_value = _make_folder_obj(HOME_FOLDER_UUID, "Big")
+        g.folders.items.return_value = PaginatedList([], complete=False)
+
+        with pytest.raises(GuruError, match="more items"):
+            dump_folder_hierarchy(g, COLL_UUID, path=str(tmp_path / "big.csv"))
+
     def test_default_path_uses_collection_title(self, tmp_path: Path) -> None:
         """When no path is given, uses <collection_title>_folder_hierarchy.csv."""
         from guru_sdk.contrib.workflows import dump_folder_hierarchy
