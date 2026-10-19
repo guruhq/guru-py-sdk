@@ -4,14 +4,25 @@ Modern Python SDK for the [Guru API](https://developer.getguru.com). Typed, sync
 
 ## Install
 
-Requires Python 3.10+.
+Requires Python 3.10+ and [uv](https://docs.astral.sh/uv/getting-started/installation/). The SDK is not on PyPI yet, so install it from source:
 
 ```bash
-pip install guru-sdk
-
-# or with uv
-uv add guru-sdk
+git clone https://github.com/guruhq/guru-py-sdk.git
+cd guru-py-sdk
+uv sync
 ```
+
+Run your scripts from the repo folder with `uv run python your_script.py`. To use the SDK from another project instead, install the clone into that project's environment:
+
+```bash
+uv add /path/to/guru-py-sdk      # or: pip install -e /path/to/guru-py-sdk
+```
+
+Once it is published, `pip install guru-sdk` or `uv add guru-sdk` will work.
+
+### Using it with Claude Code
+
+Open Claude Code in the repo folder and describe what you want in plain English, for example *"export the Engineering collection's folders and cards to a CSV and show it as a tree"*. It writes and runs the script for you. Set `GURU_USER` and `GURU_TOKEN` first (see Quick Start).
 
 ## Quick Start
 
@@ -115,6 +126,10 @@ from guru_sdk.contrib import dump_folder_hierarchy
 
 dump_folder_hierarchy(g, "Engineering")                                  # folders only
 csv_path = dump_folder_hierarchy(g, "Engineering", include_cards=True)  # folders and cards, with a type column
+
+# Very large collections: the walk stops after 200 API calls by default, opening
+# the top levels first and marking folders it didn't reach. To list everything:
+dump_folder_hierarchy(g, "Engineering", include_cards=True, max_calls=None)
 
 # View it as a tree
 from guru_sdk.contrib import render_hierarchy

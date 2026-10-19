@@ -2,6 +2,18 @@
 
 Modern Python SDK for the Guru API. Typed, sync-first, async-ready. Mirrors [guru-cli](https://github.com/guruhq/guru-cli) architecture.
 
+## Using the SDK vs. developing it
+
+Most sessions in a fresh clone are someone **using** the SDK: "export my collection", "find cards that mention X", "add these users to a group". For those:
+
+- Write the script in `scripts/` (or wherever the user asks), never in `src/` or `tests/`. Run it with `uv run python scripts/<name>.py`.
+- Check `src/guru_sdk/contrib/` first; many common tasks are one function call (`dump_folder_hierarchy`, `render_hierarchy`, `replace_text_in_collection_cards`, ...). The README's Contrib section shows usage.
+- Credentials come from `GURU_USER` and `GURU_TOKEN`. If they are missing, ask the user to set them; never write a token into a file.
+- Ask before running anything that changes Guru content (create, update, archive, move, delete). Reads are fine.
+- Skip the rules below (TDD, `make check`, docs updates, ADRs, backlog). They are for changes to the SDK itself.
+
+Everything from here down applies only when **developing** the SDK: changing `src/`, `tests/` or `docs/`.
+
 ## Commands
 
 ```bash

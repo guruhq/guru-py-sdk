@@ -27,7 +27,7 @@ from guru_sdk.models import (
     Folder,
     Tag,
 )
-from guru_sdk.resources._base import BaseResource
+from guru_sdk.resources._base import RESOLVE_MAX_PAGES, BaseResource
 
 if TYPE_CHECKING:
     from guru_sdk.http import PaginatedList
@@ -340,13 +340,16 @@ class CardResource(BaseResource):
         resolved = self._resolve_card(card_id)
         self._http.post_no_content(f"/cards/{resolved}/unverify")
 
-    def list_unverified(self) -> list[Card]:
+    def list_unverified(self, *, max_pages: int = 10) -> PaginatedList[Card]:
         """List all cards needing verification.
 
-        Returns:
-            List of cards in the verification queue.
+        The API returns at most 50 cards per page; all pages are followed up
+        to *max_pages*.
+
+        Returns a :class:`PaginatedList` of cards in the verification queue;
+        ``complete`` is False if ``max_pages`` truncated it.
         """
-        return self._http.get_list("/cards/verificationmgr", Card)
+        return self._http.get_paginated("/cards/verificationmgr", Card, max_pages=max_pages)
 
     # -------------------------------------------------------------------------
     # Tags
@@ -390,18 +393,27 @@ class CardResource(BaseResource):
     # Comments
     # -------------------------------------------------------------------------
 
-    def list_comments(self, card_id: str, *, status: str | None = None) -> list[CardComment]:
+    def list_comments(
+        self, card_id: str, *, status: str | None = None, max_pages: int = 10
+    ) -> PaginatedList[CardComment]:
         """List comments on a card.
+
+        The API returns at most 25 comments per page; all pages are followed
+        up to *max_pages*.
 
         Args:
             card_id: Card UUID or title.
             status: Filter by comment status — "OPEN" or "RESOLVED".
                 If None, returns all comments.
+            max_pages: Safety cap on pages walked (default 10).
         """
         resolved = self._resolve_card(card_id)
+        params: dict[str, Any] = {}
         if status is not None:
-            return self._http.get_list(f"/cards/{resolved}/comments", CardComment, status=status)
-        return self._http.get_list(f"/cards/{resolved}/comments", CardComment)
+            params["status"] = status
+        return self._http.get_paginated(
+            f"/cards/{resolved}/comments", CardComment, max_pages=max_pages, **params
+        )
 
     def bulk_get_comments(
         self,
@@ -697,7 +709,9 @@ class CardResource(BaseResource):
 
         # Name resolution: list cards and match by title (case-insensitive).
         # Uses the verification manager endpoint as a broad card listing source.
-        cards = self._http.get_list("/cards/verificationmgr", Card)
+        cards = self._http.get_paginated(
+            "/cards/verificationmgr", Card, max_pages=RESOLVE_MAX_PAGES
+        )
         for card in cards:
             if (
                 card.preferred_phrase is not None

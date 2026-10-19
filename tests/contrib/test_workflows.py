@@ -635,8 +635,163 @@ class TestDumpFolderHierarchy:
         g.collections.home_folder.return_value = _make_folder_obj(HOME_FOLDER_UUID, "Big")
         g.folders.items.return_value = PaginatedList([], complete=False)
 
-        with pytest.raises(GuruError, match="more items"):
+        with pytest.raises(GuruError, match="more than"):
             dump_folder_hierarchy(g, COLL_UUID, path=str(tmp_path / "big.csv"))
+
+    def test_walk_reads_folders_past_the_default_page_cap(self, tmp_path: Path) -> None:
+        """A complete dump can't stop at items()' default 10 pages (500 items).
+
+        Seen live: a QA collection root with more than 500 items raised under
+        the default cap. The walk asks for far more pages.
+        """
+        from guru_sdk.contrib.workflows import _WALK_MAX_PAGES, dump_folder_hierarchy
+
+        g = _make_guru_mock()
+        g.collections.home_folder.return_value = _make_folder_obj(HOME_FOLDER_UUID, "Big")
+        g.folders.items.return_value = []
+
+        dump_folder_hierarchy(g, COLL_UUID, path=str(tmp_path / "big.csv"))
+
+        g.folders.items.assert_called_once_with(HOME_FOLDER_UUID, max_pages=_WALK_MAX_PAGES)
+        assert _WALK_MAX_PAGES * 50 >= 10_000
+
+    def test_truncation_error_names_the_item_limit(self, tmp_path: Path) -> None:
+        from guru_sdk.contrib.workflows import _WALK_MAX_PAGES, dump_folder_hierarchy
+        from guru_sdk.errors import GuruError
+        from guru_sdk.http import PaginatedList
+
+        g = _make_guru_mock()
+        g.collections.home_folder.return_value = _make_folder_obj(HOME_FOLDER_UUID, "Big")
+        g.folders.items.return_value = PaginatedList([], complete=False)
+
+        with pytest.raises(GuruError, match=f"more than {_WALK_MAX_PAGES * 50:,} items"):
+            dump_folder_hierarchy(g, COLL_UUID, path=str(tmp_path / "big.csv"))
+
+    def _two_branch_tree(self) -> MagicMock:
+        """Home → folders A and B; A → folder A1 (3 cards); B → card."""
+        g = _make_guru_mock()
+        g.collections.home_folder.return_value = _make_folder_obj(HOME_FOLDER_UUID, "Home")
+        children = {
+            HOME_FOLDER_UUID: [
+                _make_folder_item("fa", "folder", title="A"),
+                _make_folder_item("fb", "folder", title="B"),
+            ],
+            "fa": [
+                FolderItemDetail.model_validate(
+                    {
+                        "id": "fa1",
+                        "itemId": "p-fa1",
+                        "type": "folder",
+                        "title": "A1",
+                        "numberOfFacts": 3,
+                    }
+                )
+            ],
+            "fb": [_make_folder_item("cb", "card", title="B card")],
+            "fa1": [_make_folder_item("ca1", "card", title="Deep card")],
+        }
+        g.folders.items.side_effect = lambda fid, max_pages: children[fid]
+        return g
+
+    def test_budget_opens_folders_breadth_first(self, tmp_path: Path) -> None:
+        """With 3 calls: home, A, B are opened; A1 (a level deeper) is not."""
+        from guru_sdk.contrib.workflows import dump_folder_hierarchy
+
+        g = self._two_branch_tree()
+        csv_path = tmp_path / "out.csv"
+
+        with pytest.warns(UserWarning, match="1 folder not opened"):
+            dump_folder_hierarchy(g, COLL_UUID, path=str(csv_path), include_cards=True, max_calls=3)
+
+        with open(csv_path, newline="", encoding="utf-8") as f:
+            rows = list(csv.reader(f))
+
+        assert rows == [
+            ["folder", "A"],
+            ["folder", "A", "A1"],
+            ["more", "A", "A1", "contents not listed (3 cards)"],
+            ["folder", "B"],
+            ["card", "B", "B card"],
+        ]
+        opened = [c.args[0] for c in g.folders.items.call_args_list]
+        assert opened == [HOME_FOLDER_UUID, "fa", "fb"]
+
+    def test_budget_warning_says_collection_is_too_large(self, tmp_path: Path) -> None:
+        from guru_sdk.contrib.workflows import dump_folder_hierarchy
+
+        g = self._two_branch_tree()
+
+        with pytest.warns(UserWarning) as caught:
+            dump_folder_hierarchy(g, COLL_UUID, path=str(tmp_path / "o.csv"), max_calls=3)
+
+        message = str(caught[0].message)
+        assert "call budget of 3 reached" in message
+        assert "too large to process in full" in message
+        assert "max_calls=None" in message
+
+    def test_max_calls_none_opens_everything(self, tmp_path: Path) -> None:
+        import warnings
+
+        from guru_sdk.contrib.workflows import dump_folder_hierarchy
+
+        g = self._two_branch_tree()
+        csv_path = tmp_path / "out.csv"
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            dump_folder_hierarchy(
+                g, COLL_UUID, path=str(csv_path), include_cards=True, max_calls=None
+            )
+
+        with open(csv_path, newline="", encoding="utf-8") as f:
+            rows = list(csv.reader(f))
+
+        assert ["card", "A", "A1", "Deep card"] in rows
+        assert not any(r[0] == "more" for r in rows)
+
+    def test_default_budget_is_200_calls(self) -> None:
+        import inspect
+
+        from guru_sdk.contrib.workflows import dump_folder_hierarchy
+
+        assert inspect.signature(dump_folder_hierarchy).parameters["max_calls"].default == 200
+
+    def test_budget_counts_pages_not_folders(self, tmp_path: Path) -> None:
+        """A folder that took 3 pages costs 3 calls."""
+        from guru_sdk.contrib.workflows import dump_folder_hierarchy
+        from guru_sdk.http import PaginatedList
+
+        g = _make_guru_mock()
+        g.collections.home_folder.return_value = _make_folder_obj(HOME_FOLDER_UUID, "Home")
+        root = PaginatedList([_make_folder_item("fa", "folder", title="A")], complete=True, pages=3)
+        g.folders.items.side_effect = lambda fid, max_pages: root
+
+        with pytest.warns(UserWarning, match="1 folder not opened"):
+            dump_folder_hierarchy(g, COLL_UUID, path=str(tmp_path / "o.csv"), max_calls=3)
+
+        assert g.folders.items.call_count == 1
+
+    def test_folder_cut_short_by_budget_is_marked_not_raised(self, tmp_path: Path) -> None:
+        """When the budget, not the 10,000-item cap, stops a folder's pages, list
+        what came back and mark the rest."""
+        from guru_sdk.contrib.workflows import dump_folder_hierarchy
+        from guru_sdk.http import PaginatedList
+
+        g = _make_guru_mock()
+        g.collections.home_folder.return_value = _make_folder_obj(HOME_FOLDER_UUID, "Home")
+        partial = PaginatedList(
+            [_make_folder_item("c1", "card", title="First card")], complete=False, pages=2
+        )
+        g.folders.items.side_effect = lambda fid, max_pages: partial
+        csv_path = tmp_path / "o.csv"
+
+        with pytest.warns(UserWarning, match="not fully listed"):
+            dump_folder_hierarchy(g, COLL_UUID, path=str(csv_path), include_cards=True, max_calls=2)
+
+        g.folders.items.assert_called_once_with(HOME_FOLDER_UUID, max_pages=2)
+        with open(csv_path, newline="", encoding="utf-8") as f:
+            rows = list(csv.reader(f))
+        assert rows == [["card", "First card"], ["more", "contents not listed"]]
 
     def test_default_path_uses_collection_title(self, tmp_path: Path) -> None:
         """When no path is given, uses <collection_title>_folder_hierarchy.csv."""
@@ -939,6 +1094,68 @@ class TestReplaceTextInCollectionCards:
 
         statuses = sorted(r.status for r in results)
         assert statuses == ["updated", "updated"]
+
+    def test_truncated_folder_raises_before_any_edit(self) -> None:
+        """A truncated folder anywhere in the tree aborts before any card is read or patched.
+
+        The walk edits as it goes would leave earlier folders changed and the
+        results lost; collecting first makes truncation all-or-nothing.
+        """
+        from guru_sdk.contrib.workflows import replace_text_in_collection_cards
+        from guru_sdk.errors import GuruError
+        from guru_sdk.http import PaginatedList
+
+        g = _make_guru_mock()
+        g.collections.home_folder.return_value = _make_folder_obj(HOME_FOLDER_UUID, "Home")
+        g.folders.items.side_effect = [
+            # Home: a card that would be edited, then a sub-folder
+            [
+                _make_folder_item(CARD_UUID_1, "card"),
+                _make_folder_item(SUB_FOLDER_UUID_1, "folder"),
+            ],
+            # Sub-folder: truncated by max_pages
+            PaginatedList([], complete=False),
+        ]
+
+        with pytest.raises(GuruError, match="more than"):
+            replace_text_in_collection_cards(g, COLL_UUID, "Acme Corp", "Acme Inc.")
+
+        g.cards.get.assert_not_called()
+        g.cards.patch.assert_not_called()
+
+    def test_walk_reads_folders_past_the_default_page_cap(self) -> None:
+        from guru_sdk.contrib.workflows import _WALK_MAX_PAGES, replace_text_in_collection_cards
+
+        g = _make_guru_mock()
+        g.collections.home_folder.return_value = _make_folder_obj(HOME_FOLDER_UUID, "Home")
+        g.folders.items.return_value = []
+
+        replace_text_in_collection_cards(g, COLL_UUID, "a", "b")
+
+        g.folders.items.assert_called_once_with(HOME_FOLDER_UUID, max_pages=_WALK_MAX_PAGES)
+
+    def test_results_follow_walk_order(self) -> None:
+        """Cards are processed depth-first in folder order, each once."""
+        from guru_sdk.contrib.workflows import replace_text_in_collection_cards
+
+        g = _make_guru_mock()
+        g.collections.home_folder.return_value = _make_folder_obj(HOME_FOLDER_UUID, "Home")
+        g.folders.items.side_effect = [
+            [
+                _make_folder_item(CARD_UUID_1, "card"),
+                _make_folder_item(SUB_FOLDER_UUID_1, "folder"),
+                _make_folder_item(CARD_UUID_3, "card"),
+            ],
+            [
+                _make_folder_item(CARD_UUID_2, "card"),
+                _make_folder_item(CARD_UUID_1, "card"),  # same card filed twice
+            ],
+        ]
+        g.cards.get.side_effect = lambda cid: _make_card(cid, content="<p>none</p>")
+
+        results = replace_text_in_collection_cards(g, COLL_UUID, "Acme", "X", dry_run=True)
+
+        assert [r.card_id for r in results] == [CARD_UUID_1, CARD_UUID_2, CARD_UUID_3]
 
     def test_skips_cards_without_text(self) -> None:
         """Cards that don't contain old_text are reported as unchanged and not patched."""

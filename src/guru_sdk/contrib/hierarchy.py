@@ -19,8 +19,12 @@ import csv
 import os
 
 _FORMATS = ("text", "mermaid")
-_TYPES = ("folder", "card")
+_TYPES = ("folder", "card", "more")
 _CSV_SUFFIX = "_folder_hierarchy.csv"
+_BUDGET_NOTE = (
+    "Note: the call budget was reached; this collection is too large to process "
+    "in full. Folders marked … were not opened."
+)
 
 
 def render_hierarchy(
@@ -37,6 +41,9 @@ def render_hierarchy(
             accepted: folders only, or typed rows from ``include_cards=True``.
         format: ``"text"`` for a ``tree``-style listing (folders marked 📁),
             or ``"mermaid"`` for a mindmap (folders as boxes, cards rounded).
+            Rows for folders a call budget left unopened render as
+            ``… contents not listed``, and the text tree then ends with a
+            note that the collection was too large to process in full.
         root_name: Label for the root node. Defaults to the CSV filename
             with any ``_folder_hierarchy.csv`` suffix removed.
         path: Also write the rendering to this file. A Mermaid rendering
@@ -95,8 +102,10 @@ def _render_text(rows: list[tuple[str, list[str]]], root: str) -> str:
         last = _is_last_sibling(rows, i)
         ancestors_last[depth:] = [last]
         prefix = "".join("    " if done else "│   " for done in ancestors_last[:depth])
-        icon = "📁 " if kind == "folder" else ""
+        icon = {"folder": "📁 ", "more": "… "}.get(kind, "")
         lines.append(f"{prefix}{'└── ' if last else '├── '}{icon}{item_path[-1]}")
+    if any(kind == "more" for kind, _ in rows):
+        lines += ["", _BUDGET_NOTE]
     return "\n".join(lines)
 
 
@@ -116,7 +125,12 @@ def _render_mermaid(rows: list[tuple[str, list[str]]], root: str) -> str:
     out = ["mindmap", f'  root(("{_mermaid_label(root)}"))']
     for kind, item_path in rows:
         label = _mermaid_label(item_path[-1])
-        node = f'["{label}"]' if kind == "folder" else f'("{label}")'
+        if kind == "folder":
+            node = f'["{label}"]'
+        elif kind == "more":
+            node = f'("… {label}")'
+        else:
+            node = f'("{label}")'
         out.append("  " * (len(item_path) + 1) + node)
     return "\n".join(out)
 

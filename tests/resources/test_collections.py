@@ -425,3 +425,45 @@ class TestInputValidation:
     def test_remove_validates(self, collections: CollectionResource) -> None:
         with pytest.raises(ValidationError):
             collections.remove("bad?id")
+
+
+# =============================================================================
+# Pagination — /collections and /folders?collection= follow Link headers
+# =============================================================================
+
+NEXT_PAGE = {"Link": '<https://api.getguru.com/api/v1/next?token=next>; rel="next"'}
+
+
+class TestCollectionPagination:
+    """Listings that drive a NotFoundError must read every page."""
+
+    def test_list_follows_link_pages(self, collections: CollectionResource, httpx_mock) -> None:
+        httpx_mock.add_response(json=[_collection_json(COLLECTION_UUID, "One")], headers=NEXT_PAGE)
+        httpx_mock.add_response(json=[_collection_json(COLLECTION_UUID_2, "Two")])
+
+        result = collections.list()
+
+        assert [c.name for c in result] == ["One", "Two"]
+        assert result.complete is True
+
+    def test_name_resolution_follows_link_pages(
+        self, collections: CollectionResource, httpx_mock
+    ) -> None:
+        httpx_mock.add_response(json=[_collection_json(COLLECTION_UUID, "One")], headers=NEXT_PAGE)
+        httpx_mock.add_response(json=[_collection_json(COLLECTION_UUID_2, "Two")])
+        httpx_mock.add_response(json=_collection_json(COLLECTION_UUID_2, "Two"))
+
+        result = collections.get("Two")
+
+        assert result.id == COLLECTION_UUID_2
+
+    def test_home_folder_found_past_first_page(
+        self, collections: CollectionResource, httpx_mock
+    ) -> None:
+        """GET /folders caps at 110; a big collection's home folder can be on page 2."""
+        httpx_mock.add_response(json=[_folder_json()], headers=NEXT_PAGE)
+        httpx_mock.add_response(json=[_home_folder_json()])
+
+        result = collections.home_folder(COLLECTION_UUID)
+
+        assert result.home is True

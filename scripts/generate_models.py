@@ -54,6 +54,15 @@ EXCLUDED_SCHEMAS = {
     "TeamStats",
 }
 
+# Fields the spec marks required but the live API omits. Each entry needs the
+# evidence that it is missing in practice; keep this list short and specific
+# rather than making every field optional (see ADR-009).
+OPTIONAL_FIELD_OVERRIDES: dict[str, set[str]] = {
+    # Pending invites have no name yet (seen on QA in Folder.lastModifiedBy;
+    # guru-cli marks both optional for the same reason).
+    "User": {"firstName", "lastName"},
+}
+
 # =============================================================================
 # Generation pipeline
 # =============================================================================
@@ -74,6 +83,8 @@ def load_and_filter_spec(swagger_path: Path) -> dict:  # noqa: ANN401
     # Rewrite $ref pointers that reference excluded schemas to be untyped
     _nullify_excluded_refs(definitions)
 
+    _apply_optional_field_overrides(definitions)
+
     filtered_count = len(definitions)
     print(f"  Definitions: {original_count} total, {original_count - filtered_count} excluded, {filtered_count} kept")
 
@@ -82,6 +93,23 @@ def load_and_filter_spec(swagger_path: Path) -> dict:  # noqa: ANN401
         "$schema": "http://json-schema.org/draft-07/schema#",
         "definitions": definitions,
     }
+
+
+def _apply_optional_field_overrides(definitions: dict) -> None:  # noqa: ANN401
+    """Drop OPTIONAL_FIELD_OVERRIDES fields from their schema's required list."""
+    for schema_name, fields in OPTIONAL_FIELD_OVERRIDES.items():
+        schema = definitions.get(schema_name)
+        if schema is None:
+            raise SystemExit(f"OPTIONAL_FIELD_OVERRIDES: schema {schema_name!r} not in spec")
+        required = schema.get("required", [])
+        missing = fields - set(required)
+        if missing:
+            raise SystemExit(
+                f"OPTIONAL_FIELD_OVERRIDES: {schema_name} fields {sorted(missing)} "
+                "are not required in the spec; remove them from the override"
+            )
+        schema["required"] = [f for f in required if f not in fields]
+        print(f"  Override: {schema_name} -> optional {sorted(fields)}")
 
 
 def _nullify_excluded_refs(definitions: dict) -> None:  # noqa: ANN401

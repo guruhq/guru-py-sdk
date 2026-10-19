@@ -153,3 +153,5 @@ class FolderItemDetail(FolderItem):
 
     title: str | None = None
     preferred_phrase: Annotated[str | None, Field(alias="preferredPhrase")] = None
+    # Folders only: how many cards the folder holds (live payload, not in spec)
+    number_of_facts: Annotated[int | None, Field(alias="numberOfFacts")] = None

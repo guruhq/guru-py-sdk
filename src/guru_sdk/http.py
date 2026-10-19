@@ -60,15 +60,22 @@ class PaginatedList(list[_T]):
     ``False`` when the ``max_pages`` cap stopped pagination before the server
     ran out of pages, meaning more data was left unfetched.
 
+    :attr:`pages` is how many API requests the fetch made, so callers can
+    charge them against a call budget.
+
     Note: operations that build a new list (``copy()``, ``+``, slicing) return
     a plain ``list`` — :attr:`complete` describes a fetch, not the data.
     """
 
     complete: bool
+    pages: int
 
-    def __init__(self, iterable: Iterable[_T] = (), *, complete: bool = True) -> None:
+    def __init__(
+        self, iterable: Iterable[_T] = (), *, complete: bool = True, pages: int = 1
+    ) -> None:
         super().__init__(iterable)
         self.complete = complete
+        self.pages = pages
 
 
 # =============================================================================
@@ -295,7 +302,7 @@ class HttpClient:
             next_url = _parse_link_header(response.headers.get("link"))
 
         # A leftover next_url means the max_pages cap stopped us early.
-        return PaginatedList(all_items, complete=next_url is None)
+        return PaginatedList(all_items, complete=next_url is None, pages=max(page, 1))
 
     # -------------------------------------------------------------------------
     # Cleanup
@@ -344,8 +351,10 @@ class HttpClient:
 # Internal Helpers
 # =============================================================================
 
-# Link: <https://api.getguru.com/api/v1/folders?page=2>; rel="next"
-_LINK_NEXT_RE = re.compile(r'<([^>]+)>;\s*rel="next"')
+# Link: <https://api.getguru.com/api/v1/folders?token=...>; rel="next-page"; title="Next Page"
+# Guru's live API sends rel="next-page" (confirmed on QA for /folders and
+# /folders/{id}/items); accept plain rel="next" too, matching guru-cli.
+_LINK_NEXT_RE = re.compile(r'<([^>]+)>;\s*rel="next(?:-page)?"')
 
 
 def _parse_link_header(header: str | None) -> str | None:

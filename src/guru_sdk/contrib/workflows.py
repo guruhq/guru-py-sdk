@@ -25,6 +25,11 @@ if TYPE_CHECKING:
     from guru_sdk.client import Guru
     from guru_sdk.models._generated import CollectionModel, Folder, Tag
 
+# Page cap for walks that must see every item in a folder (50 items a page,
+# so 10,000 per folder). folders.items() defaults to 10 pages (500 items),
+# which a live QA collection root exceeded.
+_WALK_MAX_PAGES = 200
+
 # =============================================================================
 # Card Workflows
 # =============================================================================
@@ -285,8 +290,9 @@ def dump_folder_hierarchy(
     path: str | None = None,
     output_dir: str | None = None,
     include_cards: bool = False,
+    max_calls: int | None = 200,
 ) -> str:
-    """Recursively walk a collection's folder tree and write it to CSV.
+    """Walk a collection's folder tree and write it to CSV.
 
     Each row represents a folder, with columns showing the parent chain
     (e.g., ["Engineering", "Onboarding", "Week 1"]). By default cards are
@@ -298,9 +304,20 @@ def dump_folder_hierarchy(
         ["folder", "Onboarding"]
         ["card", "Onboarding", "How to set up VPN"]
 
-    Rows follow walk order, so each card appears under its folder. Titles
-    come from the folder listing itself, so the walk makes one
-    ``folders.items()`` call per folder.
+    Rows are written in tree order, so each card appears under its folder.
+    Titles come from the folder listing itself, so the walk costs one API
+    call per page of each folder it opens (50 items a page).
+
+    **Call budget.** ``max_calls`` (default 200) caps the API calls the walk
+    makes, so a very large collection yields a usable overview instead of
+    thousands of requests. Folders are opened breadth-first, top level
+    first. A folder the budget didn't reach is still listed (its title comes
+    from its parent), and with ``include_cards`` gets a marker row::
+
+        ["more", "Onboarding", "Week 1", "contents not listed (12 cards)"]
+
+    A ``UserWarning`` says how much was left out. Pass ``max_calls=None`` to
+    open every folder.
 
     Args:
         g: Guru client instance.
@@ -310,12 +327,22 @@ def dump_folder_hierarchy(
         output_dir: Directory for auto-generated filenames. Defaults to
                     current working directory. Ignored if path is set.
         include_cards: Also list cards, with a leading type column.
+        max_calls: API call budget for the walk, or None for no limit.
 
     Returns:
         The path to the created CSV file.
+
+    Raises:
+        ValueError: If ``max_calls`` is less than 1.
+        GuruError: If a folder holds more than 10,000 items, rather than
+            writing an incomplete hierarchy.
     """
-    # Get the home folder for the collection
+    if max_calls is not None and max_calls < 1:
+        msg = "max_calls must be at least 1, or None for no limit"
+        raise ValueError(msg)
+
     home = g.collections.home_folder(collection_id)
+    root_id = home.id or ""
 
     # Determine output path
     if path is None:
@@ -328,38 +355,76 @@ def dump_folder_hierarchy(
         else:
             path = filename
 
-    # Write the CSV by recursively walking the folder tree
+    listings, partial = _fetch_folder_tree(g, root_id, max_calls=max_calls)
+
     with open(path, "w", newline="", encoding="utf-8") as csvfile:
         writer = csv.writer(csvfile, quoting=csv.QUOTE_ALL)
-        _walk_folder_items(g, home.id or "", writer, parent_chain=[], include_cards=include_cards)
+        unopened = _write_folder(
+            g, root_id, listings, partial, writer, [], include_cards=include_cards
+        )
 
+    _warn_if_budget_cut(max_calls, unopened=unopened, partial=len(partial))
     return path
 
 
-def _walk_folder_items(
+def _fetch_folder_tree(
+    g: Guru, root_id: str, *, max_calls: int | None
+) -> tuple[dict[str, Any], set[str]]:
+    """Open folders breadth-first until the call budget runs out.
+
+    Returns each opened folder's items, and the folders whose listing the
+    budget cut short.
+    """
+    from collections import deque
+
+    from guru_sdk.models._generated import Type8
+
+    listings: dict[str, Any] = {}
+    partial: set[str] = set()
+    calls = 0
+    queue = deque([root_id])
+
+    while queue and (max_calls is None or calls < max_calls):
+        folder_id = queue.popleft()
+        max_pages = (
+            _WALK_MAX_PAGES if max_calls is None else min(_WALK_MAX_PAGES, max_calls - calls)
+        )
+        items = g.folders.items(folder_id, max_pages=max_pages)
+        calls += getattr(items, "pages", 1)
+
+        if not getattr(items, "complete", True):
+            if max_pages == _WALK_MAX_PAGES:
+                raise GuruError(
+                    f"Folder {folder_id} has more than {_WALK_MAX_PAGES * 50:,} items; "
+                    "refusing to write an incomplete hierarchy dump"
+                )
+            partial.add(folder_id)
+
+        listings[folder_id] = items
+        queue.extend(item.id for item in items if item.type == Type8.folder and item.id)
+
+    return listings, partial
+
+
+def _write_folder(
     g: Guru,
     folder_id: str,
+    listings: dict[str, Any],
+    partial: set[str],
     writer: Any,  # csv.writer returns _csv._writer which isn't a public type
     parent_chain: list[str],
     *,
-    include_cards: bool = False,
-) -> None:
-    """Recursively walk folder items, writing folder paths to CSV.
+    include_cards: bool,
+) -> int:
+    """Write one opened folder's rows in tree order; return folders left unopened.
 
-    For each sub-folder found in items(), writes its parent chain to CSV
-    and recurses into it. Cards are written only when include_cards is set,
-    in which case every row is prefixed with its type. Titles are read from
-    the items() payload; folders.get / cards.get_bulk are only a fallback
-    for items that arrive without one.
+    Titles are read from the items() payload; folders.get / cards.get_bulk
+    are only a fallback for items that arrive without one.
     """
     from guru_sdk.models._generated import Type8
 
-    items = g.folders.items(folder_id)
-    if not getattr(items, "complete", True):
-        raise GuruError(
-            f"Folder {folder_id} has more items than one fetch returns; "
-            "refusing to write an incomplete hierarchy dump"
-        )
+    items = listings[folder_id]
+    unopened = 0
 
     # Titles come inline from items(); bulk-fetch only cards that lack one
     card_titles: dict[str, str] = {}
@@ -382,23 +447,51 @@ def _walk_folder_items(
             writer.writerow(["card", *parent_chain, title])
             continue
 
-        # Only process folders from here on
-        if item.type != Type8.folder:
-            continue
-
         # item.id is the actual folder UUID; item.item_id is the placement UUID
-        sub_folder_id = item.id
-        if sub_folder_id is None:
+        if item.type != Type8.folder or item.id is None:
             continue
 
-        title = item.title or g.folders.get(sub_folder_id).title or sub_folder_id
+        title = item.title or g.folders.get(item.id).title or item.id
+        chain = [*parent_chain, title]
+        writer.writerow(["folder", *chain] if include_cards else chain)
 
-        # Build the chain and write to CSV
-        current_chain = [*parent_chain, title]
-        writer.writerow(["folder", *current_chain] if include_cards else current_chain)
+        if item.id in listings:
+            unopened += _write_folder(
+                g, item.id, listings, partial, writer, chain, include_cards=include_cards
+            )
+        else:
+            unopened += 1
+            if include_cards:
+                writer.writerow(["more", *chain, _unlisted_label(item.number_of_facts)])
 
-        # Recurse into sub-folder
-        _walk_folder_items(g, sub_folder_id, writer, current_chain, include_cards=include_cards)
+    if folder_id in partial and include_cards:
+        writer.writerow(["more", *parent_chain, _unlisted_label(None)])
+
+    return unopened
+
+
+def _unlisted_label(card_count: int | None) -> str:
+    if card_count:
+        return f"contents not listed ({card_count:,} card{'s' if card_count != 1 else ''})"
+    return "contents not listed"
+
+
+def _warn_if_budget_cut(max_calls: int | None, *, unopened: int, partial: int) -> None:
+    import warnings
+
+    parts = []
+    if unopened:
+        parts.append(f"{unopened:,} folder{'s' if unopened != 1 else ''} not opened")
+    if partial:
+        parts.append(f"{partial:,} folder{'s' if partial != 1 else ''} not fully listed")
+    if parts:
+        warnings.warn(
+            f"dump_folder_hierarchy: call budget of {max_calls} reached; this collection "
+            f"is too large to process in full ({', '.join(parts)}). The dump lists what "
+            "was reached. Pass max_calls=None to list everything.",
+            UserWarning,
+            stacklevel=3,
+        )
 
 
 # =============================================================================
@@ -467,6 +560,8 @@ def replace_text_in_collection_cards(
     Raises:
         ValueError: If ``old_text`` is empty.
         NotFoundError: If the collection has no home folder / does not exist.
+        GuruError: If any folder holds more items than ``folders.items()``
+            fetches. Raised before any card is read or patched.
     """
     if not old_text:
         msg = "old_text must not be empty"
@@ -474,100 +569,88 @@ def replace_text_in_collection_cards(
 
     home = g.collections.home_folder(collection_id)
 
-    results: list[CardReplaceResult] = []
-    visited: set[str] = set()
-    _replace_text_walk(
-        g,
-        home.id or "",
-        old_text=old_text,
-        new_text=new_text,
-        dry_run=dry_run,
-        case_sensitive=case_sensitive,
-        keep_verification=keep_verification,
-        results=results,
-        visited=visited,
-    )
-    return results
+    # Walk the whole tree before touching any card, so a truncated folder
+    # aborts cleanly instead of leaving earlier folders edited.
+    card_ids: list[str] = []
+    _collect_card_ids(g, home.id or "", card_ids, seen=set())
+
+    return [
+        _replace_text_in_card(
+            g,
+            card_id,
+            old_text=old_text,
+            new_text=new_text,
+            dry_run=dry_run,
+            case_sensitive=case_sensitive,
+            keep_verification=keep_verification,
+        )
+        for card_id in card_ids
+    ]
 
 
-def _replace_text_walk(
+def _collect_card_ids(g: Guru, folder_id: str, card_ids: list[str], *, seen: set[str]) -> None:
+    """Depth-first, in folder order: append each card ID once.
+
+    Cards can appear in multiple folders; *seen* keeps only the first.
+    """
+    from guru_sdk.models._generated import Type8
+
+    items = _complete_folder_items(g, folder_id, purpose="edit only part of the collection")
+
+    for item in items:
+        if item.id is None:
+            continue
+        if item.type == Type8.folder:
+            _collect_card_ids(g, item.id, card_ids, seen=seen)
+        elif item.type == Type8.card and item.id not in seen:
+            seen.add(item.id)
+            card_ids.append(item.id)
+
+
+def _replace_text_in_card(
     g: Guru,
-    folder_id: str,
+    card_id: str,
     *,
     old_text: str,
     new_text: str,
     dry_run: bool,
     case_sensitive: bool,
     keep_verification: bool,
-    results: list[CardReplaceResult],
-    visited: set[str],
-) -> None:
-    """Recursively walk a folder, processing each card it finds."""
+) -> CardReplaceResult:
+    """Replace text in one card, reporting the outcome instead of raising."""
     from guru_sdk.contrib.content import replace_text
-    from guru_sdk.models._generated import Type8
 
-    items = g.folders.items(folder_id)
+    try:
+        card = g.cards.get(card_id)
+        modified_content, changed = replace_text(
+            card.content or "",
+            old_text,
+            new_text,
+            case_sensitive=case_sensitive,
+        )
+        title = card.preferred_phrase or ""
 
-    for item in items:
-        item_id = item.id
-        if item_id is None:
-            continue
+        if not changed:
+            return CardReplaceResult(card_id=card_id, title=title, status="unchanged")
+        if dry_run:
+            return CardReplaceResult(card_id=card_id, title=title, status="would_update")
 
-        if item.type == Type8.folder:
-            _replace_text_walk(
-                g,
-                item_id,
-                old_text=old_text,
-                new_text=new_text,
-                dry_run=dry_run,
-                case_sensitive=case_sensitive,
-                keep_verification=keep_verification,
-                results=results,
-                visited=visited,
-            )
-            continue
+        g.cards.patch(card_id, content=modified_content, keep_verification=keep_verification)
+        return CardReplaceResult(card_id=card_id, title=title, status="updated")
+    except Exception as exc:
+        return CardReplaceResult(card_id=card_id, title="", status="failed", error=str(exc))
 
-        if item.type != Type8.card:
-            continue
 
-        # Cards can appear in multiple folders — only process each once.
-        if item_id in visited:
-            continue
-        visited.add(item_id)
+def _complete_folder_items(g: Guru, folder_id: str, *, purpose: str) -> Any:
+    """Return every item in a folder, or raise if even _WALK_MAX_PAGES wasn't enough.
 
-        try:
-            card = g.cards.get(item_id)
-            content = card.content or ""
-            modified_content, changed = replace_text(
-                content,
-                old_text,
-                new_text,
-                case_sensitive=case_sensitive,
-            )
-            title = card.preferred_phrase or ""
-
-            if not changed:
-                results.append(CardReplaceResult(card_id=item_id, title=title, status="unchanged"))
-                continue
-
-            if dry_run:
-                results.append(
-                    CardReplaceResult(card_id=item_id, title=title, status="would_update")
-                )
-                continue
-
-            g.cards.patch(
-                item_id,
-                content=modified_content,
-                keep_verification=keep_verification,
-            )
-            results.append(CardReplaceResult(card_id=item_id, title=title, status="updated"))
-        except Exception as exc:
-            results.append(
-                CardReplaceResult(
-                    card_id=item_id,
-                    title="",
-                    status="failed",
-                    error=str(exc),
-                )
-            )
+    ``folders.items()`` stops at ``max_pages`` and reports it via
+    ``PaginatedList.complete``; a walk that ignored it would silently skip
+    content. *purpose* finishes the sentence "refusing to ...".
+    """
+    items = g.folders.items(folder_id, max_pages=_WALK_MAX_PAGES)
+    if not getattr(items, "complete", True):
+        raise GuruError(
+            f"Folder {folder_id} has more than {_WALK_MAX_PAGES * 50:,} items; refusing to {purpose}"
+        )
+    return items

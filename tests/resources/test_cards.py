@@ -1362,3 +1362,49 @@ class TestUploadFile:
 
         url = cards.upload_file(test_file)
         assert url == "https://content.api.getguru.com/files/view/xyz"
+
+
+# =============================================================================
+# Pagination — verificationmgr caps at 50, card comments at 25 (spec)
+# =============================================================================
+
+CARDS_NEXT = {"Link": '<https://api.getguru.com/api/v1/next?token=next>; rel="next"'}
+
+
+class TestCardListPagination:
+    def test_list_unverified_follows_link_pages(self, cards: CardResource, httpx_mock) -> None:
+        httpx_mock.add_response(json=[_card_json(CARD_UUID, "One")], headers=CARDS_NEXT)
+        httpx_mock.add_response(json=[_card_json(CARD_UUID_2, "Two")])
+
+        result = cards.list_unverified()
+
+        assert [c.id for c in result] == [CARD_UUID, CARD_UUID_2]
+        assert result.complete is True
+
+    def test_list_comments_follows_link_pages(self, cards: CardResource, httpx_mock) -> None:
+        httpx_mock.add_response(json=[_comment_json(COMMENT_UUID)], headers=CARDS_NEXT)
+        httpx_mock.add_response(json=[_comment_json(REPLY_UUID)])
+
+        result = cards.list_comments(CARD_UUID)
+
+        assert [c.id for c in result] == [COMMENT_UUID, REPLY_UUID]
+
+    def test_list_comments_sends_status_on_first_page(
+        self, cards: CardResource, httpx_mock
+    ) -> None:
+        httpx_mock.add_response(json=[_comment_json()])
+
+        cards.list_comments(CARD_UUID, status="OPEN")
+
+        request = httpx_mock.get_request()
+        assert request is not None
+        assert request.url.params["status"] == "OPEN"
+
+    def test_name_resolution_follows_link_pages(self, cards: CardResource, httpx_mock) -> None:
+        httpx_mock.add_response(json=[_card_json(CARD_UUID, "One")], headers=CARDS_NEXT)
+        httpx_mock.add_response(json=[_card_json(CARD_UUID_2, "Second Page Card")])
+        httpx_mock.add_response(json=_card_json(CARD_UUID_2, "Second Page Card"))
+
+        result = cards.get("Second Page Card")
+
+        assert result.id == CARD_UUID_2
